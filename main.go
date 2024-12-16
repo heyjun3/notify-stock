@@ -2,5 +2,5 @@ package main
 
 func main() {
 	client := NewHTTPClient()
-	client.FetchCurrentStock()
+	client.FetchCurrentStock("^N225")
 }

@@ -1,6 +1,10 @@
 package main
 
+import (
+	"net/http"
+)
+
 func main() {
-	client := NewHTTPClient()
+	client := NewFinanceClient(&http.Client{})
 	client.FetchCurrentStock("^N225")
 }

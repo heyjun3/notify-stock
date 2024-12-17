@@ -8,13 +8,17 @@ import (
 	"time"
 )
 
-type HTTPClient struct {
-	Client http.Client
+type HTTPClientInterface interface {
+	Get(string) (*http.Response, error)
 }
 
-func NewHTTPClient() *HTTPClient {
-	return &HTTPClient{
-		Client: http.Client{},
+type FinanceClient struct {
+	Client HTTPClientInterface
+}
+
+func NewFinanceClient(client HTTPClientInterface) *FinanceClient {
+	return &FinanceClient{
+		Client: client,
 	}
 }
 
@@ -87,7 +91,7 @@ type Chart struct {
 	Error  any      `json:"error"`
 }
 
-func (c *HTTPClient) FetchCurrentStock(symbol string) (*CurrentStokResponse, error) {
+func (c *FinanceClient) FetchCurrentStock(symbol string) (*CurrentStokResponse, error) {
 	now := time.Now().Unix()
 	URL := fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s?period1=%d&period2=%d&region=US",
 		symbol, now, now)

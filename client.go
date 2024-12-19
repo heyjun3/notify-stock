@@ -22,7 +22,7 @@ func NewFinanceClient(client HTTPClientInterface) *FinanceClient {
 	}
 }
 
-type CurrentStokResponse struct {
+type ChartResponse struct {
 	Chart Chart `json:"chart"`
 }
 type Pre struct {
@@ -69,8 +69,6 @@ type Meta struct {
 	LongName             string               `json:"longName"`
 	ShortName            string               `json:"shortName"`
 	ChartPreviousClose   float64              `json:"chartPreviousClose"`
-	PreviousClose        float64              `json:"previousClose"`
-	Scale                int                  `json:"scale"`
 	PriceHint            int                  `json:"priceHint"`
 	CurrentTradingPeriod CurrentTradingPeriod `json:"currentTradingPeriod"`
 	DataGranularity      string               `json:"dataGranularity"`
@@ -78,12 +76,22 @@ type Meta struct {
 	ValidRanges          []string             `json:"validRanges"`
 }
 type Quote struct {
+	Open   []float64 `json:"open"`
+	Close  []float64 `json:"close"`
+	Volume []int     `json:"volume"`
+	High   []float64 `json:"high"`
+	Low    []float64 `json:"low"`
+}
+type Adjclose struct {
+	Adjclose []float64 `json:"adjclose"`
 }
 type Indicators struct {
-	Quote []Quote `json:"quote"`
+	Quote    []Quote    `json:"quote"`
+	Adjclose []Adjclose `json:"adjclose"`
 }
 type Result struct {
 	Meta       Meta       `json:"meta"`
+	Timestamp  []int      `json:"timestamp"`
 	Indicators Indicators `json:"indicators"`
 }
 type Chart struct {
@@ -91,10 +99,14 @@ type Chart struct {
 	Error  any      `json:"error"`
 }
 
-func (c *FinanceClient) FetchCurrentStock(symbol string) (*CurrentStokResponse, error) {
-	now := time.Now().Unix()
-	URL := fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s?period1=%d&period2=%d&region=US",
-		symbol, now, now)
+func (c *FinanceClient) FetchCurrentStock(symbol string) (*ChartResponse, error) {
+	now := time.Now()
+	return c.FetchStock(symbol, now, now)
+}
+
+func (c *FinanceClient) FetchStock(symbol string, beggingOfPeriod, endOfPeriod time.Time) (*ChartResponse, error) {
+	URL := fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s?period1=%d&period2=%d&events=div|split|earn&interval=1d&region=US",
+		symbol, beggingOfPeriod.Unix(), endOfPeriod.Unix())
 	fmt.Println(URL)
 
 	res, err := c.Client.Get(URL)
@@ -106,10 +118,10 @@ func (c *FinanceClient) FetchCurrentStock(symbol string) (*CurrentStokResponse, 
 	if err != nil {
 		return nil, err
 	}
-	var current CurrentStokResponse
-	if err := json.Unmarshal(body, &current); err != nil {
+	fmt.Println(string(body))
+	var chart ChartResponse
+	if err := json.Unmarshal(body, &chart); err != nil {
 		return nil, err
 	}
-	fmt.Println(current.Chart.Result[0].Meta.RegularMarketPrice)
-	return &current, nil
+	return &chart, nil
 }

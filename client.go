@@ -1,11 +1,17 @@
 package main
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type HTTPClientInterface interface {
@@ -99,17 +105,39 @@ type Chart struct {
 	Error  any      `json:"error"`
 }
 
+type Option func(URL *url.URL) *url.URL
+
+func WithInterval(interval string) Option {
+	return func(URL *url.URL) *url.URL {
+		query := URL.Query()
+		query.Add("interval", interval)
+		URL.RawQuery = query.Encode()
+		return URL
+	}
+}
+
 func (c *FinanceClient) FetchCurrentStock(symbol string) (*ChartResponse, error) {
 	now := time.Now()
 	return c.FetchStock(symbol, now, now)
 }
 
-func (c *FinanceClient) FetchStock(symbol string, beggingOfPeriod, endOfPeriod time.Time) (*ChartResponse, error) {
-	URL := fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s?period1=%d&period2=%d&events=div|split|earn&interval=1d&region=US",
-		symbol, beggingOfPeriod.Unix(), endOfPeriod.Unix())
-	fmt.Println(URL)
+func (c *FinanceClient) FetchStock(symbol string, beggingOfPeriod, endOfPeriod time.Time, opts ...Option) (*ChartResponse, error) {
+	URL, err := url.Parse(fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s", symbol))
+	if err != nil {
+		return nil, err
+	}
+	query := URL.Query()
+	query.Add("period1", strconv.Itoa(int(beggingOfPeriod.Unix())))
+	query.Add("period2", strconv.Itoa(int(endOfPeriod.Unix())))
+	query.Add("region", "US")
 
-	res, err := c.Client.Get(URL)
+	URL.RawQuery = query.Encode()
+	for _, opt := range opts {
+		URL = opt(URL)
+	}
+
+	slog.Info("request", "url", URL.String())
+	res, err := c.Client.Get(URL.String())
 	if err != nil {
 		return nil, err
 	}
@@ -118,10 +146,23 @@ func (c *FinanceClient) FetchStock(symbol string, beggingOfPeriod, endOfPeriod t
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(body))
 	var chart ChartResponse
 	if err := json.Unmarshal(body, &chart); err != nil {
 		return nil, err
 	}
 	return &chart, nil
+}
+
+func calculateMovingAverage[T cmp.Ordered](values []T) (decimal.Decimal, error) {
+	d := make([]decimal.Decimal, 0, len(values))
+	for _, v := range values {
+		deci, err := decimal.NewFromString(fmt.Sprintf("%f", v))
+		if err != nil {
+			slog.Error("failed convert string to decimal")
+			return decimal.Decimal{}, err
+		}
+		d = append(d, deci)
+	}
+	avg := decimal.Avg(d[0], d[1:]...)
+	return avg, nil
 }

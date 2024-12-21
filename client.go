@@ -153,10 +153,10 @@ func (c *FinanceClient) FetchStock(symbol string, beggingOfPeriod, endOfPeriod t
 	return &chart, nil
 }
 
-func calculateMovingAverage[T cmp.Ordered](values []T) (decimal.Decimal, error) {
+func CalcAVG[T cmp.Ordered](values []T) (decimal.Decimal, error) {
 	d := make([]decimal.Decimal, 0, len(values))
 	for _, v := range values {
-		deci, err := decimal.NewFromString(fmt.Sprintf("%f", v))
+		deci, err := decimal.NewFromString(fmt.Sprintf("%v", v))
 		if err != nil {
 			slog.Error("failed convert string to decimal")
 			return decimal.Decimal{}, err

@@ -1,0 +1,12 @@
+services:
+  notify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - FROM=${FROM}
+      - TO=${TO}
+    working_dir: /app
+    volumes:
+      - ./token.json:/app/token.json
+      - ./credentials.json:/app/credentials.json

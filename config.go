@@ -1,4 +1,4 @@
-package main
+package notifystock
 
 import (
 	"log/slog"
@@ -7,15 +7,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var config Config
+var Cfg Config
 
 func init() {
 	err := godotenv.Load()
 	if err != nil {
 		slog.Info(err.Error())
 	}
-	config.FROM = os.Getenv("FROM")
-	config.TO = os.Getenv("TO")
+	Cfg.FROM = os.Getenv("FROM")
+	Cfg.TO = os.Getenv("TO")
 }
 
 type Config struct {

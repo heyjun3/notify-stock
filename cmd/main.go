@@ -18,6 +18,11 @@ const (
 	SP500 = "^GSPC"
 )
 
+var SymbolMap = map[string]string{
+	N225:  "Nikkei 225",
+	SP500: "S&P 500",
+}
+
 type Stock struct {
 	Symbol string
 	Close  decimal.Decimal
@@ -63,7 +68,7 @@ func main() {
 		log.Fatal(err)
 	}
 	sp500, err := GenerateStock(
-		N225,
+		SP500,
 		res.Chart.Result[0].Indicators.Quote[0].Close,
 		res.Chart.Result[0].Timestamp,
 	)
@@ -72,10 +77,10 @@ func main() {
 	}
 	subject := fmt.Sprintf("Market Summary %s", now.Format("January 02 2006"))
 	text := strings.Join([]string{
-		"Nikkei 225 Data",
+		SymbolMap[n225.Symbol],
 		fmt.Sprintf("Closing Price: %v yen", n225.Close.Ceil()),
 		fmt.Sprintf("1-Year Moving Average: %v yen\n", n225.AVG.Ceil()),
-		"S&P500 Data",
+		SymbolMap[sp500.Symbol],
 		fmt.Sprintf("Closing Price: %v $", sp500.Close.Ceil()),
 		fmt.Sprintf("1-Year Moving Average: %v $", sp500.AVG.Ceil()),
 	}, "\n")

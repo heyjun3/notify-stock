@@ -1,3 +1,6 @@
+volumes:
+  pgdata:
+
 services:
   notify:
     build:
@@ -10,3 +13,12 @@ services:
     volumes:
       - ./token.json:/app/token.json
       - ./credentials.json:/app/credentials.json
+
+  database:
+    image: postgres:17
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=notify-stock
+    volumes:
+      - pgdata:/var/lib/postgresql 

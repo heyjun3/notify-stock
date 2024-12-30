@@ -16,7 +16,7 @@ import (
 )
 
 // Retrieve a token, saves the token, then returns the generated client.
-func getClient(config *oauth2.Config) *http.Client {
+func getClient(config *oauth2.Config) (*http.Client, error) {
 	// The file token.json stores the user's access and refresh tokens, and is
 	// created automatically when the authorization flow completes for the first
 	// time.
@@ -24,9 +24,13 @@ func getClient(config *oauth2.Config) *http.Client {
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
 		tok = getTokenFromWeb(config)
-		saveToken(tokFile, tok)
 	}
-	return config.Client(context.Background(), tok)
+	tok, err = config.TokenSource(context.Background(), tok).Token()
+	if err != nil {
+		return nil, err
+	}
+	saveToken(tokFile, tok)
+	return config.Client(context.Background(), tok), nil
 }
 
 // Request a token from the web, then returns the retrieved token.
@@ -81,7 +85,10 @@ func NotifyGmail(ctx context.Context, from, to, subject, text string) error {
 	if err != nil {
 		return fmt.Errorf("unable to parse client secret file to config: %v", err)
 	}
-	client := getClient(config)
+	client, err := getClient(config)
+	if err != nil {
+		return err
+	}
 
 	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {

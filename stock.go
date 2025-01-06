@@ -3,7 +3,6 @@ package notifystock
 import (
 	"context"
 	"database/sql"
-	"strings"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -15,7 +14,7 @@ import (
 var db *bun.DB
 
 func init() {
-	dsn := "postgres://postgres:@localhost:5555/notify-stock?sslmode=disable"
+	dsn := "postgres://postgres:postgres@localhost:5555/notify-stock?sslmode=disable"
 	db = NewDB(dsn)
 }
 
@@ -52,12 +51,7 @@ func NewStockRepository(db *bun.DB) *StockRepository {
 func (r *StockRepository) Save(ctx context.Context, stocks []Stock) error {
 	_, err := r.db.NewInsert().
 		Model(&stocks).
-		On("CONFLICT DO UPDATE (symbol, timestamp)").
-		Set(strings.Join([]string{
-			"open = EXCLUDED.open",
-			"close = EXCLUDED.close",
-			"high= EXCLUDED.high",
-			"low = EXCLUDED.low",
-		}, ",")).Exec(ctx)
+		On("CONFLICT (symbol, timestamp) DO NOTHING").
+		Exec(ctx)
 	return err
 }

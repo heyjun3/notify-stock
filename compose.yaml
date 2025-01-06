@@ -23,16 +23,6 @@ services:
       - POSTGRES_DB=notify-stock
     volumes:
       - pgdata:/var/lib/postgresql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - 5555:5432
-
-  database-test:
-    image: postgres:17
-    environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=notify-stock
-    volumes:
-      - pgdata-test:/var/lib/postgresql
-    ports:
-      - 5556:5432

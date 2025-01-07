@@ -25,6 +25,8 @@ func getClient(config *oauth2.Config) (*http.Client, error) {
 	if err != nil {
 		tok = getTokenFromWeb(config)
 	}
+	// refresh token by every called
+	tok.AccessToken = ""
 	tok, err = config.TokenSource(context.Background(), tok).Token()
 	if err != nil {
 		return nil, err

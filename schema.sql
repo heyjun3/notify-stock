@@ -12,9 +12,9 @@ PARTITION BY
     LIST (symbol);
 
 CREATE TABLE IF NOT EXISTS
-    stocks_n255 PARTITION OF stocks FOR
+    stocks_n225 PARTITION OF stocks FOR
 VALUES
-    IN ('N255');
+    IN ('N225');
 
 CREATE TABLE IF NOT EXISTS
     stocks_sp500 PARTITION OF stocks FOR

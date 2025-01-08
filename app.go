@@ -1,6 +1,7 @@
 package notifystock
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -16,7 +17,7 @@ func IsSameLen[T any](array ...[]T) bool {
 	return true
 }
 
-func ConvertResponseToStock(res ChartResponse) ([]Stock, error) {
+func ConvertResponseToStock(symbol string, res ChartResponse) ([]Stock, error) {
 	result := res.Chart.Result
 	if len(result) == 0 {
 		return []Stock{}, fmt.Errorf("result is nil")
@@ -39,22 +40,29 @@ func ConvertResponseToStock(res ChartResponse) ([]Stock, error) {
 
 	stocks := make([]Stock, len(timestamp))
 	for i, t := range timestamp {
-		stocks[i] = Stock{
-			Timestamp: time.Unix(int64(t), 0),
-			Open:      open[i],
-			Close:     close[i],
-			High:      high[i],
-			Low:       low[i],
+		stock, err := NewStock(symbol, time.Unix(int64(t), 0), open[i], close[i], high[i], low[i])
+		if err != nil {
+			return []Stock{}, err
 		}
+		stocks[i] = stock
 	}
 	return stocks, nil
 }
 
 func SaveStock(symbol string, begging, end time.Time) error {
 	client := NewFinanceClient(&http.Client{})
+	repo := NewStockRepository(db)
+
 	res, err := client.FetchStock(symbol, begging, end, WithInterval("1d"))
 	if err != nil {
 		return err
 	}
-
+	stocks, err := ConvertResponseToStock(symbol, *res)
+	if err != nil {
+		return err
+	}
+	if err := repo.Save(context.Background(), stocks); err != nil {
+		return err
+	}
+	return nil
 }

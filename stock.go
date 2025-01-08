@@ -3,6 +3,7 @@ package notifystock
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -25,6 +26,27 @@ func NewDB(dsn string) *bun.DB {
 		bundebug.WithVerbose(true),
 	))
 	return db
+}
+
+var StockSymbolMap = map[string]string{
+	N225:  "N225",
+	SP500: "S&P500",
+}
+
+func NewStock(symbol string, timestamp time.Time,
+	open, close, high, low float64) (Stock, error) {
+	s := StockSymbolMap[symbol]
+	if s == "" {
+		return Stock{}, fmt.Errorf("undefined symbol error")
+	}
+	return Stock{
+		Symbol:    s,
+		Timestamp: timestamp,
+		Open:      open,
+		Close:     close,
+		High:      high,
+		Low:       low,
+	}, nil
 }
 
 type Stock struct {

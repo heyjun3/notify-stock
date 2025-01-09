@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"time"
 )
 
@@ -49,11 +48,20 @@ func ConvertResponseToStock(symbol string, res ChartResponse) ([]Stock, error) {
 	return stocks, nil
 }
 
-func SaveStock(symbol string, begging, end time.Time) error {
-	client := NewFinanceClient(&http.Client{})
-	repo := NewStockRepository(db)
+type StockRegister struct {
+	client          *FinanceClient
+	stockRepository *StockRepository
+}
 
-	res, err := client.FetchStock(symbol, begging, end, WithInterval("1d"))
+func NewStockRegister(client *FinanceClient, repository *StockRepository) *StockRegister {
+	return &StockRegister{
+		client:          client,
+		stockRepository: repository,
+	}
+}
+
+func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
+	res, err := s.client.FetchStock(symbol, begging, end, WithInterval("1d"))
 	if err != nil {
 		return err
 	}
@@ -61,7 +69,7 @@ func SaveStock(symbol string, begging, end time.Time) error {
 	if err != nil {
 		return err
 	}
-	if err := repo.Save(context.Background(), stocks); err != nil {
+	if err := s.stockRepository.Save(context.Background(), stocks); err != nil {
 		return err
 	}
 	return nil

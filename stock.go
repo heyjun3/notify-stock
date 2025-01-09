@@ -12,16 +12,16 @@ import (
 	"github.com/uptrace/bun/extra/bundebug"
 )
 
-var db *bun.DB
+var DB *bun.DB
 
 func init() {
 	dsn := "postgres://postgres:postgres@localhost:5555/notify-stock?sslmode=disable"
-	db = NewDB(dsn)
+	DB = NewDB(dsn)
 }
 
 func NewDB(dsn string) *bun.DB {
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-	db = bun.NewDB(sqldb, pgdialect.New())
+	db := bun.NewDB(sqldb, pgdialect.New())
 	db.AddQueryHook(bundebug.NewQueryHook(
 		bundebug.WithVerbose(true),
 	))
@@ -52,12 +52,12 @@ func NewStock(symbol string, timestamp time.Time,
 type Stock struct {
 	bun.BaseModel `bun:"table:stocks"`
 
-	Symbol    string    `bun:"symbol,pk"`
-	Timestamp time.Time `bun:"timestamp,timestamp,pk"`
-	Open      float64   `bun:"open,notnull"`
-	Close     float64   `bun:"close,notnull"`
-	High      float64   `bun:"high,notnull"`
-	Low       float64   `bun:"low,notnull"`
+	Symbol    string    `bun:"symbol,type:test,pk"`
+	Timestamp time.Time `bun:"timestamp,type:timestamp,pk"`
+	Open      float64   `bun:"open,type:decimal,notnull"`
+	Close     float64   `bun:"close,type:decimal,notnull"`
+	High      float64   `bun:"high,type:decimal,notnull"`
+	Low       float64   `bun:"low,type:decimal,notnull"`
 }
 
 type StockRepository struct {

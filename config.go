@@ -16,9 +16,11 @@ func init() {
 	}
 	Cfg.FROM = os.Getenv("FROM")
 	Cfg.TO = os.Getenv("TO")
+	Cfg.DBDSN = "postgres://postgres:postgres@localhost:5555/notify-stock?sslmode=disable"
 }
 
 type Config struct {
-	FROM string
-	TO   string
+	FROM  string
+	TO    string
+	DBDSN string
 }

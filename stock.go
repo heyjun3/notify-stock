@@ -12,13 +12,6 @@ import (
 	"github.com/uptrace/bun/extra/bundebug"
 )
 
-var DB *bun.DB
-
-func init() {
-	dsn := "postgres://postgres:postgres@localhost:5555/notify-stock?sslmode=disable"
-	DB = NewDB(dsn)
-}
-
 func NewDB(dsn string) *bun.DB {
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	db := bun.NewDB(sqldb, pgdialect.New())

@@ -32,6 +32,12 @@ func NewStock(symbol string, timestamp time.Time,
 	if s == "" {
 		return Stock{}, fmt.Errorf("undefined symbol error")
 	}
+	for _, v := range []float64{open, close, high, low} {
+		if v <= 0 {
+			return Stock{}, fmt.Errorf(
+				"value is higher than zero. open: %v, close: %v, high: %v, low: %v", open, close, high, low)
+		}
+	}
 	return Stock{
 		Symbol:    s,
 		Timestamp: timestamp,

@@ -37,13 +37,14 @@ func ConvertResponseToStock(symbol string, res ChartResponse) ([]Stock, error) {
 		return []Stock{}, fmt.Errorf("don't same length error")
 	}
 
-	stocks := make([]Stock, len(timestamp))
+	stocks := make([]Stock, 0, len(timestamp))
 	for i, t := range timestamp {
 		stock, err := NewStock(symbol, time.Unix(int64(t), 0), open[i], close[i], high[i], low[i])
 		if err != nil {
-			return []Stock{}, err
+			slog.Error("new stock error", "error", err)
+			continue
 		}
-		stocks[i] = stock
+		stocks = append(stocks, stock)
 	}
 	return stocks, nil
 }

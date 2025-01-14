@@ -9,6 +9,24 @@ import (
 )
 
 func main() {
+	// if err := registerAllStockHistoryBySymbol(notify.SP500); err != nil {
+	// 	log.Fatal(err)
+	// }
+	if err := registerStockByWeek(notify.N225); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func registerStockByWeek(symbol string) error {
+	register := notify.InitStockRegister(notify.Cfg.DBDSN, &http.Client{})
+	now := time.Now().UTC()
+	if err := register.SaveStock(symbol, now.AddDate(0, 0, -7), now); err != nil {
+		return err
+	}
+	return nil
+}
+
+func registerAllStockHistoryBySymbol(symbol string) error {
 	register := notify.InitStockRegister(notify.Cfg.DBDSN, &http.Client{})
 	t := time.Unix(0, 0)
 	times := []time.Time{t}
@@ -23,9 +41,10 @@ func main() {
 	}
 	for i := 0; i < len(times)-1; i++ {
 		if err := register.SaveStock(
-			notify.N225, times[i], times[i+1]); err != nil {
-			log.Fatal(err)
+			symbol, times[i], times[i+1]); err != nil {
+			return err
 		}
 		time.Sleep(2 * time.Second)
 	}
+	return nil
 }

@@ -21,12 +21,26 @@ func init() {
 func TestSave(t *testing.T) {
 	repo := notify.NewStockRepository(db)
 
-	t.Run("", func(t *testing.T) {
-		stocks := []notify.Stock{
-			{Symbol: "N255", Timestamp: time.Now(), Open: 1000, Close: 2000, High: 2500, Low: 500},
-		}
-		err := repo.Save(context.Background(), stocks)
+	tests := []struct {
+		name   string
+		stocks []notify.Stock
+		err    error
+	}{
+		{
+			stocks: []notify.Stock{{Symbol: "N255", Timestamp: time.Now(), Open: 1000, Close: 2000, High: 2500, Low: 500}},
+			err:    nil,
+		},
+		{
+			stocks: []notify.Stock{},
+			err:    nil,
+		},
+	}
 
-		assert.NoError(t, err)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := repo.Save(context.Background(), tt.stocks)
+
+			assert.Equal(t, tt.err, err)
+		})
+	}
 }

@@ -70,6 +70,9 @@ func NewStockRepository(db *bun.DB) *StockRepository {
 }
 
 func (r *StockRepository) Save(ctx context.Context, stocks []Stock) error {
+	if len(stocks) == 0 {
+		return nil
+	}
 	_, err := r.db.NewInsert().
 		Model(&stocks).
 		On("CONFLICT (symbol, timestamp) DO NOTHING").

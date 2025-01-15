@@ -1,21 +1,40 @@
-package main
+package stock
 
 import (
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	notify "github.com/heyjun3/notify-stock"
 )
 
-func main() {
-	// if err := registerAllStockHistoryBySymbol(notify.SP500); err != nil {
-	// 	log.Fatal(err)
-	// }
-	if err := registerStockByWeek(notify.N225); err != nil {
-		log.Fatal(err)
+var (
+	symbol                     string
+	RegisterStockByWeekCommand = &cobra.Command{
+		Use:   "register",
+		Short: "register stock by symbol and week",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := registerStockByWeek(symbol); err != nil {
+				log.Fatal(err)
+			}
+		},
 	}
+)
+
+func init() {
+	RegisterStockByWeekCommand.Flags().StringVarP(&symbol, "symbol", "s", "", "stock of symbol")
 }
+
+// func main() {
+// if err := registerAllStockHistoryBySymbol(notify.SP500); err != nil {
+// 	log.Fatal(err)
+// }
+// 	if err := registerStockByWeek(notify.N225); err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
 
 func registerStockByWeek(symbol string) error {
 	register := notify.InitStockRegister(notify.Cfg.DBDSN, &http.Client{})

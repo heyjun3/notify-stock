@@ -1,4 +1,4 @@
-package main
+package notify
 
 import (
 	"context"
@@ -9,9 +9,19 @@ import (
 	"strings"
 	"time"
 
-	notify "github.com/heyjun3/notify-stock"
 	"github.com/shopspring/decimal"
+	"github.com/spf13/cobra"
+
+	notifyapp "github.com/heyjun3/notify-stock"
 )
+
+var NotifyCommand = &cobra.Command{
+	Use:   "notify",
+	Short: "Stock summary notification for yesterday",
+	Run: func(cmd *cobra.Command, args []string) {
+		notifyStock()
+	},
+}
 
 const (
 	N225  = "^N225"
@@ -32,7 +42,7 @@ type Stock struct {
 }
 
 func GenerateStock(symbol string, close []float64, timestamp []int) (*Stock, error) {
-	avg, err := notify.CalcAVG(close)
+	avg, err := notifyapp.CalcAVG(close)
 	if err != nil {
 		return nil, err
 	}
@@ -48,10 +58,10 @@ func GenerateStock(symbol string, close []float64, timestamp []int) (*Stock, err
 	}, nil
 }
 
-func main() {
-	client := notify.NewFinanceClient(&http.Client{})
+func notifyStock() {
+	client := notifyapp.NewFinanceClient(&http.Client{})
 	now := time.Now()
-	res, err := client.FetchStock(N225, now.AddDate(0, -12, 0), now, notify.WithInterval("1d"))
+	res, err := client.FetchStock(N225, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -63,7 +73,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	res, err = client.FetchStock(SP500, now.AddDate(0, -12, 0), now, notify.WithInterval("1d"))
+	res, err = client.FetchStock(SP500, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,7 +94,7 @@ func main() {
 		fmt.Sprintf("Closing Price: %v $", sp500.Close.Ceil()),
 		fmt.Sprintf("1-Year Moving Average: %v $", sp500.AVG.Ceil()),
 	}, "\n")
-	err = notify.NotifyGmail(context.Background(), notify.Cfg.FROM, notify.Cfg.TO, subject, text)
+	err = notifyapp.NotifyGmail(context.Background(), notifyapp.Cfg.FROM, notifyapp.Cfg.TO, subject, text)
 	if err != nil {
 		slog.Error("error", "err", err)
 	}

@@ -17,7 +17,7 @@ var (
 func init() {
 	rootCmd.AddCommand(version.VersionCommand)
 	rootCmd.AddCommand(notify.NotifyCommand)
-	rootCmd.AddCommand(stock.RegisterStockByWeekCommand)
+	rootCmd.AddCommand(stock.RegisterStockCommand)
 }
 
 func Execute() error {

@@ -11,12 +11,19 @@ import (
 )
 
 var (
-	symbol                     string
-	RegisterStockByWeekCommand = &cobra.Command{
+	symbol               string
+	isAll                bool
+	RegisterStockCommand = &cobra.Command{
 		Use:   "register",
 		Short: "register stock by symbol and week",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := registerStockByWeek(symbol); err != nil {
+			var err error
+			if isAll {
+				err = registerAllStockHistoryBySymbol(symbol)
+			} else {
+				err = registerStockByWeek(symbol)
+			}
+			if err != nil {
 				log.Fatal(err)
 			}
 		},
@@ -24,17 +31,10 @@ var (
 )
 
 func init() {
-	RegisterStockByWeekCommand.Flags().StringVarP(&symbol, "symbol", "s", "", "stock of symbol")
+	RegisterStockCommand.Flags().StringVarP(&symbol, "symbol", "s", "", "stock of symbol")
+	RegisterStockCommand.Flags().BoolVarP(&isAll, "all", "a", false, "register stock price data for the entire period")
+	RegisterStockCommand.MarkFlagRequired("symbol")
 }
-
-// func main() {
-// if err := registerAllStockHistoryBySymbol(notify.SP500); err != nil {
-// 	log.Fatal(err)
-// }
-// 	if err := registerStockByWeek(notify.N225); err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
 
 func registerStockByWeek(symbol string) error {
 	register := notify.InitStockRegister(notify.Cfg.DBDSN, &http.Client{})

@@ -16,7 +16,17 @@ import (
 )
 
 // Retrieve a token, saves the token, then returns the generated client.
-func getClient(config *oauth2.Config) (*http.Client, error) {
+func getClient(credentialsPath string) (*http.Client, error) {
+	b, err := os.ReadFile(credentialsPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read client secret file: %v", err)
+	}
+
+	// If modifying these scopes, delete your previously saved token.json.
+	config, err := google.ConfigFromJSON(b, gmail.GmailReadonlyScope, gmail.GmailSendScope)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse client secret file to config: %v", err)
+	}
 	// The file token.json stores the user's access and refresh tokens, and is
 	// created automatically when the authorization flow completes for the first
 	// time.
@@ -77,17 +87,7 @@ func saveToken(path string, token *oauth2.Token) {
 }
 
 func NotifyGmail(ctx context.Context, from, to, subject, text string) error {
-	b, err := os.ReadFile("credentials.json")
-	if err != nil {
-		return fmt.Errorf("unable to read client secret file: %v", err)
-	}
-
-	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, gmail.GmailReadonlyScope, gmail.GmailSendScope)
-	if err != nil {
-		return fmt.Errorf("unable to parse client secret file to config: %v", err)
-	}
-	client, err := getClient(config)
+	client, err := getClient("credentials.json")
 	if err != nil {
 		return err
 	}
@@ -108,4 +108,9 @@ func NotifyGmail(ctx context.Context, from, to, subject, text string) error {
 		return fmt.Errorf("failed sent message: %v", err)
 	}
 	return nil
+}
+
+func RefreshToken() error {
+	_, err := getClient("credentials.json")
+	return err
 }

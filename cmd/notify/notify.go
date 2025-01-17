@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	notifyapp "github.com/heyjun3/notify-stock"
+	"github.com/heyjun3/notify-stock/cmd/notify/token"
 )
 
 var NotifyCommand = &cobra.Command{
@@ -21,6 +22,10 @@ var NotifyCommand = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		notifyStock()
 	},
+}
+
+func init() {
+	NotifyCommand.AddCommand(token.RefreshTokenCommand)
 }
 
 const (

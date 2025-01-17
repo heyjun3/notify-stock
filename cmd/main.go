@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"github.com/heyjun3/notify-stock/cmd/notify"
@@ -15,11 +15,13 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(version.VersionCommand)
-	rootCmd.AddCommand(notify.NotifyCommand)
-	rootCmd.AddCommand(stock.RegisterStockCommand)
+	rootCmd.AddCommand(version.VersionCommand, notify.NotifyCommand, stock.RegisterStockCommand)
 }
 
 func Execute() error {
 	return rootCmd.Execute()
+}
+
+func main() {
+	Execute()
 }

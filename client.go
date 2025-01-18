@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -136,7 +135,7 @@ func (c *FinanceClient) FetchStock(symbol string, beggingOfPeriod, endOfPeriod t
 		URL = opt(URL)
 	}
 
-	slog.Info("request", "url", URL.String())
+	logger.Info("request", "url", URL.String())
 	res, err := c.Client.Get(URL.String())
 	if err != nil {
 		return nil, err
@@ -158,7 +157,7 @@ func CalcAVG[T cmp.Ordered](values []T) (decimal.Decimal, error) {
 	for _, v := range values {
 		deci, err := decimal.NewFromString(fmt.Sprintf("%v", v))
 		if err != nil {
-			slog.Error("failed convert string to decimal")
+			logger.Error("failed convert string to decimal")
 			return decimal.Decimal{}, err
 		}
 		d = append(d, deci)

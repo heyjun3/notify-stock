@@ -15,7 +15,7 @@ func IsSameLen[T any](array ...[]T) bool {
 	return true
 }
 
-func ConvertResponseToStock(symbol string, res ChartResponse) ([]Stock, error) {
+func ConvertResponseToStock(symbol Symbol, res ChartResponse) ([]Stock, error) {
 	result := res.Chart.Result
 	if len(result) == 0 {
 		return []Stock{}, fmt.Errorf("result is nil")
@@ -61,11 +61,15 @@ func NewStockRegister(client *FinanceClient, repository *StockRepository) *Stock
 }
 
 func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
-	res, err := s.client.FetchStock(symbol, begging, end, WithInterval("1d"))
+	sym, err := NewSymbol(symbol)
 	if err != nil {
 		return err
 	}
-	stocks, err := ConvertResponseToStock(symbol, *res)
+	res, err := s.client.FetchStock(sym, begging, end, WithInterval("1d"))
+	if err != nil {
+		return err
+	}
+	stocks, err := ConvertResponseToStock(sym, *res)
 	if err != nil {
 		return err
 	}

@@ -27,16 +27,6 @@ func init() {
 	NotifyCommand.AddCommand(token.RefreshTokenCommand)
 }
 
-const (
-	N225  = "^N225"
-	SP500 = "^GSPC"
-)
-
-var SymbolMap = map[string]string{
-	N225:  "Nikkei 225",
-	SP500: "S&P 500",
-}
-
 type Stock struct {
 	Symbol string
 	Close  decimal.Decimal
@@ -45,7 +35,11 @@ type Stock struct {
 	End    time.Time
 }
 
-func GenerateStock(symbol string, close []float64, timestamp []int) (*Stock, error) {
+func GenerateStock(symbol notifyapp.Symbol, close []float64, timestamp []int) (*Stock, error) {
+	s, err := symbol.ForFinance()
+	if err != nil {
+		return nil, err
+	}
 	avg, err := notifyapp.CalcAVG(close)
 	if err != nil {
 		return nil, err
@@ -54,7 +48,7 @@ func GenerateStock(symbol string, close []float64, timestamp []int) (*Stock, err
 	start := time.Unix(int64(timestamp[0]), 0)
 	end := time.Unix(int64(timestamp[len(timestamp)-1]), 0)
 	return &Stock{
-		Symbol: symbol,
+		Symbol: s,
 		Close:  latest,
 		AVG:    avg,
 		Start:  start,
@@ -64,25 +58,35 @@ func GenerateStock(symbol string, close []float64, timestamp []int) (*Stock, err
 
 func notifyStock() {
 	client := notifyapp.NewFinanceClient(&http.Client{})
+	n225Symbol, err := notifyapp.NewSymbol("N225")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	now := time.Now()
-	res, err := client.FetchStock(N225, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
+	res, err := client.FetchStock(n225Symbol, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	n225, err := GenerateStock(
-		N225,
+		n225Symbol,
 		res.Chart.Result[0].Indicators.Quote[0].Close,
 		res.Chart.Result[0].Timestamp,
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	res, err = client.FetchStock(SP500, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
+	spSymbol, err := notifyapp.NewSymbol("S&P500")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, err = client.FetchStock(spSymbol, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	sp500, err := GenerateStock(
-		SP500,
+		spSymbol,
 		res.Chart.Result[0].Indicators.Quote[0].Close,
 		res.Chart.Result[0].Timestamp,
 	)
@@ -91,10 +95,10 @@ func notifyStock() {
 	}
 	subject := fmt.Sprintf("Market Summary %s", now.Format("January 02 2006"))
 	text := strings.Join([]string{
-		SymbolMap[n225.Symbol],
+		n225Symbol.Display(),
 		fmt.Sprintf("Closing Price: %v yen", n225.Close.Ceil()),
 		fmt.Sprintf("1-Year Moving Average: %v yen\n", n225.AVG.Ceil()),
-		SymbolMap[sp500.Symbol],
+		spSymbol.Display(),
 		fmt.Sprintf("Closing Price: %v $", sp500.Close.Ceil()),
 		fmt.Sprintf("1-Year Moving Average: %v $", sp500.AVG.Ceil()),
 	}, "\n")

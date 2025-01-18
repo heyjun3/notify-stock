@@ -3,7 +3,6 @@ package notifystock
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 )
 
@@ -31,7 +30,7 @@ func ConvertResponseToStock(symbol string, res ChartResponse) ([]Stock, error) {
 	high := quote[0].High
 	low := quote[0].Low
 	if !IsSameLen(open, close, high, low) || len(timestamp) != len(open) {
-		slog.Error(
+		logger.Error(
 			"same len error", "timestamp", len(timestamp), "open", len(open),
 			"close", len(close), "high", len(high), "low", len(low))
 		return []Stock{}, fmt.Errorf("don't same length error")
@@ -41,7 +40,7 @@ func ConvertResponseToStock(symbol string, res ChartResponse) ([]Stock, error) {
 	for i, t := range timestamp {
 		stock, err := NewStock(symbol, time.Unix(int64(t), 0), open[i], close[i], high[i], low[i])
 		if err != nil {
-			slog.Error("new stock error", "error", err)
+			logger.Error("new stock error", "error", err)
 			continue
 		}
 		stocks = append(stocks, stock)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -101,6 +100,6 @@ func notifyStock() {
 	}, "\n")
 	err = notifyapp.NotifyGmail(context.Background(), notifyapp.Cfg.FROM, notifyapp.Cfg.TO, subject, text)
 	if err != nil {
-		slog.Error("error", "err", err)
+		log.Fatal("error", "err", err)
 	}
 }

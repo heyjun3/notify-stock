@@ -115,13 +115,17 @@ func WithInterval(interval string) Option {
 	}
 }
 
-func (c *FinanceClient) FetchCurrentStock(symbol string) (*ChartResponse, error) {
+func (c *FinanceClient) FetchCurrentStock(symbol Symbol) (*ChartResponse, error) {
 	now := time.Now()
 	return c.FetchStock(symbol, now, now)
 }
 
-func (c *FinanceClient) FetchStock(symbol string, beggingOfPeriod, endOfPeriod time.Time, opts ...Option) (*ChartResponse, error) {
-	URL, err := url.Parse(fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s", symbol))
+func (c *FinanceClient) FetchStock(symbol Symbol, beggingOfPeriod, endOfPeriod time.Time, opts ...Option) (*ChartResponse, error) {
+	s, err := symbol.ForFinance()
+	if err != nil {
+		return nil, err
+	}
+	URL, err := url.Parse(fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s", s))
 	if err != nil {
 		return nil, err
 	}

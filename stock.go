@@ -21,16 +21,11 @@ func NewDB(dsn string) *bun.DB {
 	return db
 }
 
-var StockSymbolMap = map[string]string{
-	N225:  "N225",
-	SP500: "S&P500",
-}
-
-func NewStock(symbol string, timestamp time.Time,
+func NewStock(symbol Symbol, timestamp time.Time,
 	open, close, high, low float64) (Stock, error) {
-	s := StockSymbolMap[symbol]
-	if s == "" {
-		return Stock{}, fmt.Errorf("undefined symbol error")
+	s, err := symbol.ForDB()
+	if err != nil {
+		return Stock{}, err
 	}
 	for _, v := range []float64{open, close, high, low} {
 		if v <= 0 {

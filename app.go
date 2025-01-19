@@ -3,7 +3,6 @@ package notifystock
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 )
@@ -91,7 +90,7 @@ func NewStockNotifier(client *FinanceClient) *StockNotifier {
 	}
 }
 
-func (n *StockNotifier) Notify() {
+func (n *StockNotifier) Notify() error {
 	type StockWithSymbol struct {
 		symbol Symbol
 		stocks Stocks
@@ -102,15 +101,15 @@ func (n *StockNotifier) Notify() {
 	for _, v := range symbols {
 		symbol, err := NewSymbol(v)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		res, err := n.client.FetchStock(symbol, now.AddDate(0, -12, 0), now, WithInterval("1d"))
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		stocks, err := ConvertResponseToStock(symbol, *res)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		results = append(results, StockWithSymbol{symbol: symbol, stocks: stocks})
 	}
@@ -120,7 +119,7 @@ func (n *StockNotifier) Notify() {
 	for _, result := range results {
 		avg, err := result.stocks.ClosingAverage()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		latest := result.stocks.Latest()
 		text = append(text,
@@ -131,6 +130,7 @@ func (n *StockNotifier) Notify() {
 	}
 
 	if err := NotifyGmail(context.Background(), Cfg.FROM, Cfg.TO, subject, strings.Join(text, "\n")); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }

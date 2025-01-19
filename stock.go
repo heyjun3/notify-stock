@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -52,6 +54,22 @@ type Stock struct {
 	Close     float64   `bun:"close,type:decimal,notnull"`
 	High      float64   `bun:"high,type:decimal,notnull"`
 	Low       float64   `bun:"low,type:decimal,notnull"`
+}
+
+type Stocks []Stock
+
+func (s *Stocks) Latest() Stock {
+	return slices.MaxFunc(*s, func(a, b Stock) int {
+		return a.Timestamp.Compare(b.Timestamp)
+	})
+}
+
+func (s *Stocks) ClosingAverage() (decimal.Decimal, error) {
+	close := make([]float64, 0, len(*s))
+	for _, v := range *s {
+		close = append(close, v.Close)
+	}
+	return CalcAVG(close)
 }
 
 type StockRepository struct {

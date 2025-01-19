@@ -44,3 +44,22 @@ func TestSave(t *testing.T) {
 		})
 	}
 }
+
+func TestStocksLatest(t *testing.T) {
+	stocks := notify.Stocks{
+		{
+			Timestamp: time.Now(),
+			Close:     10000,
+		},
+		{
+			Timestamp: time.Now().AddDate(-1, 0, 0),
+			Close:     90000,
+		},
+	}
+
+	t.Run("", func(t *testing.T) {
+		latest := stocks.Latest()
+
+		assert.Equal(t, float64(10000), latest.Close)
+	})
+}

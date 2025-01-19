@@ -15,3 +15,9 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	stockRegister := NewStockRegister(financeClient, stockRepository)
 	return stockRegister
 }
+
+func InitStockNotifier(client HTTPClientInterface) *StockNotifier {
+	financeClient := NewFinanceClient(client)
+	stockNotifier := NewStockNotifier(financeClient)
+	return stockNotifier
+}

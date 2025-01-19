@@ -3,6 +3,8 @@ package notifystock
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
 	"time"
 )
 
@@ -77,4 +79,58 @@ func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
 		return err
 	}
 	return nil
+}
+
+type StockNotifier struct {
+	client *FinanceClient
+}
+
+func NewStockNotifier(client *FinanceClient) *StockNotifier {
+	return &StockNotifier{
+		client: client,
+	}
+}
+
+func (n *StockNotifier) Notify() {
+	type StockWithSymbol struct {
+		symbol Symbol
+		stocks Stocks
+	}
+	symbols := []string{"N225", "S&P500"}
+	now := time.Now()
+	results := make([]StockWithSymbol, 0, len(symbols))
+	for _, v := range symbols {
+		symbol, err := NewSymbol(v)
+		if err != nil {
+			log.Fatal(err)
+		}
+		res, err := n.client.FetchStock(symbol, now.AddDate(0, -12, 0), now, WithInterval("1d"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		stocks, err := ConvertResponseToStock(symbol, *res)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, StockWithSymbol{symbol: symbol, stocks: stocks})
+	}
+
+	subject := fmt.Sprintf("Market Summary %s", now.Format("January 02 2006"))
+	text := make([]string, 0, len(symbols)*3)
+	for _, result := range results {
+		avg, err := result.stocks.ClosingAverage()
+		if err != nil {
+			log.Fatal(err)
+		}
+		latest := result.stocks.Latest()
+		text = append(text,
+			result.symbol.Display(),
+			fmt.Sprintf("Closing Price: %v yen", int(latest.Close)),
+			fmt.Sprintf("1-Year Moving Average: %v yen\n", avg.Ceil()),
+		)
+	}
+
+	if err := NotifyGmail(context.Background(), Cfg.FROM, Cfg.TO, subject, strings.Join(text, "\n")); err != nil {
+		log.Fatal(err)
+	}
 }

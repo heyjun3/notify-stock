@@ -15,3 +15,11 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	)
 	return &StockRegister{}
 }
+
+func InitStockNotifier(client HTTPClientInterface) *StockNotifier {
+	wire.Build(
+		NewFinanceClient,
+		NewStockNotifier,
+	)
+	return &StockNotifier{}
+}

@@ -1,11 +1,11 @@
 package notify
 
 import (
-	"context"
-	"fmt"
-	"log"
+	// "context"
+	// "fmt"
+	// "log"
 	"net/http"
-	"strings"
+	// "strings"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -57,53 +57,56 @@ func GenerateStock(symbol notifyapp.Symbol, close []float64, timestamp []int) (*
 }
 
 func notifyStock() {
-	client := notifyapp.NewFinanceClient(&http.Client{})
-	n225Symbol, err := notifyapp.NewSymbol("N225")
-	if err != nil {
-		log.Fatal(err)
-	}
+	notifier := notifyapp.InitStockNotifier(&http.Client{})
+	notifier.Notify()
 
-	now := time.Now()
-	res, err := client.FetchStock(n225Symbol, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	n225, err := GenerateStock(
-		n225Symbol,
-		res.Chart.Result[0].Indicators.Quote[0].Close,
-		res.Chart.Result[0].Timestamp,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	spSymbol, err := notifyapp.NewSymbol("S&P500")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// client := notifyapp.NewFinanceClient(&http.Client{})
+	// n225Symbol, err := notifyapp.NewSymbol("N225")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	res, err = client.FetchStock(spSymbol, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	sp500, err := GenerateStock(
-		spSymbol,
-		res.Chart.Result[0].Indicators.Quote[0].Close,
-		res.Chart.Result[0].Timestamp,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	subject := fmt.Sprintf("Market Summary %s", now.Format("January 02 2006"))
-	text := strings.Join([]string{
-		n225Symbol.Display(),
-		fmt.Sprintf("Closing Price: %v yen", n225.Close.Ceil()),
-		fmt.Sprintf("1-Year Moving Average: %v yen\n", n225.AVG.Ceil()),
-		spSymbol.Display(),
-		fmt.Sprintf("Closing Price: %v $", sp500.Close.Ceil()),
-		fmt.Sprintf("1-Year Moving Average: %v $", sp500.AVG.Ceil()),
-	}, "\n")
-	err = notifyapp.NotifyGmail(context.Background(), notifyapp.Cfg.FROM, notifyapp.Cfg.TO, subject, text)
-	if err != nil {
-		log.Fatal("error", "err", err)
-	}
+	// now := time.Now()
+	// res, err := client.FetchStock(n225Symbol, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// n225, err := GenerateStock(
+	// 	n225Symbol,
+	// 	res.Chart.Result[0].Indicators.Quote[0].Close,
+	// 	res.Chart.Result[0].Timestamp,
+	// )
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// spSymbol, err := notifyapp.NewSymbol("S&P500")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// res, err = client.FetchStock(spSymbol, now.AddDate(0, -12, 0), now, notifyapp.WithInterval("1d"))
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// sp500, err := GenerateStock(
+	// 	spSymbol,
+	// 	res.Chart.Result[0].Indicators.Quote[0].Close,
+	// 	res.Chart.Result[0].Timestamp,
+	// )
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// subject := fmt.Sprintf("Market Summary %s", now.Format("January 02 2006"))
+	// text := strings.Join([]string{
+	// 	n225Symbol.Display(),
+	// 	fmt.Sprintf("Closing Price: %v yen", n225.Close.Ceil()),
+	// 	fmt.Sprintf("1-Year Moving Average: %v yen\n", n225.AVG.Ceil()),
+	// 	spSymbol.Display(),
+	// 	fmt.Sprintf("Closing Price: %v $", sp500.Close.Ceil()),
+	// 	fmt.Sprintf("1-Year Moving Average: %v $", sp500.AVG.Ceil()),
+	// }, "\n")
+	// err = notifyapp.NotifyGmail(context.Background(), notifyapp.Cfg.FROM, notifyapp.Cfg.TO, subject, text)
+	// if err != nil {
+	// 	log.Fatal("error", "err", err)
+	// }
 }

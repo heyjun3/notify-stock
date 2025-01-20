@@ -6,6 +6,10 @@
 
 package notifystock
 
+import (
+	"context"
+)
+
 // Injectors from wire.go:
 
 func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
@@ -16,8 +20,12 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	return stockRegister
 }
 
-func InitStockNotifier(client HTTPClientInterface) *StockNotifier {
+func InitStockNotifier(ctx context.Context, credentialsPath string, client HTTPClientInterface) (*StockNotifier, error) {
 	financeClient := NewFinanceClient(client)
-	stockNotifier := NewStockNotifier(financeClient)
-	return stockNotifier
+	gmailService, err := GmailServiceFactory(ctx, credentialsPath)
+	if err != nil {
+		return nil, err
+	}
+	stockNotifier := NewStockNotifier(financeClient, gmailService)
+	return stockNotifier, nil
 }

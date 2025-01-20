@@ -1,6 +1,7 @@
 package notify
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -23,7 +24,10 @@ func init() {
 }
 
 func notifyStock() {
-	notifier := notifyapp.InitStockNotifier(&http.Client{})
+	notifier, err := notifyapp.InitStockNotifier(context.Background(), "credentials.json", &http.Client{})
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err := notifier.Notify(); err != nil {
 		log.Fatal(err)
 	}

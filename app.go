@@ -81,12 +81,14 @@ func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
 }
 
 type StockNotifier struct {
-	client *FinanceClient
+	client      *FinanceClient
+	mailService *GmailService
 }
 
-func NewStockNotifier(client *FinanceClient) *StockNotifier {
+func NewStockNotifier(client *FinanceClient, mailService *GmailService) *StockNotifier {
 	return &StockNotifier{
-		client: client,
+		client:      client,
+		mailService: mailService,
 	}
 }
 
@@ -129,7 +131,7 @@ func (n *StockNotifier) Notify() error {
 		)
 	}
 
-	if err := NotifyGmail(context.Background(), Cfg.FROM, Cfg.TO, subject, strings.Join(text, "\n")); err != nil {
+	if err := n.mailService.Send(Cfg.FROM, Cfg.TO, subject, strings.Join(text, "\n")); err != nil {
 		return err
 	}
 	return nil

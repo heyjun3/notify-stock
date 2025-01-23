@@ -92,12 +92,11 @@ func NewStockNotifier(client *FinanceClient, mailService *GmailService) *StockNo
 	}
 }
 
-func (n *StockNotifier) Notify() error {
+func (n *StockNotifier) Notify(symbols []string) error {
 	type StockWithSymbol struct {
 		symbol Symbol
 		stocks Stocks
 	}
-	symbols := []string{"N225", "S&P500"}
 	now := time.Now()
 	results := make([]StockWithSymbol, 0, len(symbols))
 	for _, v := range symbols {

@@ -28,7 +28,7 @@ func notifyStock() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := notifier.Notify(); err != nil {
+	if err := notifier.Notify([]string{}); err != nil {
 		log.Fatal(err)
 	}
 }

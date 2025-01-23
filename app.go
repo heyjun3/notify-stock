@@ -81,12 +81,14 @@ func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
 }
 
 type StockNotifier struct {
-	client *FinanceClient
+	client      *FinanceClient
+	mailService *GmailService
 }
 
-func NewStockNotifier(client *FinanceClient) *StockNotifier {
+func NewStockNotifier(client *FinanceClient, mailService *GmailService) *StockNotifier {
 	return &StockNotifier{
-		client: client,
+		client:      client,
+		mailService: mailService,
 	}
 }
 
@@ -95,7 +97,6 @@ func (n *StockNotifier) Notify(symbols []string) error {
 		symbol Symbol
 		stocks Stocks
 	}
-	// symbols := []string{"N225", "S&P500"}
 	now := time.Now()
 	results := make([]StockWithSymbol, 0, len(symbols))
 	for _, v := range symbols {
@@ -129,7 +130,7 @@ func (n *StockNotifier) Notify(symbols []string) error {
 		)
 	}
 
-	if err := NotifyGmail(context.Background(), Cfg.FROM, Cfg.TO, subject, strings.Join(text, "\n")); err != nil {
+	if err := n.mailService.Send(Cfg.FROM, Cfg.TO, subject, strings.Join(text, "\n")); err != nil {
 		return err
 	}
 	return nil

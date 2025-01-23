@@ -3,6 +3,8 @@
 package notifystock
 
 import (
+	"context"
+
 	"github.com/google/wire"
 )
 
@@ -16,10 +18,11 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	return &StockRegister{}
 }
 
-func InitStockNotifier(client HTTPClientInterface) *StockNotifier {
+func InitStockNotifier(ctx context.Context, credentialsPath string, client HTTPClientInterface) (*StockNotifier, error) {
 	wire.Build(
+		GmailServiceFactory,
 		NewFinanceClient,
 		NewStockNotifier,
 	)
-	return &StockNotifier{}
+	return &StockNotifier{}, nil
 }

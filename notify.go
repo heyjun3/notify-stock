@@ -86,24 +86,33 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
-func NotifyGmail(ctx context.Context, from, to, subject, text string) error {
+type GmailService struct {
+	srv *gmail.Service
+}
+
+func GmailServiceFactory(ctx context.Context, credentialsPath string) (*GmailService, error) {
 	client, err := getClient("credentials.json")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
-		return fmt.Errorf("unable to retrieve Gmail client: %v", err)
+		return nil, fmt.Errorf("unable to retrieve Gmail client: %v", err)
 	}
+	return &GmailService{
+		srv: srv,
+	}, nil
+}
 
+func (s *GmailService) Send(from, to, subject, text string) error {
 	user := "me"
 	body := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s", from, to, subject, text)
 
 	message := &gmail.Message{
 		Raw: base64.URLEncoding.EncodeToString([]byte(body)),
 	}
-	_, err = srv.Users.Messages.Send(user, message).Do()
+	_, err := s.srv.Users.Messages.Send(user, message).Do()
 	if err != nil {
 		return fmt.Errorf("failed sent message: %v", err)
 	}

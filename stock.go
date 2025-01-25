@@ -93,7 +93,9 @@ func (r *StockRepository) Save(ctx context.Context, stocks []Stock) error {
 	return err
 }
 
-func (r *StockRepository) GetStockByPeriod(ctx context.Context, symbol Symbol, begging, end time.Time) (Stocks, error) {
+func (r *StockRepository) GetStockByPeriod(
+	ctx context.Context, symbol Symbol, begging, end time.Time) (
+	Stocks, error) {
 	s, err := symbol.ForDB()
 	if err != nil {
 		return nil, err

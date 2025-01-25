@@ -45,6 +45,30 @@ func TestSave(t *testing.T) {
 	}
 }
 
+func TestGetStockByPeriod(t *testing.T) {
+	repo := notify.NewStockRepository(db)
+
+	tests := []struct {
+		name   string
+		symbol func() notify.Symbol
+		err    error
+	}{{
+		symbol: func() notify.Symbol {
+			symbol, _ := notify.NewSymbol("N225")
+			return symbol
+		},
+		err: nil,
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := repo.GetStockByPeriod(context.Background(), tt.symbol(), time.Now(), time.Now())
+
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestStocksLatest(t *testing.T) {
 	stocks := notify.Stocks{
 		{

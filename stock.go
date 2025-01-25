@@ -92,3 +92,19 @@ func (r *StockRepository) Save(ctx context.Context, stocks []Stock) error {
 		Exec(ctx)
 	return err
 }
+
+func (r *StockRepository) GetStockByPeriod(ctx context.Context, symbol Symbol, begging, end time.Time) (Stocks, error) {
+	s, err := symbol.ForDB()
+	if err != nil {
+		return nil, err
+	}
+	var stocks Stocks
+	if err := r.db.NewSelect().
+		Model(&stocks).
+		Where("symbol = ?", s).
+		Where("timestamp BETWEEN ? AND ?", begging, end).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return stocks, nil
+}

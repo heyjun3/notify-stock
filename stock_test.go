@@ -49,9 +49,12 @@ func TestGetStockByPeriod(t *testing.T) {
 	repo := notify.NewStockRepository(db)
 
 	tests := []struct {
-		name   string
-		symbol func() notify.Symbol
-		err    error
+		name    string
+		symbol  func() notify.Symbol
+		begging time.Time
+		end     time.Time
+		length  int
+		err     error
 	}{{
 		symbol: func() notify.Symbol {
 			symbol, _ := notify.NewSymbol("N225")
@@ -62,9 +65,10 @@ func TestGetStockByPeriod(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := repo.GetStockByPeriod(context.Background(), tt.symbol(), time.Now(), time.Now())
+			stocks, err := repo.GetStockByPeriod(context.Background(), tt.symbol(), tt.begging, tt.end)
 
 			assert.NoError(t, err)
+			assert.Equal(t, tt.length, len(stocks))
 		})
 	}
 }

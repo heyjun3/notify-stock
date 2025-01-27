@@ -45,30 +45,54 @@ func TestSave(t *testing.T) {
 	}
 }
 
+func getSymbol() notify.Symbol {
+	symbol, _ := notify.NewSymbol("N225")
+	return symbol
+}
 func TestGetStockByPeriod(t *testing.T) {
 	repo := notify.NewStockRepository(db)
 
 	tests := []struct {
-		name    string
-		symbol  func() notify.Symbol
-		begging time.Time
-		end     time.Time
-		length  int
-		err     error
+		name      string
+		setup     func()
+		symbol    func() notify.Symbol
+		begging   time.Time
+		end       time.Time
+		err       error
+		minLength int
 	}{{
-		symbol: func() notify.Symbol {
-			symbol, _ := notify.NewSymbol("N225")
-			return symbol
+		symbol: getSymbol,
+		err:    nil,
+	}, {
+		symbol:    getSymbol,
+		begging:   time.Now().AddDate(-1, 0, 0),
+		end:       time.Now(),
+		err:       nil,
+		minLength: 1,
+		setup: func() {
+			if err := repo.Save(
+				context.Background(),
+				[]notify.Stock{{Symbol: "N255", Timestamp: time.Now().AddDate(0, -2, 0),
+					Open: 1000, Close: 2000, High: 2500, Low: 500}}); err != nil {
+				panic(err)
+			}
 		},
-		err: nil,
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
 			stocks, err := repo.GetStockByPeriod(context.Background(), tt.symbol(), tt.begging, tt.end)
 
 			assert.NoError(t, err)
-			assert.Equal(t, tt.length, len(stocks))
+			assert.GreaterOrEqual(t, tt.minLength, len(stocks))
+			for _, stock := range stocks {
+				assert.True(t, tt.begging.After(stock.Timestamp))
+				assert.True(t, tt.end.Before(stock.Timestamp))
+			}
 		})
 	}
 }

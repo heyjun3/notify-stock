@@ -103,8 +103,11 @@ func (r *StockRepository) GetStockByPeriod(
 	var stocks Stocks
 	if err := r.db.NewSelect().
 		Model(&stocks).
+		DistinctOn("timestamp::date").
 		Where("symbol = ?", s).
-		Where("timestamp BETWEEN ? AND ?", begging, end).
+		Where("timestamp::date BETWEEN ? AND ?", begging, end).
+		OrderExpr("timestamp::date").
+		Order("timestamp").
 		Scan(ctx); err != nil {
 		return nil, err
 	}

@@ -1,8 +1,10 @@
-package stock
+package register
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -10,8 +12,10 @@ import (
 	notify "github.com/heyjun3/notify-stock"
 )
 
+var logger *slog.Logger
+
 var (
-	symbol               string
+	symbol               []string
 	isAll                bool
 	RegisterStockCommand = &cobra.Command{
 		Use:   "register",
@@ -31,21 +35,25 @@ var (
 )
 
 func init() {
-	RegisterStockCommand.Flags().StringVarP(&symbol, "symbol", "s", "", "stock of symbol")
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	RegisterStockCommand.Flags().StringSliceVarP(&symbol, "symbol", "s", []string{}, "stock of symbol")
 	RegisterStockCommand.Flags().BoolVarP(&isAll, "all", "a", false, "register stock price data for the entire period")
 	RegisterStockCommand.MarkFlagRequired("symbol")
 }
 
-func registerStockByWeek(symbol string) error {
+func registerStockByWeek(symbols []string) error {
 	register := notify.InitStockRegister(notify.Cfg.DBDSN, &http.Client{})
 	now := time.Now().UTC()
-	if err := register.SaveStock(symbol, now.AddDate(0, 0, -7), now); err != nil {
-		return err
+	for _, symbol := range symbols {
+		if err := register.SaveStock(symbol, now.AddDate(0, 0, -7), now); err != nil {
+			logger.Error(err.Error())
+		}
 	}
 	return nil
 }
 
-func registerAllStockHistoryBySymbol(symbol string) error {
+func registerAllStockHistoryBySymbol(symbols []string) error {
 	register := notify.InitStockRegister(notify.Cfg.DBDSN, &http.Client{})
 	t := time.Unix(0, 0)
 	times := []time.Time{t}
@@ -59,11 +67,13 @@ func registerAllStockHistoryBySymbol(symbol string) error {
 		times = append(times, t)
 	}
 	for i := 0; i < len(times)-1; i++ {
-		if err := register.SaveStock(
-			symbol, times[i], times[i+1]); err != nil {
-			return err
+		for _, symbol := range symbols {
+			if err := register.SaveStock(
+				symbol, times[i], times[i+1]); err != nil {
+				return err
+			}
+			time.Sleep(2 * time.Second)
 		}
-		time.Sleep(2 * time.Second)
 	}
 	return nil
 }

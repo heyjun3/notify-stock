@@ -24,3 +24,4 @@
 # m h  dom mon dow   command
 0 23 * * * cd ~/notify-stock && ./main notify -s "N225,S&P500" >> ~/var/log/notify-stock/notify.log
 0 0,6,12,18 * * * cd ~/notify-stock && ./main notify refresh-token >> ~/var/log/notify-stock/refresh-token.log
+0 0 * * * cd ~/notify-stock && ./main register -s "N225,S&P500"

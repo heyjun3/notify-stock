@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/heyjun3/notify-stock/cmd/notify"
-	"github.com/heyjun3/notify-stock/cmd/stock"
+	"github.com/heyjun3/notify-stock/cmd/register"
 	"github.com/heyjun3/notify-stock/cmd/version"
 
 	"github.com/spf13/cobra"
@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(version.VersionCommand, notify.NotifyCommand, stock.RegisterStockCommand)
+	rootCmd.AddCommand(version.VersionCommand, notify.NotifyCommand, register.RegisterStockCommand)
 }
 
 func Execute() error {

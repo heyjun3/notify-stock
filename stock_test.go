@@ -51,10 +51,14 @@ func newSymbol(symbol string) notify.Symbol {
 }
 func TestGetStockByPeriod(t *testing.T) {
 	repo := notify.NewStockRepository(db)
-
+	if err := repo.Save(
+		context.Background(),
+		[]notify.Stock{{Symbol: "N255", Timestamp: time.Now().AddDate(0, -2, 0),
+			Open: 1000, Close: 2000, High: 2500, Low: 500}}); err != nil {
+		panic(err)
+	}
 	tests := []struct {
 		name      string
-		setup     func()
 		symbol    notify.Symbol
 		begging   time.Time
 		end       time.Time
@@ -69,22 +73,10 @@ func TestGetStockByPeriod(t *testing.T) {
 		end:       time.Now(),
 		err:       nil,
 		minLength: 1,
-		setup: func() {
-			if err := repo.Save(
-				context.Background(),
-				[]notify.Stock{{Symbol: "N255", Timestamp: time.Now().AddDate(0, -2, 0),
-					Open: 1000, Close: 2000, High: 2500, Low: 500}}); err != nil {
-				panic(err)
-			}
-		},
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				tt.setup()
-			}
-
 			stocks, err := repo.GetStockByPeriod(context.Background(), tt.symbol, tt.begging, tt.end)
 
 			assert.NoError(t, err)

@@ -45,9 +45,9 @@ func TestSave(t *testing.T) {
 	}
 }
 
-func getSymbol() notify.Symbol {
-	symbol, _ := notify.NewSymbol("N225")
-	return symbol
+func newSymbol(symbol string) notify.Symbol {
+	s, _ := notify.NewSymbol(symbol)
+	return s
 }
 func TestGetStockByPeriod(t *testing.T) {
 	repo := notify.NewStockRepository(db)
@@ -55,16 +55,16 @@ func TestGetStockByPeriod(t *testing.T) {
 	tests := []struct {
 		name      string
 		setup     func()
-		symbol    func() notify.Symbol
+		symbol    notify.Symbol
 		begging   time.Time
 		end       time.Time
 		err       error
 		minLength int
 	}{{
-		symbol: getSymbol,
+		symbol: newSymbol("N225"),
 		err:    nil,
 	}, {
-		symbol:    getSymbol,
+		symbol:    newSymbol("N225"),
 		begging:   time.Now().AddDate(-1, 0, 0),
 		end:       time.Now(),
 		err:       nil,
@@ -85,7 +85,7 @@ func TestGetStockByPeriod(t *testing.T) {
 				tt.setup()
 			}
 
-			stocks, err := repo.GetStockByPeriod(context.Background(), tt.symbol(), tt.begging, tt.end)
+			stocks, err := repo.GetStockByPeriod(context.Background(), tt.symbol, tt.begging, tt.end)
 
 			assert.NoError(t, err)
 			assert.GreaterOrEqual(t, tt.minLength, len(stocks))

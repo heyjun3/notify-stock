@@ -6,19 +6,23 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/heyjun3/notify-stock/graph/model"
 )
 
 // Symbol is the resolver for the symbol field.
 func (r *queryResolver) Symbol(ctx context.Context, input model.SymbolInput) (*model.Symbol, error) {
-	panic(fmt.Errorf("not implemented: Symbol - symbol"))
+	return &model.Symbol{
+		Symbol: input.Symbol,
+		CurrentStock: &model.Stock{
+			Close: 1000,
+		},
+	}, nil
 }
 
 // CurrentStock is the resolver for the currentStock field.
 func (r *symbolResolver) CurrentStock(ctx context.Context, obj *model.Symbol) (*model.Stock, error) {
-	panic(fmt.Errorf("not implemented: CurrentStock - currentStock"))
+	return obj.CurrentStock, nil
 }
 
 // Query returns QueryResolver implementation.

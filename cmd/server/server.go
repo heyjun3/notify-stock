@@ -1,4 +1,4 @@
-package notifystock
+package server
 
 import (
 	"log"

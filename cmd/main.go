@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/heyjun3/notify-stock/cmd/notify"
 	"github.com/heyjun3/notify-stock/cmd/register"
+	"github.com/heyjun3/notify-stock/cmd/server"
 	"github.com/heyjun3/notify-stock/cmd/version"
-
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -15,7 +16,12 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(version.VersionCommand, notify.NotifyCommand, register.RegisterStockCommand)
+	rootCmd.AddCommand(
+		version.VersionCommand,
+		notify.NotifyCommand,
+		register.RegisterStockCommand,
+		server.ServerCommand,
+	)
 }
 
 func Execute() error {

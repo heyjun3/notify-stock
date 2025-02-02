@@ -1,0 +1,24 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Time
+
+type Stock {
+  symbol: ID!
+  timestamp: Time!
+  close: Float!
+}
+
+type Symbol {
+  symbol: ID!
+  currentStock: Stock!
+}
+
+input SymbolInput {
+  symbol: ID!
+}
+
+type Query {
+  symbol(input: SymbolInput!): Symbol!
+}

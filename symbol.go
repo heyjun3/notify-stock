@@ -9,7 +9,7 @@ var (
 	}
 	symbolMapForDB = map[string]string{
 		"N225":  "N225",
-		"SP500": "S&P500",
+		"S&P500": "S&P500",
 	}
 	display = map[string]string{
 		"N225":  "Nikkei 225",

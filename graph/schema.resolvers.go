@@ -8,15 +8,21 @@ import (
 	"context"
 
 	"github.com/heyjun3/notify-stock/graph/model"
+	notify "github.com/heyjun3/notify-stock"
 )
 
 // Symbol is the resolver for the symbol field.
 func (r *queryResolver) Symbol(ctx context.Context, input model.SymbolInput) (*model.Symbol, error) {
+	symbol, err := notify.NewSymbol(input.Symbol)
+	if err != nil {
+		return nil, err
+	}
+	s, err := symbol.ForDB()
+	if err != nil {
+		return nil, err
+	}
 	return &model.Symbol{
-		Symbol: input.Symbol,
-		CurrentStock: &model.Stock{
-			Close: 1000,
-		},
+		Symbol: s,
 	}, nil
 }
 

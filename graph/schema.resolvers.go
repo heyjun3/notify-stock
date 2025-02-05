@@ -7,8 +7,8 @@ package graph
 import (
 	"context"
 
-	"github.com/heyjun3/notify-stock/graph/model"
 	notify "github.com/heyjun3/notify-stock"
+	"github.com/heyjun3/notify-stock/graph/model"
 )
 
 // Symbol is the resolver for the symbol field.

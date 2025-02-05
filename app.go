@@ -123,8 +123,9 @@ func (n *StockNotifier) Notify(symbols []string) error {
 			return err
 		}
 		latest := result.stocks.Latest()
+		symbol, _ := result.symbol.Display()
 		text = append(text,
-			result.symbol.Display(),
+			symbol,
 			fmt.Sprintf("Closing Price: %v yen", int(latest.Close)),
 			fmt.Sprintf("1-Year Moving Average: %v yen\n", avg.Ceil()),
 		)

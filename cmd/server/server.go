@@ -2,6 +2,7 @@ package server
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vektah/gqlparser/v2/ast"
 
+	notifystock "github.com/heyjun3/notify-stock"
 	"github.com/heyjun3/notify-stock/graph"
 )
 
@@ -26,13 +28,23 @@ var ServerCommand = &cobra.Command{
 
 const defaultPort = "8080"
 
+func loggerMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("request start")
+		next.ServeHTTP(w, r)
+		logger.Info("request end")
+	})
+}
+
 func runServer() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
-
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	repo := notifystock.InitStockRepository(notifystock.Cfg.DBDSN)
+	resolver := graph.NewResolver(repo)
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
@@ -46,7 +58,7 @@ func runServer() {
 	})
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", loggerMiddleware(logger, srv))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

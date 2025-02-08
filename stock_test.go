@@ -16,6 +16,7 @@ var db *bun.DB
 func init() {
 	dsn := "postgres://postgres:postgres@localhost:5555/notify-stock-test?sslmode=disable"
 	db = notify.NewDB(dsn)
+	db.NewDelete().Model((*notify.Stock)(nil)).Where("1 = 1").Exec(context.Background())
 }
 
 func TestSave(t *testing.T) {
@@ -27,7 +28,7 @@ func TestSave(t *testing.T) {
 		err    error
 	}{
 		{
-			stocks: []notify.Stock{{Symbol: "N255", Timestamp: time.Now(), Open: 1000, Close: 2000, High: 2500, Low: 500}},
+			stocks: []notify.Stock{{Symbol: "N225", Timestamp: time.Now(), Open: 1000, Close: 2000, High: 2500, Low: 500}},
 			err:    nil,
 		},
 		{
@@ -45,15 +46,11 @@ func TestSave(t *testing.T) {
 	}
 }
 
-func newSymbol(symbol string) notify.Symbol {
-	s, _ := notify.NewSymbol(symbol)
-	return s
-}
 func TestGetStockByPeriod(t *testing.T) {
 	repo := notify.NewStockRepository(db)
 	if err := repo.Save(
 		context.Background(),
-		[]notify.Stock{{Symbol: "N255", Timestamp: time.Now().AddDate(0, -2, 0),
+		[]notify.Stock{{Symbol: "N225", Timestamp: time.Now().AddDate(0, -2, 0),
 			Open: 1000, Close: 2000, High: 2500, Low: 500}}); err != nil {
 		panic(err)
 	}
@@ -80,11 +77,47 @@ func TestGetStockByPeriod(t *testing.T) {
 			stocks, err := repo.GetStockByPeriod(context.Background(), tt.symbol, tt.begging, tt.end)
 
 			assert.NoError(t, err)
-			assert.GreaterOrEqual(t, tt.minLength, len(stocks))
+			assert.GreaterOrEqual(t, len(stocks), tt.minLength)
 			for _, stock := range stocks {
-				assert.True(t, tt.begging.After(stock.Timestamp))
-				assert.True(t, tt.end.Before(stock.Timestamp))
+				assert.True(t, tt.begging.Before(stock.Timestamp))
+				assert.True(t, tt.end.After(stock.Timestamp))
 			}
+		})
+	}
+}
+
+func TestGetLatestStock(t *testing.T) {
+	repo := notify.NewStockRepository(db)
+	stocks := make([]notify.Stock, 0, 100)
+	now := time.Now().UTC().Round(time.Millisecond)
+	for i := 0; i < 100; i++ {
+		t := now.AddDate(0, 0, -i)
+		stocks = append(stocks, notify.Stock{
+			Symbol: "S&P500", Timestamp: t, Open: 10, Close: 10, High: 10, Low: 10,
+		})
+	}
+	if err := repo.Save(
+		context.Background(),
+		stocks); err != nil {
+		panic(err)
+	}
+	tests := []struct {
+		name      string
+		symbol    notify.Symbol
+		timestamp time.Time
+		err       error
+	}{{
+		symbol:    newSymbol("S&P500"),
+		timestamp: now,
+		err:       nil,
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stock, err := repo.GetLatestStock(context.Background(), tt.symbol)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.timestamp, stock.Timestamp)
 		})
 	}
 }
@@ -106,4 +139,18 @@ func TestStocksLatest(t *testing.T) {
 
 		assert.Equal(t, float64(10000), latest.Close)
 	})
+}
+
+func TestTimeCompare(t *testing.T) {
+	t.Run("after", func(t *testing.T) {
+		assert.True(t, time.Now().After(time.Now().AddDate(-1, 0, 0)))
+	})
+	t.Run("before", func(t *testing.T) {
+		assert.True(t, time.Now().Before(time.Now().AddDate(0, 0, 1)))
+	})
+}
+
+func newSymbol(symbol string) notify.Symbol {
+	s, _ := notify.NewSymbol(symbol)
+	return s
 }

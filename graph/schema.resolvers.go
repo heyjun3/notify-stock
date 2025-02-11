@@ -6,8 +6,6 @@ package graph
 
 import (
 	"context"
-	"net/http"
-	"time"
 
 	notify "github.com/heyjun3/notify-stock"
 	"github.com/heyjun3/notify-stock/graph/model"
@@ -30,21 +28,18 @@ func (r *queryResolver) Symbol(ctx context.Context, input model.SymbolInput) (*m
 
 // CurrentStock is the resolver for the currentStock field.
 func (r *symbolResolver) CurrentStock(ctx context.Context, obj *model.Symbol) (*model.Stock, error) {
-	client := notify.NewFinanceClient(&http.Client{})
 	symbol, err := notify.NewSymbol(obj.Symbol)
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.FetchCurrentStock(symbol)
+	stock, err := r.stockRepository.GetLatestStock(ctx, symbol)
 	if err != nil {
 		return nil, err
 	}
-	timestamp := res.Chart.Result[0].Meta.RegularMarketTime
-	close := res.Chart.Result[0].Meta.RegularMarketPrice
 	return &model.Stock{
 		Symbol:    obj.Symbol,
-		Close:     close,
-		Timestamp: time.Unix(int64(timestamp), 0),
+		Close:     stock.Close,
+		Timestamp: stock.Timestamp,
 	}, nil
 }
 

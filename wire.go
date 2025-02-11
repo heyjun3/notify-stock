@@ -26,3 +26,11 @@ func InitStockNotifier(ctx context.Context, credentialsPath string, client HTTPC
 	)
 	return &StockNotifier{}, nil
 }
+
+func InitStockRepository(dsn string) *StockRepository {
+	wire.Build(
+		NewDB,
+		NewStockRepository,
+	)
+	return &StockRepository{}
+}

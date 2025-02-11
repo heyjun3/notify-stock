@@ -113,3 +113,20 @@ func (r *StockRepository) GetStockByPeriod(
 	}
 	return stocks, nil
 }
+
+func (r *StockRepository) GetLatestStock(ctx context.Context, symbol Symbol) (*Stock, error) {
+	s, err := symbol.ForDB()
+	if err != nil {
+		return nil, err
+	}
+	var stock Stock
+	if err := r.db.NewSelect().
+		Model(&stock).
+		Where("symbol = ?", s).
+		Order("timestamp DESC").
+		Limit(1).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return &stock, nil
+}

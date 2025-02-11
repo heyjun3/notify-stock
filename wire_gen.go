@@ -29,3 +29,9 @@ func InitStockNotifier(ctx context.Context, credentialsPath string, client HTTPC
 	stockNotifier := NewStockNotifier(financeClient, gmailService)
 	return stockNotifier, nil
 }
+
+func InitStockRepository(dsn string) *StockRepository {
+	db := NewDB(dsn)
+	stockRepository := NewStockRepository(db)
+	return stockRepository
+}

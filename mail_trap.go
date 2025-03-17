@@ -39,6 +39,8 @@ func NewMailTrap(from, to, subject, text string) MailTrap {
 	}
 }
 
+var _ MailService = (*MailTrapClient)(nil)
+
 type MailTrapClient struct {
 	url   string
 	token string

@@ -15,6 +15,7 @@ import (
 
 type HTTPClientInterface interface {
 	Get(string) (*http.Response, error)
+	Do(*http.Request) (*http.Response, error)
 }
 
 type FinanceClient struct {
@@ -32,20 +33,20 @@ type ChartResponse struct {
 }
 type Pre struct {
 	Timezone  string `json:"timezone"`
-	End       int    `json:"end"`
 	Start     int    `json:"start"`
+	End       int    `json:"end"`
 	Gmtoffset int    `json:"gmtoffset"`
 }
 type Regular struct {
 	Timezone  string `json:"timezone"`
-	End       int    `json:"end"`
 	Start     int    `json:"start"`
+	End       int    `json:"end"`
 	Gmtoffset int    `json:"gmtoffset"`
 }
 type Post struct {
 	Timezone  string `json:"timezone"`
-	End       int    `json:"end"`
 	Start     int    `json:"start"`
+	End       int    `json:"end"`
 	Gmtoffset int    `json:"gmtoffset"`
 }
 type CurrentTradingPeriod struct {
@@ -81,11 +82,11 @@ type Meta struct {
 	ValidRanges          []string             `json:"validRanges"`
 }
 type Quote struct {
-	Open   []float64 `json:"open"`
-	Close  []float64 `json:"close"`
 	Volume []int     `json:"volume"`
+	Close  []float64 `json:"close"`
 	High   []float64 `json:"high"`
 	Low    []float64 `json:"low"`
+	Open   []float64 `json:"open"`
 }
 type Adjclose struct {
 	Adjclose []float64 `json:"adjclose"`
@@ -140,7 +141,12 @@ func (c *FinanceClient) FetchStock(symbol Symbol, beggingOfPeriod, endOfPeriod t
 	}
 
 	logger.Info("request", "url", URL.String())
-	res, err := c.Client.Get(URL.String())
+	req, err := http.NewRequest(http.MethodGet, URL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0")
+	res, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +156,7 @@ func (c *FinanceClient) FetchStock(symbol Symbol, beggingOfPeriod, endOfPeriod t
 		return nil, err
 	}
 	var chart ChartResponse
+	fmt.Println(res.StatusCode)
 	if err := json.Unmarshal(body, &chart); err != nil {
 		return nil, err
 	}

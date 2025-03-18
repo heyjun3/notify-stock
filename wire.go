@@ -18,11 +18,12 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	return &StockRegister{}
 }
 
-func InitStockNotifier(ctx context.Context, credentialsPath string, client HTTPClientInterface) (*StockNotifier, error) {
+func InitStockNotifier(ctx context.Context, token string, client HTTPClientInterface) (*StockNotifier, error) {
 	wire.Build(
-		GmailServiceFactory,
+		NewMailTrapClient,
 		NewFinanceClient,
 		NewStockNotifier,
+		wire.Bind(new(MailService), new(*MailTrapClient)),
 	)
 	return &StockNotifier{}, nil
 }

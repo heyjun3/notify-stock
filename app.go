@@ -80,12 +80,16 @@ func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
 	return nil
 }
 
-type StockNotifier struct {
-	client      *FinanceClient
-	mailService *GmailService
+type MailService interface {
+	Send(from, to, subject, text string) error
 }
 
-func NewStockNotifier(client *FinanceClient, mailService *GmailService) *StockNotifier {
+type StockNotifier struct {
+	client      *FinanceClient
+	mailService MailService
+}
+
+func NewStockNotifier(client *FinanceClient, mailService MailService) *StockNotifier {
 	return &StockNotifier{
 		client:      client,
 		mailService: mailService,

@@ -20,13 +20,10 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	return stockRegister
 }
 
-func InitStockNotifier(ctx context.Context, credentialsPath string, client HTTPClientInterface) (*StockNotifier, error) {
+func InitStockNotifier(ctx context.Context, token string, client HTTPClientInterface) (*StockNotifier, error) {
 	financeClient := NewFinanceClient(client)
-	gmailService, err := GmailServiceFactory(ctx, credentialsPath)
-	if err != nil {
-		return nil, err
-	}
-	stockNotifier := NewStockNotifier(financeClient, gmailService)
+	mailTrapClient := NewMailTrapClient(token)
+	stockNotifier := NewStockNotifier(financeClient, mailTrapClient)
 	return stockNotifier, nil
 }
 

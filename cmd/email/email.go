@@ -3,7 +3,7 @@ package email
 import (
 	"github.com/spf13/cobra"
 
-	notifyStock "github.com/heyjun3/notify-stock"
+	notifyStock "github.com/heyjun3/notify-stock/internal"
 )
 
 var EmailCommand = &cobra.Command{

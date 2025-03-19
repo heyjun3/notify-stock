@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	notify "github.com/heyjun3/notify-stock"
+	notify "github.com/heyjun3/notify-stock/internal"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/uptrace/bun"

@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	notify "github.com/heyjun3/notify-stock"
+	notify "github.com/heyjun3/notify-stock/internal"
 )
 
 var logger *slog.Logger

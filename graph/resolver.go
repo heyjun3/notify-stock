@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	notify "github.com/heyjun3/notify-stock"
+	notify "github.com/heyjun3/notify-stock/internal"
 )
 
 // This file will not be regenerated automatically.

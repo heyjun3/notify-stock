@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vektah/gqlparser/v2/ast"
 
-	notifystock "github.com/heyjun3/notify-stock"
 	"github.com/heyjun3/notify-stock/graph"
+	notifystock "github.com/heyjun3/notify-stock/internal"
 )
 
 var ServerCommand = &cobra.Command{

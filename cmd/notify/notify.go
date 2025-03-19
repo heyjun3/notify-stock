@@ -7,8 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	notifyapp "github.com/heyjun3/notify-stock"
-	"github.com/heyjun3/notify-stock/cmd/notify/token"
+	notifyapp "github.com/heyjun3/notify-stock/internal"
 )
 
 var NotifyCommand = &cobra.Command{
@@ -22,7 +21,6 @@ var NotifyCommand = &cobra.Command{
 var symbols []string
 
 func init() {
-	NotifyCommand.AddCommand(token.RefreshTokenCommand)
 	NotifyCommand.Flags().StringSliceVarP(&symbols, "symbol", "s", []string{}, "array of symbol")
 }
 

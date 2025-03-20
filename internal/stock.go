@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -36,6 +37,7 @@ func NewStock(symbol Symbol, timestamp time.Time,
 		}
 	}
 	return Stock{
+		symbol:    symbol,
 		Symbol:    s,
 		Timestamp: timestamp,
 		Open:      open,
@@ -48,6 +50,7 @@ func NewStock(symbol Symbol, timestamp time.Time,
 type Stock struct {
 	bun.BaseModel `bun:"table:stocks"`
 
+	symbol    Symbol    `bun:"-"`
 	Symbol    string    `bun:"symbol,type:test,pk"`
 	Timestamp time.Time `bun:"timestamp,type:timestamp,pk"`
 	Open      float64   `bun:"open,type:decimal,notnull"`
@@ -70,6 +73,21 @@ func (s *Stocks) ClosingAverage() (decimal.Decimal, error) {
 		close = append(close, v.Close)
 	}
 	return CalcAVG(close)
+}
+
+func (s *Stocks) GenerateNotificationMessage() (string, error) {
+	avg, err := s.ClosingAverage()
+	if err != nil {
+		return "", err
+	}
+	latest := s.Latest()
+	symbolStr, _ := latest.symbol.Display()
+	text := strings.Join([]string{
+		symbolStr,
+		fmt.Sprintf("Closing Price: %v yen", int(latest.Close)),
+		fmt.Sprintf("1-Year Moving Average: %v yen", avg.Ceil()),
+	}, "\n")
+	return text, nil
 }
 
 type StockRepository struct {

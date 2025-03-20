@@ -150,13 +150,13 @@ func (c *FinanceClient) FetchStock(symbol Symbol, beggingOfPeriod, endOfPeriod t
 	if err != nil {
 		return nil, err
 	}
+	logger.Info("request status", "code", res.StatusCode)
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	var chart ChartResponse
-	fmt.Println(res.StatusCode)
 	if err := json.Unmarshal(body, &chart); err != nil {
 		return nil, err
 	}

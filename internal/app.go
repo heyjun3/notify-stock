@@ -8,7 +8,7 @@ import (
 )
 
 func IsSameLen[T any](array ...[]T) bool {
-	for i := 0; i < len(array)-1; i++ {
+	for i := range len(array) - 1 {
 		if !(len(array[i]) == len(array[i+1])) {
 			return false
 		}
@@ -120,22 +120,17 @@ func (n *StockNotifier) Notify(symbols []string) error {
 	}
 
 	subject := fmt.Sprintf("Market Summary %s", now.Format("January 02 2006"))
-	text := make([]string, 0, len(symbols)*3)
+	text := make([]string, 0)
 	for _, result := range results {
-		avg, err := result.stocks.ClosingAverage()
+		message, err := result.stocks.GenerateNotificationMessage()
 		if err != nil {
-			return err
+			logger.Error("failed to generate notification message", "error", err)
+			continue
 		}
-		latest := result.stocks.Latest()
-		symbol, _ := result.symbol.Display()
-		text = append(text,
-			symbol,
-			fmt.Sprintf("Closing Price: %v yen", int(latest.Close)),
-			fmt.Sprintf("1-Year Moving Average: %v yen\n", avg.Ceil()),
-		)
+		text = append(text, message)
 	}
 
-	if err := n.mailService.Send(Cfg.FROM, Cfg.TO, subject, strings.Join(text, "\n")); err != nil {
+	if err := n.mailService.Send(Cfg.FROM, Cfg.TO, subject, strings.Join(text, "\n\n")); err != nil {
 		return err
 	}
 	return nil

@@ -1,7 +1,6 @@
 package notifystock
 
 import (
-	"cmp"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,12 +8,9 @@ import (
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/shopspring/decimal"
 )
 
 type HTTPClientInterface interface {
-	Get(string) (*http.Response, error)
 	Do(*http.Request) (*http.Response, error)
 }
 
@@ -161,18 +157,4 @@ func (c *FinanceClient) FetchStock(symbol Symbol, beggingOfPeriod, endOfPeriod t
 		return nil, err
 	}
 	return &chart, nil
-}
-
-func CalcAVG[T cmp.Ordered](values []T) (decimal.Decimal, error) {
-	d := make([]decimal.Decimal, 0, len(values))
-	for _, v := range values {
-		deci, err := decimal.NewFromString(fmt.Sprintf("%v", v))
-		if err != nil {
-			logger.Error("failed convert string to decimal")
-			return decimal.Decimal{}, err
-		}
-		d = append(d, deci)
-	}
-	avg := decimal.Avg(d[0], d[1:]...)
-	return avg, nil
 }

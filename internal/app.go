@@ -97,12 +97,8 @@ func NewStockNotifier(client *FinanceClient, mailService MailService) *StockNoti
 }
 
 func (n *StockNotifier) Notify(symbols []string) error {
-	type StockWithSymbol struct {
-		symbol Symbol
-		stocks Stocks
-	}
 	now := time.Now()
-	results := make([]StockWithSymbol, 0, len(symbols))
+	results := make([]Stocks, 0, len(symbols))
 	for _, v := range symbols {
 		symbol, err := NewSymbol(v)
 		if err != nil {
@@ -116,13 +112,13 @@ func (n *StockNotifier) Notify(symbols []string) error {
 		if err != nil {
 			return err
 		}
-		results = append(results, StockWithSymbol{symbol: symbol, stocks: stocks})
+		results = append(results, stocks)
 	}
 
 	subject := fmt.Sprintf("Market Summary %s", now.Format("January 02 2006"))
 	text := make([]string, 0)
 	for _, result := range results {
-		message, err := result.stocks.GenerateNotificationMessage()
+		message, err := result.GenerateNotificationMessage()
 		if err != nil {
 			logger.Error("failed to generate notification message", "error", err)
 			continue

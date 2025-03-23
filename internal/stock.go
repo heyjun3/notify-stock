@@ -24,7 +24,7 @@ func NewDB(dsn string) *bun.DB {
 	return db
 }
 
-func NewStock(symbol Symbol, timestamp time.Time,
+func NewStock(symbol Symbol, timestamp time.Time, currency string,
 	open, close, high, low float64) (Stock, error) {
 	s, err := symbol.ForDB()
 	if err != nil {
@@ -36,8 +36,13 @@ func NewStock(symbol Symbol, timestamp time.Time,
 				"value is higher than zero. open: %v, close: %v, high: %v, low: %v", open, close, high, low)
 		}
 	}
+	cur, err := CurrencyString(currency)
+	if err != nil {
+		return Stock{}, err
+	}
 	return Stock{
 		symbol:    symbol,
+		currency:  cur,
 		Symbol:    s,
 		Timestamp: timestamp,
 		Open:      open,
@@ -50,7 +55,9 @@ func NewStock(symbol Symbol, timestamp time.Time,
 type Stock struct {
 	bun.BaseModel `bun:"table:stocks"`
 
-	symbol    Symbol    `bun:"-"`
+	symbol   Symbol   `bun:"-"`
+	currency Currency `bun:"-"`
+
 	Symbol    string    `bun:"symbol,type:test,pk"`
 	Timestamp time.Time `bun:"timestamp,type:timestamp,pk"`
 	Open      float64   `bun:"open,type:decimal,notnull"`
@@ -81,11 +88,12 @@ func (s *Stocks) GenerateNotificationMessage() (string, error) {
 		return "", err
 	}
 	latest := s.Latest()
+	currency := latest.currency.String()
 	symbolStr, _ := latest.symbol.Display()
 	text := strings.Join([]string{
 		symbolStr,
-		fmt.Sprintf("Closing Price: %v yen", int(latest.Close)),
-		fmt.Sprintf("1-Year Moving Average: %v yen", avg.Ceil()),
+		fmt.Sprintf("Closing Price: %v %s", int(latest.Close), currency),
+		fmt.Sprintf("1-Year Moving Average: %v %s", avg.Ceil(), currency),
 	}, "\n")
 	return text, nil
 }

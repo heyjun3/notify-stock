@@ -36,10 +36,14 @@ func ConvertResponseToStock(symbol Symbol, res ChartResponse) ([]Stock, error) {
 			"close", len(close), "high", len(high), "low", len(low))
 		return []Stock{}, fmt.Errorf("don't same length error")
 	}
+	currency := result[0].Meta.Currency
 
 	stocks := make([]Stock, 0, len(timestamp))
 	for i, t := range timestamp {
-		stock, err := NewStock(symbol, time.Unix(int64(t), 0), open[i], close[i], high[i], low[i])
+		stock, err := NewStock(
+			symbol, time.Unix(int64(t), 0), currency,
+			open[i], close[i], high[i], low[i],
+		)
 		if err != nil {
 			logger.Error("new stock error", "error", err)
 			continue

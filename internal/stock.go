@@ -2,7 +2,6 @@ package notifystock
 
 import (
 	"cmp"
-	"database/sql"
 	"fmt"
 	"slices"
 	"strings"
@@ -10,19 +9,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
-	"github.com/uptrace/bun/extra/bundebug"
 )
-
-func NewDB(dsn string) *bun.DB {
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-	db := bun.NewDB(sqldb, pgdialect.New())
-	db.AddQueryHook(bundebug.NewQueryHook(
-		bundebug.WithVerbose(true),
-	))
-	return db
-}
 
 func NewStock(symbol Symbol, timestamp time.Time, currency string,
 	open, close, high, low float64) (Stock, error) {

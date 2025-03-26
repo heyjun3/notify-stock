@@ -16,14 +16,14 @@ func IsSameLen[T any](array ...[]T) bool {
 	return true
 }
 
-func ConvertResponseToStock(symbol Symbol, res ChartResponse) ([]Stock, error) {
+func ConvertResponseToStock(symbol Symbol, res ChartResponse) (*Stocks, error) {
 	result := res.Chart.Result
 	if len(result) == 0 {
-		return []Stock{}, fmt.Errorf("result is nil")
+		return nil, fmt.Errorf("result is nil")
 	}
 	quote := result[0].Indicators.Quote
 	if len(quote) == 0 {
-		return []Stock{}, fmt.Errorf("quote is nil")
+		return nil, fmt.Errorf("quote is nil")
 	}
 	timestamp := result[0].Timestamp
 	open := quote[0].Open
@@ -34,14 +34,14 @@ func ConvertResponseToStock(symbol Symbol, res ChartResponse) ([]Stock, error) {
 		logger.Error(
 			"same len error", "timestamp", len(timestamp), "open", len(open),
 			"close", len(close), "high", len(high), "low", len(low))
-		return []Stock{}, fmt.Errorf("don't same length error")
+		return nil, fmt.Errorf("don't same length error")
 	}
 	currency := result[0].Meta.Currency
 
 	stocks := make([]Stock, 0, len(timestamp))
 	for i, t := range timestamp {
 		stock, err := NewStock(
-			symbol, time.Unix(int64(t), 0), currency,
+			symbol, time.Unix(int64(t), 0),
 			open[i], close[i], high[i], low[i],
 		)
 		if err != nil {
@@ -50,7 +50,11 @@ func ConvertResponseToStock(symbol Symbol, res ChartResponse) ([]Stock, error) {
 		}
 		stocks = append(stocks, stock)
 	}
-	return stocks, nil
+	s, err := NewStocks(symbol, currency, stocks)
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 type StockRegister struct {
@@ -74,11 +78,11 @@ func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
 	if err != nil {
 		return err
 	}
-	stocks, err := ConvertResponseToStock(sym, *res)
+	stock, err := ConvertResponseToStock(sym, *res)
 	if err != nil {
 		return err
 	}
-	if err := s.stockRepository.Save(context.Background(), stocks); err != nil {
+	if err := s.stockRepository.Save(context.Background(), stock.stocks); err != nil {
 		return err
 	}
 	return nil
@@ -102,7 +106,7 @@ func NewStockNotifier(client *FinanceClient, mailService MailService) *StockNoti
 
 func (n *StockNotifier) Notify(symbols []string) error {
 	now := time.Now()
-	results := make([]Stocks, 0, len(symbols))
+	results := make([]*Stocks, 0, len(symbols))
 	for _, v := range symbols {
 		symbol, err := NewSymbol(v)
 		if err != nil {

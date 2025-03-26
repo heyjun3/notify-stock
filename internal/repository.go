@@ -43,12 +43,12 @@ func (r *StockRepository) Save(ctx context.Context, stocks []Stock) error {
 
 func (r *StockRepository) GetStockByPeriod(
 	ctx context.Context, symbol Symbol, begging, end time.Time) (
-	Stocks, error) {
+	[]Stock, error) {
 	s, err := symbol.ForDB()
 	if err != nil {
 		return nil, err
 	}
-	var stocks Stocks
+	var stocks []Stock
 	if err := r.db.NewSelect().
 		Model(&stocks).
 		DistinctOn("timestamp::date").

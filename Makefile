@@ -1,5 +1,6 @@
 .PHONY:db-setup\ 
-	build
+	build\
+	notify
 
 db-setup:
 	docker compose up -d database
@@ -8,3 +9,6 @@ db-setup:
 
 build:
 	/usr/local/go/bin/go build -o main  cmd/main.go
+
+notify:
+	go run cmd/main.go notify -s "N225,S&P500"

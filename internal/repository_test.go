@@ -123,7 +123,7 @@ func TestGetLatestStock(t *testing.T) {
 }
 
 func TestStocksLatest(t *testing.T) {
-	stocks := notify.Stocks{
+	stocks := []notify.Stock{
 		{
 			Timestamp: time.Now(),
 			Close:     10000,
@@ -135,7 +135,9 @@ func TestStocksLatest(t *testing.T) {
 	}
 
 	t.Run("", func(t *testing.T) {
-		latest := stocks.Latest()
+		s, err := notify.NewStocks(newSymbol("N225"), "JPY", stocks)
+		assert.NoError(t, err)
+		latest := s.Latest()
 
 		assert.Equal(t, float64(10000), latest.Close)
 	})

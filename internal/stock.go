@@ -11,7 +11,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func NewStock(symbol Symbol, timestamp time.Time, currency string,
+func NewStock(symbol Symbol, timestamp time.Time,
 	open, close, high, low float64) (Stock, error) {
 	s, err := symbol.ForDB()
 	if err != nil {
@@ -23,13 +23,7 @@ func NewStock(symbol Symbol, timestamp time.Time, currency string,
 				"value is higher than zero. open: %v, close: %v, high: %v, low: %v", open, close, high, low)
 		}
 	}
-	cur, err := CurrencyString(currency)
-	if err != nil {
-		return Stock{}, err
-	}
 	return Stock{
-		symbol:    symbol,
-		currency:  cur,
 		Symbol:    s,
 		Timestamp: timestamp,
 		Open:      open,
@@ -42,9 +36,6 @@ func NewStock(symbol Symbol, timestamp time.Time, currency string,
 type Stock struct {
 	bun.BaseModel `bun:"table:stocks"`
 
-	symbol   Symbol   `bun:"-"`
-	currency Currency `bun:"-"`
-
 	Symbol    string    `bun:"symbol,type:test,pk"`
 	Timestamp time.Time `bun:"timestamp,type:timestamp,pk"`
 	Open      float64   `bun:"open,type:decimal,notnull"`
@@ -53,17 +44,33 @@ type Stock struct {
 	Low       float64   `bun:"low,type:decimal,notnull"`
 }
 
-type Stocks []Stock
+type Stocks struct {
+	symbol   Symbol
+	currency Currency
+	stocks   []Stock
+}
+
+func NewStocks(symbol Symbol, currency string, stocks []Stock) (*Stocks, error) {
+	cur, err := CurrencyString(currency)
+	if err != nil {
+		return nil, err
+	}
+	return &Stocks{
+		symbol:   symbol,
+		currency: cur,
+		stocks:   stocks,
+	}, nil
+}
 
 func (s *Stocks) Latest() Stock {
-	return slices.MaxFunc(*s, func(a, b Stock) int {
+	return slices.MaxFunc(s.stocks, func(a, b Stock) int {
 		return a.Timestamp.Compare(b.Timestamp)
 	})
 }
 
 func (s *Stocks) ClosingAverage() (decimal.Decimal, error) {
-	close := make([]float64, 0, len(*s))
-	for _, v := range *s {
+	close := make([]float64, 0, len(s.stocks))
+	for _, v := range s.stocks {
 		close = append(close, v.Close)
 	}
 	return CalcAVG(close)
@@ -75,8 +82,8 @@ func (s *Stocks) GenerateNotificationMessage() (string, error) {
 		return "", err
 	}
 	latest := s.Latest()
-	currency := latest.currency.String()
-	symbolStr, _ := latest.symbol.Display()
+	currency := s.currency
+	symbolStr, _ := s.symbol.Display()
 	text := strings.Join([]string{
 		symbolStr,
 		fmt.Sprintf("Closing Price: %v %s", int(latest.Close), currency),

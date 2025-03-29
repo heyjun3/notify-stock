@@ -1,6 +1,6 @@
 module github.com/heyjun3/notify-stock
 
-go 1.23.3
+go 1.24.1
 
 require (
 	github.com/99designs/gqlgen v0.17.64

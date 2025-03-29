@@ -16,7 +16,7 @@ type To struct {
 	Email string `json:"email"`
 }
 
-type MailTrap struct {
+type Email struct {
 	From     From   `json:"from"`
 	To       []To   `json:"to"`
 	Subject  string `json:"subject"`
@@ -24,11 +24,11 @@ type MailTrap struct {
 	Category string `json:"category"`
 }
 
-func NewMailTrap(from, to, subject, text string) MailTrap {
-	return MailTrap{
+func NewEmail(from, to, subject, text string) Email {
+	return Email{
 		From: From{
 			Email: from,
-			Name:  "MailTrap",
+			Name:  "Market Watch",
 		},
 		To: []To{
 			{Email: to},
@@ -39,25 +39,25 @@ func NewMailTrap(from, to, subject, text string) MailTrap {
 	}
 }
 
-var _ MailService = (*MailTrapClient)(nil)
+var _ MailService = (*EmailClient)(nil)
 
-type MailTrapClient struct {
+type EmailClient struct {
 	url   string
 	token string
 }
 
-func NewMailTrapClient(token string) *MailTrapClient {
+func NewEmailClient(token string) *EmailClient {
 	if !strings.HasPrefix(token, "Bearer") {
 		token = "Bearer " + token
 	}
-	return &MailTrapClient{
-		url:   "https://send.api.mailtrap.io/api/send",
+	return &EmailClient{
+		url:   "https://api.mailersend.com/v1/email",
 		token: token,
 	}
 }
 
-func (m *MailTrapClient) Send(from, to, subject, text string) error {
-	mail := NewMailTrap(from, to, subject, text)
+func (m *EmailClient) Send(from, to, subject, text string) error {
+	mail := NewEmail(from, to, subject, text)
 	payload, err := json.Marshal(mail)
 	if err != nil {
 		return err

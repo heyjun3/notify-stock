@@ -10,7 +10,7 @@ var EmailCommand = &cobra.Command{
 	Use:   "email",
 	Short: "send email.",
 	Run: func(cmd *cobra.Command, args []string) {
-		c := notifyStock.NewMailTrapClient(notifyStock.Cfg.MailTrapToken)
-		c.Send("hello@demomailtrap.co", notifyStock.Cfg.TO, "test mail", "hello")
+		c := notifyStock.NewEmailClient(notifyStock.Cfg.MailTrapToken)
+		c.Send(notifyStock.Cfg.FROM, notifyStock.Cfg.TO, "test mail", "hello")
 	},
 }

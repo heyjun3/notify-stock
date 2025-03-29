@@ -20,10 +20,10 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 
 func InitStockNotifier(ctx context.Context, token string, client HTTPClientInterface) (*StockNotifier, error) {
 	wire.Build(
-		NewMailTrapClient,
+		NewEmailClient,
 		NewFinanceClient,
 		NewStockNotifier,
-		wire.Bind(new(MailService), new(*MailTrapClient)),
+		wire.Bind(new(MailService), new(*EmailClient)),
 	)
 	return &StockNotifier{}, nil
 }

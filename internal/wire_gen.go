@@ -22,8 +22,8 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 
 func InitStockNotifier(ctx context.Context, token string, client HTTPClientInterface) (*StockNotifier, error) {
 	financeClient := NewFinanceClient(client)
-	mailTrapClient := NewMailTrapClient(token)
-	stockNotifier := NewStockNotifier(financeClient, mailTrapClient)
+	emailClient := NewEmailClient(token)
+	stockNotifier := NewStockNotifier(financeClient, emailClient)
 	return stockNotifier, nil
 }
 

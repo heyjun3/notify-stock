@@ -8,7 +8,7 @@ db-setup:
 	PGPASSWORD=postgres psql -d notify-stock-test -U postgres -p 5555 -h localhost < schema.sql
 
 build:
-	/usr/local/go/bin/go build -o main  cmd/main.go
+	/usr/local/go/bin/go build -o main -ldflags="-w" cmd/main.go
 
 notify:
 	go run cmd/main.go notify -s "N225,S&P500"

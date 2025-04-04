@@ -11,4 +11,4 @@ build:
 	/usr/local/go/bin/go build -o main -ldflags="-w" cmd/main.go
 
 notify:
-	go run cmd/main.go notify -s "N225,S&P500"
+	/usr/local/go/bin/go run cmd/main.go notify -s "N225,S&P500"

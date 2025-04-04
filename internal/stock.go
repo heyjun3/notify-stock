@@ -76,18 +76,33 @@ func (s *Stocks) ClosingAverage() (decimal.Decimal, error) {
 	return CalcAVG(close)
 }
 
+func (s *Stocks) ClosingPriceToAVGRatio() (decimal.Decimal, error) {
+	avg, err := s.ClosingAverage()
+	if err != nil {
+		return decimal.Decimal{}, err
+	}
+	latest := s.Latest()
+	ratio := decimal.NewFromFloat(latest.Close).Div(avg)
+	return ratio, nil
+}
+
 func (s *Stocks) GenerateNotificationMessage() (string, error) {
 	avg, err := s.ClosingAverage()
 	if err != nil {
 		return "", err
 	}
 	latest := s.Latest()
+	ratio, err := s.ClosingPriceToAVGRatio()
+	if err != nil {
+		return "", err
+	}
 	currency := s.currency
 	symbolStr, _ := s.symbol.Display()
 	text := strings.Join([]string{
 		symbolStr,
 		fmt.Sprintf("Closing Price: %v %s", int(latest.Close), currency),
 		fmt.Sprintf("1-Year Moving Average: %v %s", avg.Ceil(), currency),
+		fmt.Sprintf("Closing Price to 1-Year Moving Average Ratio: %v%s", ratio.Mul(decimal.New(100, 0)).RoundCeil(2), "%"),
 	}, "\n")
 	return text, nil
 }

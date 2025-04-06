@@ -3,7 +3,6 @@ package notifystock
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"net/http"
 	"strings"
 )
@@ -70,15 +69,10 @@ func (m *EmailClient) Send(from, to, subject, text string) error {
 	req.Header.Add("Content-Type", "application/json")
 
 	client := http.Client{}
-	res, err := client.Do(req)
+	_, err = client.Do(req)
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	logger.Info("send email", "body", string(body))
+	logger.Info("send email success", "status", "success")
 	return nil
 }

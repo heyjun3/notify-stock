@@ -11,9 +11,6 @@ services:
       - FROM=${FROM}
       - TO=${TO}
     working_dir: /app
-    volumes:
-      - ./token.json:/app/token.json
-      - ./credentials.json:/app/credentials.json
 
   database:
     image: postgres:17

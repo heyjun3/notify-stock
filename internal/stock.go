@@ -36,7 +36,7 @@ func NewStock(symbol Symbol, timestamp time.Time,
 type Stock struct {
 	bun.BaseModel `bun:"table:stocks"`
 
-	Symbol    string    `bun:"symbol,type:test,pk"`
+	Symbol    string    `bun:"symbol,type:text,pk"`
 	Timestamp time.Time `bun:"timestamp,type:timestamp,pk"`
 	Open      float64   `bun:"open,type:decimal,notnull"`
 	Close     float64   `bun:"close,type:decimal,notnull"`

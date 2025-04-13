@@ -20,3 +20,11 @@ CREATE TABLE IF NOT EXISTS
     stocks_sp500 PARTITION OF stocks FOR
 VALUES
     IN ('S&P500');
+
+CREATE TABLE IF NOT EXISTS
+    notifications (
+        id UUID PRIMARY KEY,
+        symbol TEXT,
+        Email TEXT,
+        Hour TIME
+    );

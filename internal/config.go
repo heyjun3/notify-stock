@@ -9,7 +9,7 @@ import (
 var Cfg Config
 
 func init() {
-	err := godotenv.Load()
+	err := godotenv.Load("../.env")
 	if err != nil {
 		logger.Info(err.Error())
 	}

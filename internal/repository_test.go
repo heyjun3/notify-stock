@@ -16,7 +16,12 @@ var db *bun.DB
 func init() {
 	dsn := "postgres://postgres:postgres@localhost:5555/notify-stock-test?sslmode=disable"
 	db = notify.NewDB(dsn)
-	db.NewDelete().Model((*notify.Stock)(nil)).Where("1 = 1").Exec(context.Background())
+	for _, table := range []any{
+		(*notify.Stock)(nil),
+		(*notify.Notification)(nil),
+	} {
+		db.NewDelete().Model(table).Where("1 = 1").Exec(context.Background())
+	}
 }
 
 func TestSave(t *testing.T) {

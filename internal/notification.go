@@ -1,6 +1,7 @@
 package notifystock
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,4 +46,36 @@ func NewNotification(ID *uuid.UUID, symbol Symbol, email string, hour time.Time)
 		Email:  email,
 		Hour:   NewTimeOfHour(hour),
 	}, nil
+}
+
+type NotificationRepository struct {
+	db *bun.DB
+}
+
+func NewNotificationRepository(db *bun.DB) *NotificationRepository {
+	return &NotificationRepository{
+		db: db,
+	}
+}
+
+func (r *NotificationRepository) Save(ctx context.Context, n []Notification) error {
+	if len(n) == 0 {
+		return nil
+	}
+	_, err := r.db.NewInsert().
+		Model(&n).
+		On("CONFLICT (id) DO NOTHING").
+		Exec(ctx)
+	return err
+}
+func (r *NotificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*Notification, error) {
+	var n Notification
+	err := r.db.NewSelect().
+		Model(&n).
+		Where("id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &n, nil
 }

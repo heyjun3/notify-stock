@@ -10,17 +10,18 @@ import (
 type Notification struct {
 	bun.BaseModel `bun:"table:notifications"`
 
-	ID     uuid.UUID `bun:"id,type:uuid,pk,default:gen_random_uuid()"`
-	Symbol string    `bun:"symbol,type:text,notnull"`
-	Email  string    `bun:"email,type:text,notnull"`
-	Hour TimeOfHour `bun:"embed:"`
+	ID     uuid.UUID  `bun:"id,type:uuid,pk,default:gen_random_uuid()"`
+	Symbol string     `bun:"symbol,type:text,notnull"`
+	Email  string     `bun:"email,type:text,notnull"`
+	Hour   TimeOfHour `bun:"embed:"`
 }
 
 type TimeOfHour struct {
 	Hour time.Time `bun:"hour,type:time,notnull"`
 }
+
 func NewTimeOfHour(hour time.Time) TimeOfHour {
-	rounded := hour.Round(time.Hour)
+	rounded := hour.Round(time.Hour).UTC()
 	return TimeOfHour{
 		Hour: rounded,
 	}
@@ -39,9 +40,9 @@ func NewNotification(ID *uuid.UUID, symbol Symbol, email string, hour time.Time)
 		return nil, err
 	}
 	return &Notification{
-		ID:    *ID,
+		ID:     *ID,
 		Symbol: s,
-		Email: email,
-		Hour:  NewTimeOfHour(hour),
+		Email:  email,
+		Hour:   NewTimeOfHour(hour),
 	}, nil
 }

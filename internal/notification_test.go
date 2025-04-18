@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	notify "github.com/heyjun3/notify-stock/internal"
 )
 
@@ -42,4 +43,38 @@ func TestSaveNotifications(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetByID(t *testing.T) {
+	repo := notify.NewNotificationRepository(db)
+	t.Run("notification get by id", func(t *testing.T) {
+		id := uuid.New()
+
+		notifications := []notify.Notification{
+			NoError(notify.NewNotification(&id, newSymbol("N225"), "test@exsample.com", time.Now())),
+		}
+		err := repo.Save(context.Background(), notifications)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+		notification, err := repo.GetByID(context.Background(), id)
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+
+		if notification.ID != id {
+			t.Errorf("expected id %v, got %v", id, notification.ID)
+		}
+	})
+
+	t.Run("notification get by id not found", func(t *testing.T) {
+		notification, err := repo.GetByID(context.Background(), uuid.New())
+		if err == nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+		if notification != nil {
+			t.Errorf("expected nil, got %v", notification)
+		}
+	})
 }

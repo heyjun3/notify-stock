@@ -2,6 +2,7 @@ package notifystock
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -64,7 +65,12 @@ func (r *NotificationRepository) Save(ctx context.Context, n []Notification) err
 	}
 	_, err := r.db.NewInsert().
 		Model(&n).
-		On("CONFLICT (id) DO NOTHING").
+		On("CONFLICT (id) DO UPDATE").
+		Set(strings.Join([]string{
+			"symbol = EXCLUDED.symbol",
+			"email = EXCLUDED.email",
+			"hour = EXCLUDED.hour",
+		}, ",")).
 		Exec(ctx)
 	return err
 }
@@ -78,4 +84,15 @@ func (r *NotificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*No
 		return nil, err
 	}
 	return &n, nil
+}
+func (r *NotificationRepository) GetByHour(ctx context.Context, time TimeOfHour) ([]Notification, error) {
+	var n []Notification
+	err := r.db.NewSelect().
+		Model(&n).
+		Where("hour = ?", time.Hour.Format("15:04:05")).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return n, nil
 }

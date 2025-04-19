@@ -14,7 +14,7 @@ type Notification struct {
 	ID     uuid.UUID  `bun:"id,type:uuid,pk,default:gen_random_uuid()"`
 	Symbol string     `bun:"symbol,type:text,notnull"`
 	Email  string     `bun:"email,type:text,notnull"`
-	Hour   TimeOfHour `bun:"embed:"`
+	Time   TimeOfHour `bun:"embed:"`
 }
 
 type TimeOfHour struct {
@@ -44,7 +44,7 @@ func NewNotification(ID *uuid.UUID, symbol Symbol, email string, hour time.Time)
 		ID:     *ID,
 		Symbol: s,
 		Email:  email,
-		Hour:   NewTimeOfHour(hour),
+		Time:   NewTimeOfHour(hour),
 	}, nil
 }
 

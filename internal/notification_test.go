@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+
 	notify "github.com/heyjun3/notify-stock/internal"
 )
 
@@ -37,10 +39,7 @@ func TestSaveNotifications(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := repo.Save(context.Background(), tt.notifications)
-
-			if err != nil {
-				t.Errorf("expected no error, got %v", err)
-			}
+			assert.NoError(t, err)
 		})
 	}
 }
@@ -54,27 +53,21 @@ func TestGetByID(t *testing.T) {
 			NoError(notify.NewNotification(&id, newSymbol("N225"), "test@exsample.com", time.Now())),
 		}
 		err := repo.Save(context.Background(), notifications)
+		assert.NoError(t, err)
 
-		if err != nil {
-			t.Errorf("expected no error, got %v", err)
-		}
 		notification, err := repo.GetByID(context.Background(), id)
-		if err != nil {
-			t.Errorf("expected no error, got %v", err)
-		}
+		assert.NoError(t, err)
 
-		if notification.ID != id {
-			t.Errorf("expected id %v, got %v", id, notification.ID)
-		}
+		assert.Equal(t, notification.ID, id)
+		assert.Equal(t, notification.Symbol, notifications[0].Symbol)
+		assert.Equal(t, notification.Email, notifications[0].Email)
+		assert.Equal(t, notification.Time.Hour.Hour(), notifications[0].Time.Hour.Hour())
 	})
 
 	t.Run("notification get by id not found", func(t *testing.T) {
 		notification, err := repo.GetByID(context.Background(), uuid.New())
-		if err == nil {
-			t.Errorf("expected no error, got %v", err)
-		}
-		if notification != nil {
-			t.Errorf("expected nil, got %v", notification)
-		}
+
+		assert.Error(t, err)
+		assert.Nil(t, notification)
 	})
 }

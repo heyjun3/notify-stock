@@ -11,4 +11,4 @@ build:
 	docker compose build notify
 
 notify:
-	docker compose run notify notify -s "N225,S&P500" --rm
+	docker compose run --rm notify notify -s "N225,S&P500"

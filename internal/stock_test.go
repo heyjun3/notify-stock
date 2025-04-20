@@ -95,7 +95,7 @@ func TestGetLatestStock(t *testing.T) {
 	repo := notify.NewStockRepository(db)
 	stocks := make([]notify.Stock, 0, 100)
 	now := time.Now().UTC().Round(time.Millisecond)
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		t := now.AddDate(0, 0, -i)
 		stocks = append(stocks, notify.Stock{
 			Symbol: "S&P500", Timestamp: t, Open: 10, Close: 10, High: 10, Low: 10,

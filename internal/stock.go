@@ -2,6 +2,7 @@ package notifystock
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -119,4 +120,63 @@ func CalcAVG[T cmp.Ordered](values []T) (decimal.Decimal, error) {
 	}
 	avg := decimal.Avg(d[0], d[1:]...)
 	return avg, nil
+}
+
+type StockRepository struct {
+	db *bun.DB
+}
+
+func NewStockRepository(db *bun.DB) *StockRepository {
+	return &StockRepository{
+		db: db,
+	}
+}
+
+func (r *StockRepository) Save(ctx context.Context, stocks []Stock) error {
+	if len(stocks) == 0 {
+		return nil
+	}
+	_, err := r.db.NewInsert().
+		Model(&stocks).
+		On("CONFLICT (symbol, timestamp) DO NOTHING").
+		Exec(ctx)
+	return err
+}
+
+func (r *StockRepository) GetStockByPeriod(
+	ctx context.Context, symbol Symbol, begging, end time.Time) (
+	[]Stock, error) {
+	s, err := symbol.ForDB()
+	if err != nil {
+		return nil, err
+	}
+	var stocks []Stock
+	if err := r.db.NewSelect().
+		Model(&stocks).
+		DistinctOn("timestamp::date").
+		Where("symbol = ?", s).
+		Where("timestamp::date BETWEEN ? AND ?", begging, end).
+		OrderExpr("timestamp::date").
+		Order("timestamp").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return stocks, nil
+}
+
+func (r *StockRepository) GetLatestStock(ctx context.Context, symbol Symbol) (*Stock, error) {
+	s, err := symbol.ForDB()
+	if err != nil {
+		return nil, err
+	}
+	var stock Stock
+	if err := r.db.NewSelect().
+		Model(&stock).
+		Where("symbol = ?", s).
+		Order("timestamp DESC").
+		Limit(0).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return &stock, nil
 }

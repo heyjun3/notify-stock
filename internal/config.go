@@ -11,7 +11,10 @@ var Cfg Config
 func init() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		logger.Info(err.Error())
+		err = godotenv.Load("../.env")
+		if err != nil {
+			logger.Info(err.Error())
+		}
 	}
 	from, ok := os.LookupEnv("FROM")
 	if !ok {

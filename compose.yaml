@@ -10,6 +10,7 @@ services:
     environment:
       - FROM=${FROM}
       - TO=${TO}
+      - MAIL_TOKEN=${MAIL_TOKEN}
     working_dir: /app
 
   database:

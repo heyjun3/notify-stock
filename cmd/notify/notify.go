@@ -25,7 +25,7 @@ func init() {
 }
 
 func notifyStock(symbols []string) {
-	notifier, err := notifyapp.InitStockNotifier(context.Background(), notifyapp.Cfg.MailTrapToken, &http.Client{})
+	notifier, err := notifyapp.InitStockNotifier(context.Background(), notifyapp.Cfg.MailToken, &http.Client{})
 	if err != nil {
 		log.Fatal(err)
 	}

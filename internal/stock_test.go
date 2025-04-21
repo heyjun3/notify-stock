@@ -7,24 +7,10 @@ import (
 
 	notify "github.com/heyjun3/notify-stock/internal"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/uptrace/bun"
 )
 
-var db *bun.DB
-
-func init() {
-	dsn := "postgres://postgres:postgres@localhost:5555/notify-stock-test?sslmode=disable"
-	db = notify.NewDB(dsn)
-	for _, table := range []any{
-		(*notify.Stock)(nil),
-		(*notify.Notification)(nil),
-	} {
-		db.NewDelete().Model(table).Where("1 = 1").Exec(context.Background())
-	}
-}
-
 func TestSave(t *testing.T) {
+	db := openDB(t)
 	repo := notify.NewStockRepository(db)
 
 	tests := []struct {
@@ -52,6 +38,7 @@ func TestSave(t *testing.T) {
 }
 
 func TestGetStockByPeriod(t *testing.T) {
+	db := openDB(t)
 	repo := notify.NewStockRepository(db)
 	if err := repo.Save(
 		context.Background(),
@@ -92,6 +79,7 @@ func TestGetStockByPeriod(t *testing.T) {
 }
 
 func TestGetLatestStock(t *testing.T) {
+	db := openDB(t)
 	repo := notify.NewStockRepository(db)
 	stocks := make([]notify.Stock, 0, 100)
 	now := time.Now().UTC().Round(time.Millisecond)

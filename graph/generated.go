@@ -40,6 +40,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Mutation() MutationResolver
 	Query() QueryResolver
 	Symbol() SymbolResolver
 }
@@ -48,6 +49,17 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Mutation struct {
+		CreateNotification func(childComplexity int, input model.NotificationInput) int
+	}
+
+	Notification struct {
+		Email  func(childComplexity int) int
+		ID     func(childComplexity int) int
+		Symbol func(childComplexity int) int
+		Time   func(childComplexity int) int
+	}
+
 	Query struct {
 		Symbol func(childComplexity int, input model.SymbolInput) int
 	}
@@ -64,6 +76,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type MutationResolver interface {
+	CreateNotification(ctx context.Context, input model.NotificationInput) (*model.Notification, error)
+}
 type QueryResolver interface {
 	Symbol(ctx context.Context, input model.SymbolInput) (*model.Symbol, error)
 }
@@ -85,17 +100,57 @@ func (e *executableSchema) Schema() *ast.Schema {
 	return parsedSchema
 }
 
-func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
+func (e *executableSchema) Complexity(ctx context.Context, typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Mutation.createNotification":
+		if e.complexity.Mutation.CreateNotification == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createNotification_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateNotification(childComplexity, args["input"].(model.NotificationInput)), true
+
+	case "Notification.email":
+		if e.complexity.Notification.Email == nil {
+			break
+		}
+
+		return e.complexity.Notification.Email(childComplexity), true
+
+	case "Notification.id":
+		if e.complexity.Notification.ID == nil {
+			break
+		}
+
+		return e.complexity.Notification.ID(childComplexity), true
+
+	case "Notification.symbol":
+		if e.complexity.Notification.Symbol == nil {
+			break
+		}
+
+		return e.complexity.Notification.Symbol(childComplexity), true
+
+	case "Notification.time":
+		if e.complexity.Notification.Time == nil {
+			break
+		}
+
+		return e.complexity.Notification.Time(childComplexity), true
 
 	case "Query.symbol":
 		if e.complexity.Query.Symbol == nil {
 			break
 		}
 
-		args, err := ec.field_Query_symbol_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_symbol_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -145,6 +200,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputNotificationInput,
 		ec.unmarshalInputSymbolInput,
 	)
 	first := true
@@ -179,6 +235,21 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			}
 
 			return &response
+		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
 		}
 
 	default:
@@ -246,6 +317,29 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_createNotification_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_createNotification_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createNotification_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.NotificationInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNNotificationInput2githubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐNotificationInput(ctx, tmp)
+	}
+
+	var zeroVal model.NotificationInput
+	return zeroVal, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -393,6 +487,247 @@ func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _Mutation_createNotification(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createNotification(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateNotification(rctx, fc.Args["input"].(model.NotificationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Notification)
+	fc.Result = res
+	return ec.marshalNNotification2ᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createNotification(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Notification_id(ctx, field)
+			case "symbol":
+				return ec.fieldContext_Notification_symbol(ctx, field)
+			case "email":
+				return ec.fieldContext_Notification_email(ctx, field)
+			case "time":
+				return ec.fieldContext_Notification_time(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Notification", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createNotification_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Notification_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Notification_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Notification",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Notification_symbol(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Notification_symbol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Symbol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Notification_symbol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Notification",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Notification_email(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Notification_email(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Email, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Notification_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Notification",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Notification_time(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Notification_time(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Time, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Notification_time(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Notification",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_symbol(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_symbol(ctx, field)
 	if err != nil {
@@ -496,6 +831,8 @@ func (ec *executionContext) fieldContext_Query___type(ctx context.Context, field
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -508,8 +845,6 @@ func (ec *executionContext) fieldContext_Query___type(ctx context.Context, field
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
@@ -898,6 +1233,50 @@ func (ec *executionContext) fieldContext___Directive_description(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___Directive_isRepeatable(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsRepeatable, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext___Directive_isRepeatable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "__Directive",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Directive_locations(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext___Directive_locations(ctx, field)
 	if err != nil {
@@ -1007,50 +1386,6 @@ func (ec *executionContext) fieldContext___Directive_args(ctx context.Context, f
 	if fc.Args, err = ec.field___Directive_args_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext___Directive_isRepeatable(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IsRepeatable, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext___Directive_isRepeatable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "__Directive",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
 	}
 	return fc, nil
 }
@@ -1424,6 +1759,8 @@ func (ec *executionContext) fieldContext___Field_type(_ context.Context, field g
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -1436,8 +1773,6 @@ func (ec *executionContext) fieldContext___Field_type(_ context.Context, field g
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
@@ -1662,6 +1997,8 @@ func (ec *executionContext) fieldContext___InputValue_type(_ context.Context, fi
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -1674,8 +2011,6 @@ func (ec *executionContext) fieldContext___InputValue_type(_ context.Context, fi
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
@@ -1897,6 +2232,8 @@ func (ec *executionContext) fieldContext___Schema_types(_ context.Context, field
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -1909,8 +2246,6 @@ func (ec *executionContext) fieldContext___Schema_types(_ context.Context, field
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
@@ -1965,6 +2300,8 @@ func (ec *executionContext) fieldContext___Schema_queryType(_ context.Context, f
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -1977,8 +2314,6 @@ func (ec *executionContext) fieldContext___Schema_queryType(_ context.Context, f
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
@@ -2030,6 +2365,8 @@ func (ec *executionContext) fieldContext___Schema_mutationType(_ context.Context
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -2042,8 +2379,6 @@ func (ec *executionContext) fieldContext___Schema_mutationType(_ context.Context
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
@@ -2095,6 +2430,8 @@ func (ec *executionContext) fieldContext___Schema_subscriptionType(_ context.Con
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -2107,8 +2444,6 @@ func (ec *executionContext) fieldContext___Schema_subscriptionType(_ context.Con
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
@@ -2161,12 +2496,12 @@ func (ec *executionContext) fieldContext___Schema_directives(_ context.Context, 
 				return ec.fieldContext___Directive_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Directive_description(ctx, field)
+			case "isRepeatable":
+				return ec.fieldContext___Directive_isRepeatable(ctx, field)
 			case "locations":
 				return ec.fieldContext___Directive_locations(ctx, field)
 			case "args":
 				return ec.fieldContext___Directive_args(ctx, field)
-			case "isRepeatable":
-				return ec.fieldContext___Directive_isRepeatable(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Directive", field.Name)
 		},
@@ -2300,6 +2635,47 @@ func (ec *executionContext) fieldContext___Type_description(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___Type_specifiedByURL(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SpecifiedByURL(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "__Type",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Type_fields(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext___Type_fields(ctx, field)
 	if err != nil {
@@ -2408,6 +2784,8 @@ func (ec *executionContext) fieldContext___Type_interfaces(_ context.Context, fi
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -2420,8 +2798,6 @@ func (ec *executionContext) fieldContext___Type_interfaces(_ context.Context, fi
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
@@ -2473,6 +2849,8 @@ func (ec *executionContext) fieldContext___Type_possibleTypes(_ context.Context,
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -2485,8 +2863,6 @@ func (ec *executionContext) fieldContext___Type_possibleTypes(_ context.Context,
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
@@ -2655,6 +3031,8 @@ func (ec *executionContext) fieldContext___Type_ofType(_ context.Context, field 
 				return ec.fieldContext___Type_name(ctx, field)
 			case "description":
 				return ec.fieldContext___Type_description(ctx, field)
+			case "specifiedByURL":
+				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "fields":
 				return ec.fieldContext___Type_fields(ctx, field)
 			case "interfaces":
@@ -2667,53 +3045,10 @@ func (ec *executionContext) fieldContext___Type_ofType(_ context.Context, field 
 				return ec.fieldContext___Type_inputFields(ctx, field)
 			case "ofType":
 				return ec.fieldContext___Type_ofType(ctx, field)
-			case "specifiedByURL":
-				return ec.fieldContext___Type_specifiedByURL(ctx, field)
 			case "isOneOf":
 				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext___Type_specifiedByURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SpecifiedByURL(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "__Type",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2764,6 +3099,47 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputNotificationInput(ctx context.Context, obj any) (model.NotificationInput, error) {
+	var it model.NotificationInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"symbol", "email", "time"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "symbol":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("symbol"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Symbol = data
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
+		case "time":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("time"))
+			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Time = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSymbolInput(ctx context.Context, obj any) (model.SymbolInput, error) {
 	var it model.SymbolInput
 	asMap := map[string]any{}
@@ -2798,6 +3174,109 @@ func (ec *executionContext) unmarshalInputSymbolInput(ctx context.Context, obj a
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
+			Object: field.Name,
+			Field:  field,
+		})
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "createNotification":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createNotification(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var notificationImplementors = []string{"Notification"}
+
+func (ec *executionContext) _Notification(ctx context.Context, sel ast.SelectionSet, obj *model.Notification) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, notificationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Notification")
+		case "id":
+			out.Values[i] = ec._Notification_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "symbol":
+			out.Values[i] = ec._Notification_symbol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._Notification_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "time":
+			out.Values[i] = ec._Notification_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var queryImplementors = []string{"Query"}
 
@@ -3013,6 +3492,11 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 			}
 		case "description":
 			out.Values[i] = ec.___Directive_description(ctx, field, obj)
+		case "isRepeatable":
+			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "locations":
 			out.Values[i] = ec.___Directive_locations(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3020,11 +3504,6 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 			}
 		case "args":
 			out.Values[i] = ec.___Directive_args(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "isRepeatable":
-			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3287,6 +3766,8 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec.___Type_name(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec.___Type_description(ctx, field, obj)
+		case "specifiedByURL":
+			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
 		case "fields":
 			out.Values[i] = ec.___Type_fields(ctx, field, obj)
 		case "interfaces":
@@ -3299,8 +3780,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec.___Type_inputFields(ctx, field, obj)
 		case "ofType":
 			out.Values[i] = ec.___Type_ofType(ctx, field, obj)
-		case "specifiedByURL":
-			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
 		case "isOneOf":
 			out.Values[i] = ec.___Type_isOneOf(ctx, field, obj)
 		default:
@@ -3373,6 +3852,25 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNNotification2githubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v model.Notification) graphql.Marshaler {
+	return ec._Notification(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNNotification2ᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Notification(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNNotificationInput2githubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐNotificationInput(ctx context.Context, v any) (model.NotificationInput, error) {
+	res, err := ec.unmarshalInputNotificationInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNStock2githubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐStock(ctx context.Context, sel ast.SelectionSet, v model.Stock) graphql.Marshaler {
@@ -3503,9 +4001,7 @@ func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Conte
 
 func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
 	var vSlice []any
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {

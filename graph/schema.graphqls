@@ -15,10 +15,27 @@ type Symbol {
   currentStock: Stock!
 }
 
+type Notification {
+  id: ID!
+  symbol: ID!
+  email: String!
+  time: Time!
+}
+
 input SymbolInput {
   symbol: ID!
 }
 
+input NotificationInput {
+  symbol: ID!
+  email: String!
+  time: Time!
+}
+
 type Query {
   symbol(input: SymbolInput!): Symbol!
+}
+
+type Mutation {
+  createNotification(input: NotificationInput!): Notification!
 }

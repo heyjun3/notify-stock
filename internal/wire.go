@@ -35,3 +35,11 @@ func InitStockRepository(dsn string) *StockRepository {
 	)
 	return &StockRepository{}
 }
+
+func InitNotificationRepository(dsn string) *NotificationRepository {
+	wire.Build(
+		NewDB,
+		NewNotificationRepository,
+	)
+	return &NotificationRepository{}
+}

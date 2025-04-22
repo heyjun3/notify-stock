@@ -43,7 +43,8 @@ func runServer() {
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	repo := notifystock.InitStockRepository(notifystock.Cfg.DBDSN)
-	resolver := graph.NewResolver(repo)
+	noti := notifystock.InitNotificationRepository(notifystock.Cfg.DBDSN)
+	resolver := graph.NewResolver(repo, noti)
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
 	srv.AddTransport(transport.Options{})

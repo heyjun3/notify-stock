@@ -32,3 +32,9 @@ func InitStockRepository(dsn string) *StockRepository {
 	stockRepository := NewStockRepository(db)
 	return stockRepository
 }
+
+func InitNotificationRepository(dsn string) *NotificationRepository {
+	db := NewDB(dsn)
+	notificationRepository := NewNotificationRepository(db)
+	return notificationRepository
+}

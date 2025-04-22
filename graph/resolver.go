@@ -12,13 +12,15 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	stockRepository *notify.StockRepository
-	logger          *slog.Logger
+	stockRepository        *notify.StockRepository
+	notificationRepository *notify.NotificationRepository
+	logger                 *slog.Logger
 }
 
-func NewResolver(stockRepository *notify.StockRepository) *Resolver {
+func NewResolver(stockRepository *notify.StockRepository, notificationRepository *notify.NotificationRepository) *Resolver {
 	return &Resolver{
-		stockRepository: stockRepository,
-		logger:          slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		stockRepository:        stockRepository,
+		notificationRepository: notificationRepository,
+		logger:                 slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 }

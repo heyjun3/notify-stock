@@ -13,15 +13,10 @@ import (
 
 // CreateNotification is the resolver for the createNotification field.
 func (r *mutationResolver) CreateNotification(ctx context.Context, input model.NotificationInput) (*model.Notification, error) {
-	symbol, err := notify.NewSymbol(input.Symbol)
+	notification, err := r.notificationCreator.Create(
+		ctx, input.Symbol, input.Email, input.Time,
+	)
 	if err != nil {
-		return nil, err
-	}
-	notification, err := notify.NewNotification(nil, symbol, input.Email, input.Time)
-	if err != nil {
-		return nil, err
-	}
-	if err := r.notificationRepository.Save(ctx, []notify.Notification{*notification}); err != nil {
 		return nil, err
 	}
 	return &model.Notification{

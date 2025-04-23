@@ -96,3 +96,30 @@ func (r *NotificationRepository) GetByHour(ctx context.Context, time TimeOfHour)
 	}
 	return n, nil
 }
+
+type NotificationCreator struct {
+	notificationRepository *NotificationRepository
+}
+
+func NewNotificationCreator(notificationRepository *NotificationRepository) *NotificationCreator {
+	return &NotificationCreator{
+		notificationRepository: notificationRepository,
+	}
+}
+
+func (n *NotificationCreator) Create(
+	ctx context.Context, symbol string, email string, hour time.Time) (
+	*Notification, error) {
+	sym, err := NewSymbol(symbol)
+	if err != nil {
+		return nil, err
+	}
+	notification, err := NewNotification(nil, sym, email, hour)
+	if err != nil {
+		return nil, err
+	}
+	if err := n.notificationRepository.Save(ctx, []Notification{*notification}); err != nil {
+		return nil, err
+	}
+	return notification, nil
+}

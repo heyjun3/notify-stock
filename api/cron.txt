@@ -22,5 +22,5 @@
 #
 # /usr/local/go/bin/go build -o main cmd/main.go
 # m h  dom mon dow   command
-0 18 * * * cd ~/notify-stock && make notify
-# 0 0 * * * cd ~/notify-stock && ./main register -s "N225,S&P500"
+0 18 * * * cd ~/notify-stock/api && make notify
+# 0 0 * * * cd ~/notify-stock/api && ./main register -s "N225,S&P500"

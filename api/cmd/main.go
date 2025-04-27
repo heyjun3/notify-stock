@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/heyjun3/notify-stock/cmd/email"
+	"github.com/heyjun3/notify-stock/cmd/fetch"
 	"github.com/heyjun3/notify-stock/cmd/notify"
 	"github.com/heyjun3/notify-stock/cmd/register"
 	"github.com/heyjun3/notify-stock/cmd/server"
@@ -23,6 +24,7 @@ func init() {
 		register.RegisterStockCommand,
 		server.ServerCommand,
 		email.EmailCommand,
+		fetch.FetchCommand,
 	)
 }
 

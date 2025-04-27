@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 func IsSameLen[T any](array ...[]T) bool {
@@ -57,19 +59,37 @@ func ConvertResponseToStock(symbol Symbol, res ChartResponse) (*Stocks, error) {
 	return s, nil
 }
 
-type StockRegister struct {
-	client          *FinanceClient
-	stockRepository *StockRepository
+func ConvertResponseToSymbol(res *ChartResponse) (*SymbolDetail, error) {
+	result := res.Chart.Result
+	if len(result) == 0 {
+		return nil, fmt.Errorf("result is nil")
+	}
+	meta := result[0].Meta
+	detail := NewSymbolDetail(meta.Symbol, meta.ShortName, meta.LongName,
+		decimal.NewFromFloat(meta.RegularMarketPrice), decimal.NewFromFloat(meta.ChartPreviousClose))
+	return detail, nil
 }
 
-func NewStockRegister(client *FinanceClient, repository *StockRepository) *StockRegister {
+type StockRegister struct {
+	client           *FinanceClient
+	stockRepository  *StockRepository
+	symbolRepository *SymbolRepository
+}
+
+func NewStockRegister(
+	client *FinanceClient,
+	stockRepository *StockRepository,
+	symbolRepository *SymbolRepository,
+) *StockRegister {
 	return &StockRegister{
-		client:          client,
-		stockRepository: repository,
+		client:           client,
+		stockRepository:  stockRepository,
+		symbolRepository: symbolRepository,
 	}
 }
 
 func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
+	ctx := context.Background()
 	sym, err := NewSymbol(symbol)
 	if err != nil {
 		return err
@@ -82,7 +102,14 @@ func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
 	if err != nil {
 		return err
 	}
-	if err := s.stockRepository.Save(context.Background(), stock.stocks); err != nil {
+	if err := s.stockRepository.Save(ctx, stock.stocks); err != nil {
+		return err
+	}
+	detail, err := ConvertResponseToSymbol(res)
+	if err != nil {
+		return err
+	}
+	if err := s.symbolRepository.Save(ctx, []SymbolDetail{*detail}); err != nil {
 		return err
 	}
 	return nil

@@ -28,10 +28,14 @@ func init() {
 	if !ok {
 		panic("MAIL_TOKEN is not set")
 	}
+	dbdsn, ok := os.LookupEnv("DBDSN")
+	if !ok {
+		dbdsn = "postgres://postgres:postgres@localhost:5555/notify-stock?sslmode=disable"
+	}
 	Cfg = Config{
 		FROM:      from,
 		TO:        to,
-		DBDSN:     "postgres://postgres:postgres@localhost:5555/notify-stock?sslmode=disable",
+		DBDSN:     dbdsn,
 		MailToken: mailToken,
 	}
 }

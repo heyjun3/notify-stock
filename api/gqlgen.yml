@@ -157,3 +157,5 @@ models:
     fields:
       currentStock:
         resolver: true
+      detail:
+        resolver: true

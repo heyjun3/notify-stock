@@ -11,6 +11,7 @@ services:
       - FROM=${FROM}
       - TO=${TO}
       - MAIL_TOKEN=${MAIL_TOKEN}
+      - DBDSN=postgres://${DB_USER}:${DB_PASSWORD}@database:5432/notify-stock?sslmode=disable
     working_dir: /app
 
   database:

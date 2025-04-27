@@ -13,9 +13,19 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 		NewDB,
 		NewFinanceClient,
 		NewStockRepository,
+		NewSymbolRepository,
 		NewStockRegister,
 	)
 	return &StockRegister{}
+}
+
+func InitSymbolFetcher(dsn string) *SymbolFetcher {
+	wire.Build(
+		NewDB,
+		NewSymbolRepository,
+		NewSymbolFetcher,
+	)
+	return &SymbolFetcher{}
 }
 
 func InitStockNotifier(ctx context.Context, token string, client HTTPClientInterface) (*StockNotifier, error) {

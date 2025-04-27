@@ -15,7 +15,7 @@ import (
 var logger *slog.Logger
 
 var (
-	symbol               []string
+	symbols              []string
 	isAll                bool
 	RegisterStockCommand = &cobra.Command{
 		Use:   "register",
@@ -23,9 +23,9 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			var err error
 			if isAll {
-				err = registerAllStockHistoryBySymbol(symbol)
+				err = registerAllStockHistoryBySymbol(symbols)
 			} else {
-				err = registerStockByWeek(symbol)
+				err = registerStockByWeek(symbols)
 			}
 			if err != nil {
 				log.Fatal(err)
@@ -37,7 +37,7 @@ var (
 func init() {
 	logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	RegisterStockCommand.Flags().StringSliceVarP(&symbol, "symbol", "s", []string{}, "stock of symbol")
+	RegisterStockCommand.Flags().StringSliceVarP(&symbols, "symbol", "s", []string{}, "stock of symbol")
 	RegisterStockCommand.Flags().BoolVarP(&isAll, "all", "a", false, "register stock price data for the entire period")
 	RegisterStockCommand.MarkFlagRequired("symbol")
 }
@@ -66,7 +66,7 @@ func registerAllStockHistoryBySymbol(symbols []string) error {
 		}
 		times = append(times, t)
 	}
-	for i := 0; i < len(times)-1; i++ {
+	for i := range len(times) - 1 {
 		for _, symbol := range symbols {
 			if err := register.SaveStock(
 				symbol, times[i], times[i+1]); err != nil {

@@ -32,8 +32,20 @@ type Stock struct {
 }
 
 type Symbol struct {
-	Symbol       string `json:"symbol"`
-	CurrentStock *Stock `json:"currentStock"`
+	Symbol       string        `json:"symbol"`
+	CurrentStock *Stock        `json:"currentStock"`
+	Detail       *SymbolDetail `json:"detail"`
+}
+
+type SymbolDetail struct {
+	Symbol        string  `json:"symbol"`
+	ShortName     string  `json:"shortName"`
+	LongName      string  `json:"longName"`
+	Price         float64 `json:"price"`
+	Change        string  `json:"change"`
+	ChangePercent string  `json:"changePercent"`
+	Volume        *string `json:"volume,omitempty"`
+	MarketCap     *string `json:"marketCap,omitempty"`
 }
 
 type SymbolInput struct {

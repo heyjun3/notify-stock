@@ -13,6 +13,18 @@ type Stock {
 type Symbol {
   symbol: ID!
   currentStock: Stock!
+  detail: SymbolDetail!
+}
+
+type SymbolDetail {
+  symbol: ID!
+  shortName: String!
+  longName: String!
+  price: Float!
+  change: String!
+  changePercent: String!
+  volume: String
+  marketCap: String
 }
 
 type Notification {
@@ -34,6 +46,7 @@ input NotificationInput {
 
 type Query {
   symbol(input: SymbolInput!): Symbol!
+  symbols(input: SymbolInput): [Symbol!]!
 }
 
 type Mutation {

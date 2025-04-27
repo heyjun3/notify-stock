@@ -16,8 +16,16 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	financeClient := NewFinanceClient(client)
 	db := NewDB(dsn)
 	stockRepository := NewStockRepository(db)
-	stockRegister := NewStockRegister(financeClient, stockRepository)
+	symbolRepository := NewSymbolRepository(db)
+	stockRegister := NewStockRegister(financeClient, stockRepository, symbolRepository)
 	return stockRegister
+}
+
+func InitSymbolFetcher(dsn string) *SymbolFetcher {
+	db := NewDB(dsn)
+	symbolRepository := NewSymbolRepository(db)
+	symbolFetcher := NewSymbolFetcher(symbolRepository)
+	return symbolFetcher
 }
 
 func InitStockNotifier(ctx context.Context, token string, client HTTPClientInterface) (*StockNotifier, error) {

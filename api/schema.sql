@@ -28,3 +28,15 @@ CREATE TABLE IF NOT EXISTS
         Email TEXT,
         Hour TIME
     );
+
+CREATE TABLE IF NOT EXISTS 
+    symbols (
+        symbol TEXT PRIMARY KEY,
+        short_name TEXT NOT NULL,
+        long_name TEXT NOT NULL,
+        market_price DECIMAL NOT NULL,
+        previous_close DECIMAL NOT NULL,
+        volume INTEGER,
+        market_cap INTEGER
+    )
+;

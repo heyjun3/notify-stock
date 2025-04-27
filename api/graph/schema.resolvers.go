@@ -42,6 +42,39 @@ func (r *queryResolver) Symbol(ctx context.Context, input model.SymbolInput) (*m
 	}, nil
 }
 
+// Symbols is the resolver for the symbols field.
+func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) ([]*model.Symbol, error) {
+	if input == nil {
+		symbols, err := r.symbolFetcher.FetchAll(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		sym := make([]*model.Symbol, 0, len(symbols))
+		for _, symbol := range symbols {
+			sym = append(sym, &model.Symbol{
+				Symbol: symbol.Symbol,
+				Detail: &model.SymbolDetail{
+					Symbol:        symbol.Symbol,
+					ShortName:     symbol.ShortName,
+					LongName:      symbol.LongName,
+					Price:         symbol.MarketPrice.InexactFloat64(),
+					Change:        symbol.Change(),
+					ChangePercent: symbol.ChangePercent(),
+				},
+			})
+		}
+		return sym, nil
+	}
+	symbol, err := r.symbolFetcher.Fetch(ctx, input.Symbol)
+	if err != nil {
+		return nil, err
+	}
+	return []*model.Symbol{
+		{Symbol: symbol.Symbol},
+	}, nil
+}
+
 // CurrentStock is the resolver for the currentStock field.
 func (r *symbolResolver) CurrentStock(ctx context.Context, obj *model.Symbol) (*model.Stock, error) {
 	symbol, err := notify.NewSymbol(obj.Symbol)
@@ -57,6 +90,12 @@ func (r *symbolResolver) CurrentStock(ctx context.Context, obj *model.Symbol) (*
 		Close:     stock.Close,
 		Timestamp: stock.Timestamp,
 	}, nil
+}
+
+// Detail is the resolver for the detail field.
+func (r *symbolResolver) Detail(ctx context.Context, obj *model.Symbol) (*model.SymbolDetail, error) {
+	r.logger.Info("Fetching symbol detail", "symbol", obj.Symbol)
+	return obj.Detail, nil
 }
 
 // Mutation returns MutationResolver implementation.

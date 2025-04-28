@@ -1,4 +1,4 @@
-import type { Route } from "./+types/dashboard";
+// import type { Route } from "./+types/dashboard";
 import Dashboard from "../dashboard/dashboard";
 
 export function meta() {

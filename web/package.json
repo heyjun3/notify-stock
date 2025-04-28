@@ -8,19 +8,25 @@
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "fmt": "biome format --write",
-    "lint": "biome lint --write"
+    "lint": "biome lint --write",
+    "codegen": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
+    "@apollo/client": "^3.13.8",
     "@react-router/node": "^7.5.2",
     "@react-router/serve": "^7.5.2",
+    "graphql": "^16.11.0",
     "isbot": "^5.1.17",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.5.2",
-    "recharts": "^2.15.3"
+    "recharts": "^2.15.3",
+    "vite-plugin-cjs-interop": "^2.2.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@graphql-codegen/cli": "^5.0.5",
+    "@graphql-codegen/typescript-react-apollo": "^4.3.2",
     "@react-router/dev": "^7.5.2",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^20",
@@ -28,7 +34,7 @@
     "@types/react-dom": "^19.0.1",
     "react-router-devtools": "^1.1.0",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.2",
+    "typescript": "^5.8.3",
     "vite": "^5.4.11",
     "vite-tsconfig-paths": "^5.1.4"
   }

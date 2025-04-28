@@ -1,0 +1,15 @@
+  query GetSymbols {
+    symbols {
+    symbol
+    detail {
+      symbol
+      shortName
+      longName
+      price
+      change
+      changePercent
+      volume
+      marketCap
+    }
+  }
+  }

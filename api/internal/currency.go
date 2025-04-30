@@ -15,6 +15,19 @@ const (
 	USD
 )
 
+func (c Currency) Symbol() string {
+	cur := c.String()
+	switch cur {
+	case "JPY":
+		return "¥"
+	case "USD":
+		return "$"
+	default:
+		logger.Warn("unknown currency", "currency", cur)
+		return "$"
+	}
+}
+
 var _ driver.Valuer = (*Currency)(nil)
 
 func (c Currency) Value() (driver.Value, error) {

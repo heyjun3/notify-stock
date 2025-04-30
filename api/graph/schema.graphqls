@@ -25,6 +25,7 @@ type SymbolDetail {
   changePercent: String!
   volume: String
   marketCap: String
+  currencySymbol: String!
 }
 
 type Notification {

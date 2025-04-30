@@ -78,14 +78,15 @@ type ComplexityRoot struct {
 	}
 
 	SymbolDetail struct {
-		Change        func(childComplexity int) int
-		ChangePercent func(childComplexity int) int
-		LongName      func(childComplexity int) int
-		MarketCap     func(childComplexity int) int
-		Price         func(childComplexity int) int
-		ShortName     func(childComplexity int) int
-		Symbol        func(childComplexity int) int
-		Volume        func(childComplexity int) int
+		Change         func(childComplexity int) int
+		ChangePercent  func(childComplexity int) int
+		CurrencySymbol func(childComplexity int) int
+		LongName       func(childComplexity int) int
+		MarketCap      func(childComplexity int) int
+		Price          func(childComplexity int) int
+		ShortName      func(childComplexity int) int
+		Symbol         func(childComplexity int) int
+		Volume         func(childComplexity int) int
 	}
 }
 
@@ -239,6 +240,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SymbolDetail.ChangePercent(childComplexity), true
+
+	case "SymbolDetail.currencySymbol":
+		if e.complexity.SymbolDetail.CurrencySymbol == nil {
+			break
+		}
+
+		return e.complexity.SymbolDetail.CurrencySymbol(childComplexity), true
 
 	case "SymbolDetail.longName":
 		if e.complexity.SymbolDetail.LongName == nil {
@@ -1381,6 +1389,8 @@ func (ec *executionContext) fieldContext_Symbol_detail(_ context.Context, field 
 				return ec.fieldContext_SymbolDetail_volume(ctx, field)
 			case "marketCap":
 				return ec.fieldContext_SymbolDetail_marketCap(ctx, field)
+			case "currencySymbol":
+				return ec.fieldContext_SymbolDetail_currencySymbol(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SymbolDetail", field.Name)
 		},
@@ -1722,6 +1732,50 @@ func (ec *executionContext) _SymbolDetail_marketCap(ctx context.Context, field g
 }
 
 func (ec *executionContext) fieldContext_SymbolDetail_marketCap(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SymbolDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SymbolDetail_currencySymbol(ctx context.Context, field graphql.CollectedField, obj *model.SymbolDetail) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SymbolDetail_currencySymbol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CurrencySymbol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SymbolDetail_currencySymbol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SymbolDetail",
 		Field:      field,
@@ -4163,6 +4217,11 @@ func (ec *executionContext) _SymbolDetail(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._SymbolDetail_volume(ctx, field, obj)
 		case "marketCap":
 			out.Values[i] = ec._SymbolDetail_marketCap(ctx, field, obj)
+		case "currencySymbol":
+			out.Values[i] = ec._SymbolDetail_currencySymbol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

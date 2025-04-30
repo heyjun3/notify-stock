@@ -52,6 +52,7 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 					Price:         symbol.MarketPrice.InexactFloat64(),
 					Change:        symbol.Change(),
 					ChangePercent: symbol.ChangePercent(),
+					CurrencySymbol: symbol.Currency.Symbol(),
 				},
 			})
 		}

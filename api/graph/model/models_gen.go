@@ -38,14 +38,15 @@ type Symbol struct {
 }
 
 type SymbolDetail struct {
-	Symbol        string  `json:"symbol"`
-	ShortName     string  `json:"shortName"`
-	LongName      string  `json:"longName"`
-	Price         float64 `json:"price"`
-	Change        string  `json:"change"`
-	ChangePercent string  `json:"changePercent"`
-	Volume        *string `json:"volume,omitempty"`
-	MarketCap     *string `json:"marketCap,omitempty"`
+	Symbol         string  `json:"symbol"`
+	ShortName      string  `json:"shortName"`
+	LongName       string  `json:"longName"`
+	Price          float64 `json:"price"`
+	Change         string  `json:"change"`
+	ChangePercent  string  `json:"changePercent"`
+	Volume         *string `json:"volume,omitempty"`
+	MarketCap      *string `json:"marketCap,omitempty"`
+	CurrencySymbol string  `json:"currencySymbol"`
 }
 
 type SymbolInput struct {

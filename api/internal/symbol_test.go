@@ -84,10 +84,7 @@ func TestSymbolRepository(t *testing.T) {
 	t.Run("get symbol", func(t *testing.T) {
 		detail := notify.NewSymbolDetail("S&P500", "S&P500", "S&P 500", "JPY",
 			decimal.NewFromInt(1000), decimal.NewFromInt(900))
-		currency, err := notify.CurrencyString("USD")
-		assert.NoError(t, err)
-		detail.Currency = currency
-		err = repo.Save(context.Background(), []notify.SymbolDetail{*detail})
+		err := repo.Save(context.Background(), []notify.SymbolDetail{*detail})
 		assert.NoError(t, err)
 
 		symbol, err := repo.Get(context.Background(), "S&P500")
@@ -98,7 +95,7 @@ func TestSymbolRepository(t *testing.T) {
 		assert.Equal(t, decimal.NewFromInt(1000), symbol.MarketPrice)
 		assert.Equal(t, decimal.NewFromInt(900), symbol.PreviousClose)
 		fmt.Println(symbol.Currency.String())
-		assert.Equal(t, "USD", symbol.Currency.String())
+		assert.Equal(t, "JPY", symbol.Currency.String())
 	})
 
 	t.Run("get all symbols", func(t *testing.T) {

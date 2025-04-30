@@ -48,16 +48,16 @@ func TestGetStockByPeriod(t *testing.T) {
 	}
 	tests := []struct {
 		name      string
-		symbol    notify.Symbol
+		symbol    string
 		begging   time.Time
 		end       time.Time
 		err       error
 		minLength int
 	}{{
-		symbol: newSymbol("N225"),
+		symbol: "N225",
 		err:    nil,
 	}, {
-		symbol:    newSymbol("N225"),
+		symbol:    "N225",
 		begging:   time.Now().AddDate(-1, 0, 0),
 		end:       time.Now(),
 		err:       nil,
@@ -96,11 +96,11 @@ func TestGetLatestStock(t *testing.T) {
 	}
 	tests := []struct {
 		name      string
-		symbol    notify.Symbol
+		symbol    string
 		timestamp time.Time
 		err       error
 	}{{
-		symbol:    newSymbol("S&P500"),
+		symbol:    "S&P500",
 		timestamp: now,
 		err:       nil,
 	}}
@@ -128,7 +128,7 @@ func TestStocksLatest(t *testing.T) {
 	}
 
 	t.Run("", func(t *testing.T) {
-		s, err := notify.NewStocks(newSymbol("N225"), "JPY", stocks)
+		s, err := notify.NewStocks(notify.SymbolDetail{}, "JPY", stocks)
 		assert.NoError(t, err)
 		latest := s.Latest()
 
@@ -143,9 +143,4 @@ func TestTimeCompare(t *testing.T) {
 	t.Run("before", func(t *testing.T) {
 		assert.True(t, time.Now().Before(time.Now().AddDate(0, 0, 1)))
 	})
-}
-
-func newSymbol(symbol string) notify.Symbol {
-	s, _ := notify.NewSymbol(symbol)
-	return s
 }

@@ -16,6 +16,7 @@ func openDB(t *testing.T) *bun.DB {
 	for _, table := range []any{
 		(*notify.Stock)(nil),
 		(*notify.Notification)(nil),
+		(*notify.SymbolDetail)(nil),
 	} {
 		db.NewDelete().Model(table).Where("1 = 1").Exec(context.Background())
 	}

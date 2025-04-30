@@ -24,7 +24,7 @@ func TestNotificationRepository(t *testing.T) {
 	})
 	t.Run("save notification with valid data", func(t *testing.T) {
 		err := repo.Save(context.Background(), []notify.Notification{
-			NoError(notify.NewNotification(nil, newSymbol("N225"), "test@example.com", time.Now())),
+			NoError(notify.NewNotification(nil, "N225", "test@example.com", time.Now())),
 		})
 		assert.NoError(t, err)
 	})
@@ -33,14 +33,14 @@ func TestNotificationRepository(t *testing.T) {
 		ctx := context.Background()
 		err := repo.Save(ctx, []notify.Notification{
 			NoError(notify.NewNotification(
-				&id, newSymbol("N225"), "test@example.com",
+				&id, "N225", "test@example.com",
 				time.Date(2022, 1, 1, 4, 0, 0, 0, time.UTC))),
 		})
 		assert.NoError(t, err)
 
 		err = repo.Save(ctx, []notify.Notification{
 			NoError(notify.NewNotification(
-				&id, newSymbol("N225"), "test+test@example.com",
+				&id, "N225", "test+test@example.com",
 				time.Date(2022, 1, 1, 23, 0, 0, 0, time.UTC))),
 		})
 		assert.NoError(t, err)
@@ -55,7 +55,7 @@ func TestNotificationRepository(t *testing.T) {
 		id := uuid.New()
 
 		notifications := []notify.Notification{
-			NoError(notify.NewNotification(&id, newSymbol("N225"), "test@exsample.com", time.Now())),
+			NoError(notify.NewNotification(&id, "N225", "test@exsample.com", time.Now())),
 		}
 		err := repo.Save(context.Background(), notifications)
 		assert.NoError(t, err)
@@ -77,9 +77,9 @@ func TestNotificationRepository(t *testing.T) {
 	t.Run("get notifications by hour", func(t *testing.T) {
 		notifications := []notify.Notification{
 			NoError(notify.NewNotification(
-				nil, newSymbol("N225"), "test@exsample.com", time.Now())),
+				nil, "N225", "test@exsample.com", time.Now())),
 			NoError(notify.NewNotification(
-				nil, newSymbol("N225"), "test@exsample.com", time.Now().Add(2*time.Hour))),
+				nil, "N225", "test@exsample.com", time.Now().Add(2*time.Hour))),
 		}
 		err := repo.Save(context.Background(), notifications)
 		assert.NoError(t, err)

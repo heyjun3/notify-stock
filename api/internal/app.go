@@ -18,7 +18,7 @@ func IsSameLen[T any](array ...[]T) bool {
 	return true
 }
 
-func ConvertResponseToStock(symbol Symbol, res ChartResponse) (*Stocks, error) {
+func ConvertResponseToStock(res ChartResponse) (*Stocks, error) {
 	result := res.Chart.Result
 	if len(result) == 0 {
 		return nil, fmt.Errorf("result is nil")
@@ -39,6 +39,7 @@ func ConvertResponseToStock(symbol Symbol, res ChartResponse) (*Stocks, error) {
 		return nil, fmt.Errorf("don't same length error")
 	}
 	currency := result[0].Meta.Currency
+	symbol := result[0].Meta.Symbol
 
 	stocks := make([]Stock, 0, len(timestamp))
 	for i, t := range timestamp {
@@ -52,7 +53,11 @@ func ConvertResponseToStock(symbol Symbol, res ChartResponse) (*Stocks, error) {
 		}
 		stocks = append(stocks, stock)
 	}
-	s, err := NewStocks(symbol, currency, stocks)
+	detail, err := ConvertResponseToSymbol(&res)
+	if err != nil {
+		return nil, err
+	}
+	s, err := NewStocks(*detail, currency, stocks)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +70,7 @@ func ConvertResponseToSymbol(res *ChartResponse) (*SymbolDetail, error) {
 		return nil, fmt.Errorf("result is nil")
 	}
 	meta := result[0].Meta
-	detail := NewSymbolDetail(meta.Symbol, meta.ShortName, meta.LongName,
+	detail := NewSymbolDetail(meta.Symbol, meta.ShortName, meta.LongName, meta.Currency,
 		decimal.NewFromFloat(meta.RegularMarketPrice), decimal.NewFromFloat(meta.ChartPreviousClose))
 	return detail, nil
 }
@@ -90,19 +95,24 @@ func NewStockRegister(
 
 func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
 	ctx := context.Background()
-	sym, err := NewSymbol(symbol)
+	res, err := s.client.FetchStock(symbol, begging, end, WithInterval("1d"))
 	if err != nil {
 		return err
 	}
-	res, err := s.client.FetchStock(sym, begging, end, WithInterval("1d"))
-	if err != nil {
-		return err
-	}
-	stock, err := ConvertResponseToStock(sym, *res)
+	stock, err := ConvertResponseToStock(*res)
 	if err != nil {
 		return err
 	}
 	if err := s.stockRepository.Save(ctx, stock.stocks); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *StockRegister) RegisterSymbol(symbol string) error {
+	ctx := context.Background()
+	res, err := s.client.FetchCurrentStock(symbol)
+	if err != nil {
 		return err
 	}
 	detail, err := ConvertResponseToSymbol(res)
@@ -111,6 +121,15 @@ func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
 	}
 	if err := s.symbolRepository.Save(ctx, []SymbolDetail{*detail}); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *StockRegister) RegisterSymbols(symbols []string) error {
+	for _, symbol := range symbols {
+		if err := s.RegisterSymbol(symbol); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -134,16 +153,12 @@ func NewStockNotifier(client *FinanceClient, mailService MailService) *StockNoti
 func (n *StockNotifier) Notify(symbols []string) error {
 	now := time.Now()
 	results := make([]*Stocks, 0, len(symbols))
-	for _, v := range symbols {
-		symbol, err := NewSymbol(v)
-		if err != nil {
-			return err
-		}
+	for _, symbol := range symbols {
 		res, err := n.client.FetchStock(symbol, now.AddDate(0, -12, 0), now, WithInterval("1d"))
 		if err != nil {
 			return err
 		}
-		stocks, err := ConvertResponseToStock(symbol, *res)
+		stocks, err := ConvertResponseToStock(*res)
 		if err != nil {
 			return err
 		}

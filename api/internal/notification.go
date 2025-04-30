@@ -29,7 +29,7 @@ func NewTimeOfHour(hour time.Time) TimeOfHour {
 	}
 }
 
-func NewNotification(ID *uuid.UUID, symbol Symbol, email string, hour time.Time) (*Notification, error) {
+func NewNotification(ID *uuid.UUID, symbol string, email string, hour time.Time) (*Notification, error) {
 	if ID == nil {
 		id, err := uuid.NewV7()
 		if err != nil {
@@ -37,13 +37,9 @@ func NewNotification(ID *uuid.UUID, symbol Symbol, email string, hour time.Time)
 		}
 		ID = &id
 	}
-	s, err := symbol.ForDB()
-	if err != nil {
-		return nil, err
-	}
 	return &Notification{
 		ID:     *ID,
-		Symbol: s,
+		Symbol: symbol,
 		Email:  email,
 		Time:   NewTimeOfHour(hour),
 	}, nil
@@ -110,11 +106,7 @@ func NewNotificationCreator(notificationRepository *NotificationRepository) *Not
 func (n *NotificationCreator) Create(
 	ctx context.Context, symbol string, email string, hour time.Time) (
 	*Notification, error) {
-	sym, err := NewSymbol(symbol)
-	if err != nil {
-		return nil, err
-	}
-	notification, err := NewNotification(nil, sym, email, hour)
+	notification, err := NewNotification(nil, symbol, email, hour)
 	if err != nil {
 		return nil, err
 	}

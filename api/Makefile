@@ -12,8 +12,8 @@ build:
 	docker compose build notify
 
 notify:
-	docker compose run --rm notify notify -s "N225,S&P500"
+	docker compose run --rm notify notify -s "^N225,^GSPC"
 register:
-	docker compose run --rm notify register -s "N225,S&P500"
+	docker compose run --rm notify register -s "^N225,^GSPC"
 gqlgen:
 	go run github.com/99designs/gqlgen generate

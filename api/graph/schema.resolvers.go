@@ -8,7 +8,6 @@ import (
 	"context"
 
 	"github.com/heyjun3/notify-stock/graph/model"
-	notify "github.com/heyjun3/notify-stock/internal"
 )
 
 // CreateNotification is the resolver for the createNotification field.
@@ -29,16 +28,8 @@ func (r *mutationResolver) CreateNotification(ctx context.Context, input model.N
 
 // Symbol is the resolver for the symbol field.
 func (r *queryResolver) Symbol(ctx context.Context, input model.SymbolInput) (*model.Symbol, error) {
-	symbol, err := notify.NewSymbol(input.Symbol)
-	if err != nil {
-		return nil, err
-	}
-	s, err := symbol.ForDB()
-	if err != nil {
-		return nil, err
-	}
 	return &model.Symbol{
-		Symbol: s,
+		Symbol: input.Symbol,
 	}, nil
 }
 
@@ -77,11 +68,7 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 
 // CurrentStock is the resolver for the currentStock field.
 func (r *symbolResolver) CurrentStock(ctx context.Context, obj *model.Symbol) (*model.Stock, error) {
-	symbol, err := notify.NewSymbol(obj.Symbol)
-	if err != nil {
-		return nil, err
-	}
-	stock, err := r.stockRepository.GetLatestStock(ctx, symbol)
+	stock, err := r.stockRepository.GetLatestStock(ctx, obj.Symbol)
 	if err != nil {
 		return nil, err
 	}

@@ -12,12 +12,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func NewStock(symbol Symbol, timestamp time.Time,
+func NewStock(symbol string, timestamp time.Time,
 	open, close, high, low float64) (Stock, error) {
-	s, err := symbol.ForDB()
-	if err != nil {
-		return Stock{}, err
-	}
 	for _, v := range []float64{open, close, high, low} {
 		if v <= 0 {
 			return Stock{}, fmt.Errorf(
@@ -25,7 +21,7 @@ func NewStock(symbol Symbol, timestamp time.Time,
 		}
 	}
 	return Stock{
-		Symbol:    s,
+		Symbol:    symbol,
 		Timestamp: timestamp,
 		Open:      open,
 		Close:     close,
@@ -46,12 +42,12 @@ type Stock struct {
 }
 
 type Stocks struct {
-	symbol   Symbol
+	symbol   SymbolDetail
 	currency Currency
 	stocks   []Stock
 }
 
-func NewStocks(symbol Symbol, currency string, stocks []Stock) (*Stocks, error) {
+func NewStocks(symbol SymbolDetail, currency string, stocks []Stock) (*Stocks, error) {
 	cur, err := CurrencyString(currency)
 	if err != nil {
 		return nil, err
@@ -98,9 +94,8 @@ func (s *Stocks) GenerateNotificationMessage() (string, error) {
 		return "", err
 	}
 	currency := s.currency
-	symbolStr, _ := s.symbol.Display()
 	text := strings.Join([]string{
-		symbolStr,
+		s.symbol.ShortName,
 		fmt.Sprintf("Closing Price: %v %s", int(latest.Close), currency),
 		fmt.Sprintf("1-Year Moving Average: %v %s", avg.Ceil(), currency),
 		fmt.Sprintf("Closing Price to 1-Year Moving Average Ratio: %v%s", ratio.Mul(decimal.New(100, 0)).RoundCeil(2), "%"),
@@ -144,17 +139,13 @@ func (r *StockRepository) Save(ctx context.Context, stocks []Stock) error {
 }
 
 func (r *StockRepository) GetStockByPeriod(
-	ctx context.Context, symbol Symbol, begging, end time.Time) (
+	ctx context.Context, symbol string, begging, end time.Time) (
 	[]Stock, error) {
-	s, err := symbol.ForDB()
-	if err != nil {
-		return nil, err
-	}
 	var stocks []Stock
 	if err := r.db.NewSelect().
 		Model(&stocks).
 		DistinctOn("timestamp::date").
-		Where("symbol = ?", s).
+		Where("symbol = ?", symbol).
 		Where("timestamp::date BETWEEN ? AND ?", begging, end).
 		OrderExpr("timestamp::date").
 		Order("timestamp").
@@ -164,15 +155,11 @@ func (r *StockRepository) GetStockByPeriod(
 	return stocks, nil
 }
 
-func (r *StockRepository) GetLatestStock(ctx context.Context, symbol Symbol) (*Stock, error) {
-	s, err := symbol.ForDB()
-	if err != nil {
-		return nil, err
-	}
+func (r *StockRepository) GetLatestStock(ctx context.Context, symbol string) (*Stock, error) {
 	var stock Stock
 	if err := r.db.NewSelect().
 		Model(&stock).
-		Where("symbol = ?", s).
+		Where("symbol = ?", symbol).
 		Order("timestamp DESC").
 		Limit(0).
 		Scan(ctx); err != nil {

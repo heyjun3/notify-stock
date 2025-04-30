@@ -2,6 +2,7 @@ package notifystock_test
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"testing"
 
@@ -14,33 +15,33 @@ import (
 
 func TestSymbolDetail(t *testing.T) {
 	t.Run("calculate change", func(t *testing.T) {
-		detail := notify.NewSymbolDetail("N225", "N225", "Nikkei 225",
+		detail := notify.NewSymbolDetail("N225", "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(1000), decimal.NewFromInt(900))
 
 		assert.Equal(t, "+100", detail.Change())
 
-		detail = notify.NewSymbolDetail("N225", "N225", "Nikkei 225",
+		detail = notify.NewSymbolDetail("N225", "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(800), decimal.NewFromInt(900))
 
 		assert.Equal(t, "-100", detail.Change())
 
-		detail = notify.NewSymbolDetail("N225", "N225", "Nikkei 225",
+		detail = notify.NewSymbolDetail("N225", "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(800), decimal.NewFromInt(800))
 
 		assert.Equal(t, "0", detail.Change())
 	})
 
 	t.Run("calculate change percent", func(t *testing.T) {
-		detail := notify.NewSymbolDetail("N225", "N225", "Nikkei 225",
+		detail := notify.NewSymbolDetail("N225", "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(1000), decimal.NewFromInt(900))
 		assert.Equal(t, "+11.11%", detail.ChangePercent())
 
-		detail = notify.NewSymbolDetail("N225", "N225", "Nikkei 225",
+		detail = notify.NewSymbolDetail("N225", "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(810), decimal.NewFromInt(900))
 
 		assert.Equal(t, "-10%", detail.ChangePercent())
 
-		detail = notify.NewSymbolDetail("N225", "N225", "Nikkei 225",
+		detail = notify.NewSymbolDetail("N225", "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(900), decimal.NewFromInt(900))
 
 		assert.Equal(t, "0%", detail.ChangePercent())
@@ -52,7 +53,7 @@ func TestSymbolRepository(t *testing.T) {
 	repo := notify.NewSymbolRepository(db)
 
 	t.Run("save symbol", func(t *testing.T) {
-		detail := notify.NewSymbolDetail("N225", "N225", "Nikkei 225",
+		detail := notify.NewSymbolDetail("N225", "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(1000), decimal.NewFromInt(900))
 		err := repo.Save(context.Background(), []notify.SymbolDetail{*detail})
 
@@ -60,12 +61,12 @@ func TestSymbolRepository(t *testing.T) {
 	})
 	t.Run("update symbol", func(t *testing.T) {
 		symbol := uuid.New().String()
-		detail := notify.NewSymbolDetail(symbol, "N225", "Nikkei 225",
+		detail := notify.NewSymbolDetail(symbol, "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(1000), decimal.NewFromInt(900))
 		err := repo.Save(context.Background(), []notify.SymbolDetail{*detail})
 		assert.NoError(t, err)
 
-		detail = notify.NewSymbolDetail(symbol, "N225"+symbol, "Nikkei 225"+symbol,
+		detail = notify.NewSymbolDetail(symbol, "N225"+symbol, "Nikkei 225"+symbol, "JPY",
 			decimal.NewFromInt(1100), decimal.NewFromInt(1000))
 		err = repo.Save(context.Background(), []notify.SymbolDetail{*detail})
 		assert.NoError(t, err)
@@ -81,9 +82,12 @@ func TestSymbolRepository(t *testing.T) {
 	})
 
 	t.Run("get symbol", func(t *testing.T) {
-		detail := notify.NewSymbolDetail("S&P500", "S&P500", "S&P 500",
+		detail := notify.NewSymbolDetail("S&P500", "S&P500", "S&P 500", "JPY",
 			decimal.NewFromInt(1000), decimal.NewFromInt(900))
-		err := repo.Save(context.Background(), []notify.SymbolDetail{*detail})
+		currency, err := notify.CurrencyString("USD")
+		assert.NoError(t, err)
+		detail.Currency = currency
+		err = repo.Save(context.Background(), []notify.SymbolDetail{*detail})
 		assert.NoError(t, err)
 
 		symbol, err := repo.Get(context.Background(), "S&P500")
@@ -93,10 +97,12 @@ func TestSymbolRepository(t *testing.T) {
 		assert.Equal(t, "S&P 500", symbol.LongName)
 		assert.Equal(t, decimal.NewFromInt(1000), symbol.MarketPrice)
 		assert.Equal(t, decimal.NewFromInt(900), symbol.PreviousClose)
+		fmt.Println(symbol.Currency.String())
+		assert.Equal(t, "USD", symbol.Currency.String())
 	})
 
 	t.Run("get all symbols", func(t *testing.T) {
-		detail := notify.NewSymbolDetail("N225", "N225", "Nikkei 225",
+		detail := notify.NewSymbolDetail("N225", "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(1000), decimal.NewFromInt(900))
 		err := repo.Save(context.Background(), []notify.SymbolDetail{*detail})
 		assert.NoError(t, err)

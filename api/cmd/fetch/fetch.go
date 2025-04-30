@@ -29,12 +29,8 @@ func init() {
 }
 
 func fetch(symbol string) error {
-	s, err := notify.NewSymbol(symbol)
-	if err != nil {
-		return err
-	}
 	client := notify.NewFinanceClient(&http.Client{})
-	res, err := client.FetchCurrentStock(s)
+	res, err := client.FetchCurrentStock(symbol)
 	if err != nil {
 		return err
 	}

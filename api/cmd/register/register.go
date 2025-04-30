@@ -50,7 +50,7 @@ func registerStockByWeek(symbols []string) error {
 			logger.Error(err.Error())
 		}
 	}
-	return nil
+	return register.RegisterSymbols(symbols)
 }
 
 func registerAllStockHistoryBySymbol(symbols []string) error {
@@ -75,5 +75,5 @@ func registerAllStockHistoryBySymbol(symbols []string) error {
 			time.Sleep(2 * time.Second)
 		}
 	}
-	return nil
+	return register.RegisterSymbols(symbols)
 }

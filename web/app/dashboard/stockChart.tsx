@@ -46,7 +46,7 @@ export function StockChart({ data, selectedSymbol }: StockChartProps) {
               angle={-30} // ラベルを斜めにする
               textAnchor="end" // ラベルのアンカーを調整
               height={50} // X軸の高さを確保
-              interval={0} // ラベルを常に表示（データ数が多い場合は調整）
+              interval={"preserveEnd"} // ラベルを常に表示（データ数が多い場合は調整）
             />
             <YAxis
               tick={{ fill: "#9CA3AF" }}

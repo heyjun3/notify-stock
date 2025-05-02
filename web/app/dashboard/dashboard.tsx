@@ -1,26 +1,86 @@
 import type React from "react";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 
 import { StockChart } from "./stockChart";
 import { Pagination } from "./pagination";
 import { StockCard } from "./stockCard";
 
-import { useGetSymbolsQuery } from "../gen/graphql";
+import { useGetSymbolsSuspenseQuery } from "../gen/graphql";
 
 // ダミーのチャートデータ（選択された銘柄に応じて変化させる想定）
 const chartData = [
-  { name: "1月", price: 160 },
-  { name: "2月", price: 165 },
-  { name: "3月", price: 170 },
-  { name: "4月", price: 168 },
-  { name: "5月", price: 175 },
-  { name: "6月", price: 180 },
-  { name: "7月", price: 178 },
-  { name: "8月", price: 185 },
-  { name: "9月", price: 182 },
-  { name: "10月", price: 175 },
-  { name: "11月", price: 178 },
-  { name: "12月", price: 175 },
+  { name: "2024-01-01", price: 160 },
+  { name: "2024-02-01", price: 165 },
+  { name: "2024-03-01", price: 170 },
+  { name: "2024-04-01", price: 168 },
+  { name: "2024-05-01", price: 175 },
+  { name: "2024-06-01", price: 180 },
+  { name: "2024-07-01", price: 178 },
+  { name: "2024-08-01", price: 185 },
+  { name: "2024-09-01", price: 182 },
+  { name: "2024-10-01", price: 175 },
+  { name: "2024-11-01", price: 178 },
+  { name: "2024-12-01", price: 175 },
+  { name: "2024-01-01", price: 160 },
+  { name: "2024-02-01", price: 165 },
+  { name: "2024-03-01", price: 170 },
+  { name: "2024-04-01", price: 168 },
+  { name: "2024-05-01", price: 175 },
+  { name: "2024-06-01", price: 180 },
+  { name: "2024-07-01", price: 178 },
+  { name: "2024-08-01", price: 185 },
+  { name: "2024-09-01", price: 182 },
+  { name: "2024-10-01", price: 175 },
+  { name: "2024-11-01", price: 178 },
+  { name: "2024-12-01", price: 175 },
+  { name: "2024-01-01", price: 160 },
+  { name: "2024-02-01", price: 165 },
+  { name: "2024-03-01", price: 170 },
+  { name: "2024-04-01", price: 168 },
+  { name: "2024-05-01", price: 175 },
+  { name: "2024-06-01", price: 180 },
+  { name: "2024-07-01", price: 178 },
+  { name: "2024-08-01", price: 185 },
+  { name: "2024-09-01", price: 182 },
+  { name: "2024-10-01", price: 175 },
+  { name: "2024-11-01", price: 178 },
+  { name: "2024-12-01", price: 175 },
+  { name: "2024-01-01", price: 160 },
+  { name: "2024-02-01", price: 165 },
+  { name: "2024-03-01", price: 170 },
+  { name: "2024-04-01", price: 168 },
+  { name: "2024-05-01", price: 175 },
+  { name: "2024-06-01", price: 180 },
+  { name: "2024-07-01", price: 178 },
+  { name: "2024-08-01", price: 185 },
+  { name: "2024-09-01", price: 182 },
+  { name: "2024-10-01", price: 175 },
+  { name: "2024-11-01", price: 178 },
+  { name: "2024-12-01", price: 175 },
+  { name: "2024-01-01", price: 160 },
+  { name: "2024-02-01", price: 165 },
+  { name: "2024-03-01", price: 170 },
+  { name: "2024-04-01", price: 168 },
+  { name: "2024-05-01", price: 175 },
+  { name: "2024-06-01", price: 180 },
+  { name: "2024-07-01", price: 178 },
+  { name: "2024-08-01", price: 185 },
+  { name: "2024-09-01", price: 182 },
+  { name: "2024-10-01", price: 175 },
+  { name: "2024-11-01", price: 178 },
+  { name: "2024-12-01", price: 175 },
+  { name: "2024-01-01", price: 160 },
+  { name: "2024-02-01", price: 165 },
+  { name: "2024-03-01", price: 170 },
+  { name: "2024-04-01", price: 168 },
+  { name: "2024-05-01", price: 175 },
+  { name: "2024-06-01", price: 180 },
+  { name: "2024-07-01", price: 178 },
+  { name: "2024-08-01", price: 185 },
+  { name: "2024-09-01", price: 182 },
+  { name: "2024-10-01", price: 175 },
+  { name: "2024-11-01", price: 178 },
+  { name: "2024-12-01", price: 175 },
 ];
 
 // 1ページあたりの表示件数
@@ -28,7 +88,7 @@ const ITEMS_PER_PAGE = 4;
 
 const useGetSymbols = () => {
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null); // 初期選択
-  const { data, loading } = useGetSymbolsQuery();
+  const { data } = useGetSymbolsSuspenseQuery();
   const symbols = data?.symbols.map((symbol) => symbol.detail)
   useEffect(() => {
     if (data && data.symbols.length > 0) {
@@ -36,7 +96,7 @@ const useGetSymbols = () => {
     }
     return
   }, [data])
-  return { symbols, loading, selectedSymbol, setSelectedSymbol };
+  return { symbols, selectedSymbol, setSelectedSymbol };
 }
 
 
@@ -44,7 +104,7 @@ const useGetSymbols = () => {
  * ダッシュボード全体のページコンポーネント
  */
 function DashboardPage() {
-  const { symbols, loading, selectedSymbol, setSelectedSymbol } = useGetSymbols();
+  const { symbols, selectedSymbol, setSelectedSymbol } = useGetSymbols()
   const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ番号
 
@@ -100,65 +160,62 @@ function DashboardPage() {
     return chartData;
   }, [selectedSymbol]);
 
-
-  if (loading) {
-    return <div className="text-center">Loading...</div>;
-  }
-
   return (
-    <div className="p-4 sm:p-8 bg-gray-100 dark:bg-gray-900 min-h-screen font-sans">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-900 dark:text-white">
-        株価ダッシュボード
-      </h1>
+    <Suspense fallback={<div className="text-center">Loading...</div>}>
+      <div className="p-4 sm:p-8 bg-gray-100 dark:bg-gray-900 min-h-screen font-sans">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+          株価ダッシュボード
+        </h1>
 
-      {/* 検索バー */}
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="銘柄シンボル or 会社名で検索..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-        />
-      </div>
-
-      {/* 株価カード一覧 */}
-      {paginatedStocks.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {paginatedStocks.map((stock) => (
-              <StockCard
-                key={stock.symbol}
-                stock={stock}
-                isSelected={stock.shortName === selectedSymbol}
-                onClick={handleCardClick}
-              />
-            ))}
-          </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
+        {/* 検索バー */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="銘柄シンボル or 会社名で検索..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
           />
-        </>
-      ) : (
-        <div className="text-center text-gray-500 dark:text-gray-400 py-10">
-          該当する銘柄が見つかりません。
         </div>
-      )}
 
-      {/* 株価チャート */}
-      <div className="mt-8">
-        {" "}
-        {/* チャートの上にマージンを追加 */}
-        <StockChart data={currentChartData} selectedSymbol={selectedSymbol} />
+        {/* 株価カード一覧 */}
+        {paginatedStocks.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {paginatedStocks.map((stock) => (
+                <StockCard
+                  key={stock.symbol}
+                  stock={stock}
+                  isSelected={stock.shortName === selectedSymbol}
+                  onClick={handleCardClick}
+                />
+              ))}
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </>
+        ) : (
+          <div className="text-center text-gray-500 dark:text-gray-400 py-10">
+            該当する銘柄が見つかりません。
+          </div>
+        )}
+
+        {/* 株価チャート */}
+        <div className="mt-8">
+          {" "}
+          {/* チャートの上にマージンを追加 */}
+          <StockChart data={currentChartData} selectedSymbol={selectedSymbol} />
+        </div>
+
+        {/* フッター等、他の要素をここに追加可能 */}
+        <footer className="mt-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+          データはダミーです。実際の取引には使用しないでください。
+        </footer>
       </div>
-
-      {/* フッター等、他の要素をここに追加可能 */}
-      <footer className="mt-8 text-center text-gray-500 dark:text-gray-400 text-sm">
-        データはダミーです。実際の取引には使用しないでください。
-      </footer>
-    </div>
+    </Suspense>
   );
 }
 

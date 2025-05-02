@@ -76,6 +76,7 @@ export type SymbolDetail = {
   __typename?: 'SymbolDetail';
   change: Scalars['String']['output'];
   changePercent: Scalars['String']['output'];
+  currencySymbol: Scalars['String']['output'];
   longName: Scalars['String']['output'];
   marketCap?: Maybe<Scalars['String']['output']>;
   price: Scalars['Float']['output'];
@@ -91,7 +92,7 @@ export type SymbolInput = {
 export type GetSymbolsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetSymbolsQuery = { __typename?: 'Query', symbols: Array<{ __typename?: 'Symbol', symbol: string, detail: { __typename?: 'SymbolDetail', symbol: string, shortName: string, longName: string, price: number, change: string, changePercent: string, volume?: string | null, marketCap?: string | null } }> };
+export type GetSymbolsQuery = { __typename?: 'Query', symbols: Array<{ __typename?: 'Symbol', symbol: string, detail: { __typename?: 'SymbolDetail', symbol: string, shortName: string, longName: string, price: number, change: string, changePercent: string, volume?: string | null, marketCap?: string | null, currencySymbol: string } }> };
 
 
 export const GetSymbolsDocument = gql`
@@ -107,6 +108,7 @@ export const GetSymbolsDocument = gql`
       changePercent
       volume
       marketCap
+      currencySymbol
     }
   }
 }

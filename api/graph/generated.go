@@ -72,6 +72,7 @@ type ComplexityRoot struct {
 	}
 
 	Symbol struct {
+		Chart        func(childComplexity int, input model.ChartInput) int
 		CurrentStock func(childComplexity int) int
 		Detail       func(childComplexity int) int
 		Symbol       func(childComplexity int) int
@@ -100,6 +101,7 @@ type QueryResolver interface {
 type SymbolResolver interface {
 	CurrentStock(ctx context.Context, obj *model.Symbol) (*model.Stock, error)
 	Detail(ctx context.Context, obj *model.Symbol) (*model.SymbolDetail, error)
+	Chart(ctx context.Context, obj *model.Symbol, input model.ChartInput) ([]*model.Stock, error)
 }
 
 type executableSchema struct {
@@ -206,6 +208,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Stock.Timestamp(childComplexity), true
 
+	case "Symbol.chart":
+		if e.complexity.Symbol.Chart == nil {
+			break
+		}
+
+		args, err := ec.field_Symbol_chart_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Symbol.Chart(childComplexity, args["input"].(model.ChartInput)), true
+
 	case "Symbol.currentStock":
 		if e.complexity.Symbol.CurrentStock == nil {
 			break
@@ -298,6 +312,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputChartInput,
 		ec.unmarshalInputNotificationInput,
 		ec.unmarshalInputSymbolInput,
 	)
@@ -505,6 +520,29 @@ func (ec *executionContext) field_Query_symbols_argsInput(
 	}
 
 	var zeroVal *model.SymbolInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Symbol_chart_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Symbol_chart_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Symbol_chart_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.ChartInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNChartInput2githubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐChartInput(ctx, tmp)
+	}
+
+	var zeroVal model.ChartInput
 	return zeroVal, nil
 }
 
@@ -894,6 +932,8 @@ func (ec *executionContext) fieldContext_Query_symbol(ctx context.Context, field
 				return ec.fieldContext_Symbol_currentStock(ctx, field)
 			case "detail":
 				return ec.fieldContext_Symbol_detail(ctx, field)
+			case "chart":
+				return ec.fieldContext_Symbol_chart(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Symbol", field.Name)
 		},
@@ -957,6 +997,8 @@ func (ec *executionContext) fieldContext_Query_symbols(ctx context.Context, fiel
 				return ec.fieldContext_Symbol_currentStock(ctx, field)
 			case "detail":
 				return ec.fieldContext_Symbol_detail(ctx, field)
+			case "chart":
+				return ec.fieldContext_Symbol_chart(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Symbol", field.Name)
 		},
@@ -1394,6 +1436,66 @@ func (ec *executionContext) fieldContext_Symbol_detail(_ context.Context, field 
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SymbolDetail", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Symbol_chart(ctx context.Context, field graphql.CollectedField, obj *model.Symbol) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Symbol_chart(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Symbol().Chart(rctx, obj, fc.Args["input"].(model.ChartInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Stock)
+	fc.Result = res
+	return ec.marshalOStock2ᚕᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐStock(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Symbol_chart(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Symbol",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "symbol":
+				return ec.fieldContext_Stock_symbol(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_Stock_timestamp(ctx, field)
+			case "close":
+				return ec.fieldContext_Stock_close(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Stock", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Symbol_chart_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3739,6 +3841,40 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputChartInput(ctx context.Context, obj any) (model.ChartInput, error) {
+	var it model.ChartInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"start", "end"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "start":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
+			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Start = data
+		case "end":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end"))
+			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.End = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNotificationInput(ctx context.Context, obj any) (model.NotificationInput, error) {
 	var it model.NotificationInput
 	asMap := map[string]any{}
@@ -4126,6 +4262,39 @@ func (ec *executionContext) _Symbol(ctx context.Context, sel ast.SelectionSet, o
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "chart":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Symbol_chart(ctx, field, obj)
 				return res
 			}
 
@@ -4595,6 +4764,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNChartInput2githubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐChartInput(ctx context.Context, v any) (model.ChartInput, error) {
+	res, err := ec.unmarshalInputChartInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5040,6 +5214,54 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOStock2ᚕᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐStock(ctx context.Context, sel ast.SelectionSet, v []*model.Stock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOStock2ᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐStock(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOStock2ᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐStock(ctx context.Context, sel ast.SelectionSet, v *model.Stock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Stock(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

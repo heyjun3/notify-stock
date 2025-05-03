@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/heyjun3/notify-stock/graph/model"
 )
@@ -46,12 +47,12 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 			sym = append(sym, &model.Symbol{
 				Symbol: symbol.Symbol,
 				Detail: &model.SymbolDetail{
-					Symbol:        symbol.Symbol,
-					ShortName:     symbol.ShortName,
-					LongName:      symbol.LongName,
-					Price:         symbol.MarketPrice.InexactFloat64(),
-					Change:        symbol.Change(),
-					ChangePercent: symbol.ChangePercent(),
+					Symbol:         symbol.Symbol,
+					ShortName:      symbol.ShortName,
+					LongName:       symbol.LongName,
+					Price:          symbol.MarketPrice.InexactFloat64(),
+					Change:         symbol.Change(),
+					ChangePercent:  symbol.ChangePercent(),
 					CurrencySymbol: symbol.Currency.Symbol(),
 				},
 			})
@@ -84,6 +85,23 @@ func (r *symbolResolver) CurrentStock(ctx context.Context, obj *model.Symbol) (*
 func (r *symbolResolver) Detail(ctx context.Context, obj *model.Symbol) (*model.SymbolDetail, error) {
 	r.logger.Info("Fetching symbol detail", "symbol", obj.Symbol)
 	return obj.Detail, nil
+}
+
+// Chart is the resolver for the chart field.
+func (r *symbolResolver) Chart(ctx context.Context, obj *model.Symbol, input model.ChartInput) ([]*model.Stock, error) {
+	stocks, err := r.stockRepository.GetStockByPeriod(ctx, obj.Symbol, input.Start, input.End)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stock by period: %w", err)
+	}
+	result := make([]*model.Stock, 0, len(stocks))
+	for _, stock := range stocks {
+		result = append(result, &model.Stock{
+			Symbol:    obj.Symbol,
+			Close:     stock.Close,
+			Timestamp: stock.Timestamp,
+		})
+	}
+	return result, nil
 }
 
 // Mutation returns MutationResolver implementation.

@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+type ChartInput struct {
+	Start time.Time `json:"start"`
+	End   time.Time `json:"end"`
+}
+
 type Mutation struct {
 }
 
@@ -35,6 +40,7 @@ type Symbol struct {
 	Symbol       string        `json:"symbol"`
 	CurrentStock *Stock        `json:"currentStock"`
 	Detail       *SymbolDetail `json:"detail"`
+	Chart        []*Stock      `json:"chart,omitempty"`
 }
 
 type SymbolDetail struct {

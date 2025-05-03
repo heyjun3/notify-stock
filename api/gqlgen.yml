@@ -159,3 +159,5 @@ models:
         resolver: true
       detail:
         resolver: true
+      chart:
+        resolver: true

@@ -17,12 +17,14 @@ func NewStock(symbol string, timestamp time.Time,
 	for _, v := range []float64{open, close, high, low} {
 		if v <= 0 {
 			return Stock{}, fmt.Errorf(
-				"value is higher than zero. open: %v, close: %v, high: %v, low: %v", open, close, high, low)
+				"value is higher than zero. open: %v, close: %v, high: %v, low: %v, timestamp: %v, symbol: %v",
+				open, close, high, low, timestamp, symbol)
 		}
 	}
+	truncated := timestamp.Truncate(time.Hour * 24)
 	return Stock{
 		Symbol:    symbol,
-		Timestamp: timestamp,
+		Timestamp: truncated,
 		Open:      open,
 		Close:     close,
 		High:      high,
@@ -133,7 +135,13 @@ func (r *StockRepository) Save(ctx context.Context, stocks []Stock) error {
 	}
 	_, err := r.db.NewInsert().
 		Model(&stocks).
-		On("CONFLICT (symbol, timestamp) DO NOTHING").
+		On("CONFLICT (symbol, timestamp) DO UPDATE").
+		Set(strings.Join([]string{
+			"open = EXCLUDED.open",
+			"close = EXCLUDED.close",
+			"high = EXCLUDED.high",
+			"low = EXCLUDED.low",
+		}, ",")).
 		Exec(ctx)
 	return err
 }

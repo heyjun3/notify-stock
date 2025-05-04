@@ -144,3 +144,14 @@ func TestTimeCompare(t *testing.T) {
 		assert.True(t, time.Now().Before(time.Now().AddDate(0, 0, 1)))
 	})
 }
+
+func TestRoundTime(t *testing.T) {
+	t.Run("round", func(t *testing.T) {
+		tt := time.Date(2023, 10, 1, 23, 2, 2, 2, time.UTC)
+		assert.Equal(t, "2023-10-02T00:00:00Z", tt.Round(time.Hour*24).Format(time.RFC3339))
+	})
+	t.Run("truncate", func(t *testing.T) {
+		tt := time.Date(2023, 10, 1, 23, 2, 2, 2, time.UTC)
+		assert.Equal(t, "2023-10-01T00:00:00Z", tt.Truncate(time.Hour*24).Format(time.RFC3339))
+	})
+}

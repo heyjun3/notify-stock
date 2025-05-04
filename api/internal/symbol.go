@@ -19,7 +19,7 @@ type SymbolDetail struct {
 	PreviousClose decimal.Decimal `bun:"previous_close"`
 	Volume        sql.NullInt64   `bun:"volume"`
 	MarketCap     sql.NullInt64   `bun:"market_cap"`
-	Currency      *Currency        `bun:"currency"`
+	Currency      *Currency       `bun:"currency"`
 }
 
 func (s *SymbolDetail) Change() string {

@@ -44,7 +44,10 @@ export function StockCard({ stock, isSelected, onClick }: StockCardProps) {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xl font-semibold text-gray-900 dark:text-white">{stock.currencySymbol}{stock.price}</p>
+          <p className="text-xl font-semibold text-gray-900 dark:text-white">
+            {stock.currencySymbol}
+            {stock.price}
+          </p>
           <p className={`text-sm font-medium ${changeColor}`}>
             {stock.change} ({stock.changePercent})
           </p>

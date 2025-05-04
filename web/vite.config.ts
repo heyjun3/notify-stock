@@ -5,9 +5,12 @@ import { cjsInterop } from "vite-plugin-cjs-interop";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  plugins: [tailwindcss(), reactRouter(), tsconfigPaths(), cjsInterop({
-    dependencies: [
-      "@apollo/client",
-    ]
-  })],
+  plugins: [
+    tailwindcss(),
+    reactRouter(),
+    tsconfigPaths(),
+    cjsInterop({
+      dependencies: ["@apollo/client"],
+    }),
+  ],
 });

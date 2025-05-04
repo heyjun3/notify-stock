@@ -11,6 +11,7 @@ import {
 type StockChartProps = {
   data: { name: string; price: number }[]; // チャートデータ
   selectedSymbol: string | null; // 選択中の銘柄シンボル
+  tickFormatter?: (value: any) => string;
 };
 
 /**
@@ -19,7 +20,7 @@ type StockChartProps = {
  * @param {Array<object>} props.data - チャートデータ
  * @param {string} props.selectedSymbol - 選択中の銘柄シンボル
  */
-export function StockChart({ data, selectedSymbol }: StockChartProps) {
+export function StockChart({ data, selectedSymbol, tickFormatter }: StockChartProps) {
   return (
     <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md h-[300px] sm:h-[400px]">
       <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
@@ -32,7 +33,7 @@ export function StockChart({ data, selectedSymbol }: StockChartProps) {
             margin={{
               top: 5,
               right: 20, // 右側のスペースを確保
-              left: 0, // 左側のスペースを調整
+              left: 15, // 左側のスペースを調整
               bottom: 20, // 下部のスペースを確保
             }}
           >
@@ -53,7 +54,7 @@ export function StockChart({ data, selectedSymbol }: StockChartProps) {
               tickLine={{ stroke: "#9CA3AF" }}
               axisLine={{ stroke: "#9CA3AF" }}
               domain={["auto", "auto"]} // Y軸の範囲を自動調整
-              tickFormatter={(value) => `$${value}`} // ドル記号を追加
+              tickFormatter={tickFormatter} // ドル記号を追加
             />
             <Tooltip
               contentStyle={{

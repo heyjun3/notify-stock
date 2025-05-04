@@ -1,4 +1,4 @@
-query GetSymbols {
+query GetSymbols($chartInput: ChartInput!) {
   symbols {
     symbol
     detail {
@@ -11,6 +11,11 @@ query GetSymbols {
       volume
       marketCap
       currencySymbol
+    }
+    chart(input: $chartInput) {
+      symbol
+      timestamp
+      close
     }
   }
 }

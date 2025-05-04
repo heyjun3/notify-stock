@@ -1,5 +1,6 @@
 import type React from "react";
 import { useState, useMemo, useEffect, Suspense } from "react";
+import { addYear, dayEnd, format } from "@formkit/tempo";
 
 import { StockChart } from "./stockChart";
 import { Pagination } from "./pagination";
@@ -7,107 +8,62 @@ import { StockCard } from "./stockCard";
 
 import { useGetSymbolsSuspenseQuery } from "../gen/graphql";
 
-// ダミーのチャートデータ（選択された銘柄に応じて変化させる想定）
-const chartData = [
-  { name: "2024-01-01", price: 160 },
-  { name: "2024-02-01", price: 165 },
-  { name: "2024-03-01", price: 170 },
-  { name: "2024-04-01", price: 168 },
-  { name: "2024-05-01", price: 175 },
-  { name: "2024-06-01", price: 180 },
-  { name: "2024-07-01", price: 178 },
-  { name: "2024-08-01", price: 185 },
-  { name: "2024-09-01", price: 182 },
-  { name: "2024-10-01", price: 175 },
-  { name: "2024-11-01", price: 178 },
-  { name: "2024-12-01", price: 175 },
-  { name: "2024-01-01", price: 160 },
-  { name: "2024-02-01", price: 165 },
-  { name: "2024-03-01", price: 170 },
-  { name: "2024-04-01", price: 168 },
-  { name: "2024-05-01", price: 175 },
-  { name: "2024-06-01", price: 180 },
-  { name: "2024-07-01", price: 178 },
-  { name: "2024-08-01", price: 185 },
-  { name: "2024-09-01", price: 182 },
-  { name: "2024-10-01", price: 175 },
-  { name: "2024-11-01", price: 178 },
-  { name: "2024-12-01", price: 175 },
-  { name: "2024-01-01", price: 160 },
-  { name: "2024-02-01", price: 165 },
-  { name: "2024-03-01", price: 170 },
-  { name: "2024-04-01", price: 168 },
-  { name: "2024-05-01", price: 175 },
-  { name: "2024-06-01", price: 180 },
-  { name: "2024-07-01", price: 178 },
-  { name: "2024-08-01", price: 185 },
-  { name: "2024-09-01", price: 182 },
-  { name: "2024-10-01", price: 175 },
-  { name: "2024-11-01", price: 178 },
-  { name: "2024-12-01", price: 175 },
-  { name: "2024-01-01", price: 160 },
-  { name: "2024-02-01", price: 165 },
-  { name: "2024-03-01", price: 170 },
-  { name: "2024-04-01", price: 168 },
-  { name: "2024-05-01", price: 175 },
-  { name: "2024-06-01", price: 180 },
-  { name: "2024-07-01", price: 178 },
-  { name: "2024-08-01", price: 185 },
-  { name: "2024-09-01", price: 182 },
-  { name: "2024-10-01", price: 175 },
-  { name: "2024-11-01", price: 178 },
-  { name: "2024-12-01", price: 175 },
-  { name: "2024-01-01", price: 160 },
-  { name: "2024-02-01", price: 165 },
-  { name: "2024-03-01", price: 170 },
-  { name: "2024-04-01", price: 168 },
-  { name: "2024-05-01", price: 175 },
-  { name: "2024-06-01", price: 180 },
-  { name: "2024-07-01", price: 178 },
-  { name: "2024-08-01", price: 185 },
-  { name: "2024-09-01", price: 182 },
-  { name: "2024-10-01", price: 175 },
-  { name: "2024-11-01", price: 178 },
-  { name: "2024-12-01", price: 175 },
-  { name: "2024-01-01", price: 160 },
-  { name: "2024-02-01", price: 165 },
-  { name: "2024-03-01", price: 170 },
-  { name: "2024-04-01", price: 168 },
-  { name: "2024-05-01", price: 175 },
-  { name: "2024-06-01", price: 180 },
-  { name: "2024-07-01", price: 178 },
-  { name: "2024-08-01", price: 185 },
-  { name: "2024-09-01", price: 182 },
-  { name: "2024-10-01", price: 175 },
-  { name: "2024-11-01", price: 178 },
-  { name: "2024-12-01", price: 175 },
-];
-
 // 1ページあたりの表示件数
 const ITEMS_PER_PAGE = 4;
 
 const useGetSymbols = () => {
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null); // 初期選択
-  const { data } = useGetSymbolsSuspenseQuery();
-  const symbols = data?.symbols.map((symbol) => symbol.detail)
+  const [charts, setCharts] = useState<
+    Map<
+      string,
+      { shortName: string; data: { name: string; price: number }[]; formatter: (v: any) => string }
+    >
+  >(new Map());
+  const { data } = useGetSymbolsSuspenseQuery({
+    variables: {
+      chartInput: {
+        start: dayEnd(addYear(new Date(), -1)).toISOString(),
+        end: dayEnd(new Date()).toISOString(),
+      },
+    },
+  });
+  const symbols = data?.symbols.map((symbol) => symbol.detail);
+
   useEffect(() => {
     if (data && data.symbols.length > 0) {
       setSelectedSymbol(data.symbols[0].detail.shortName);
     }
-    return
-  }, [data])
-  return { symbols, selectedSymbol, setSelectedSymbol };
-}
-
+    if (!data) return;
+    const m = new Map<
+      string,
+      { shortName: string; data: { name: string; price: number }[]; formatter: (v: any) => string }
+    >();
+    for (const symbol of data.symbols) {
+      const shortName = symbol.detail.shortName;
+      const chart = symbol.chart
+        ?.filter((data) => data != null)
+        .map((data) => ({
+          name: format(data.timestamp, "short"),
+          price: data.close,
+        }));
+      const formatter = (value: any) => `${symbol.detail.currencySymbol}${value}`;
+      if (chart) {
+        m.set(shortName, { shortName, data: chart, formatter });
+      }
+    }
+    setCharts(m);
+    return;
+  }, [data]);
+  return { symbols, charts, selectedSymbol, setSelectedSymbol };
+};
 
 /**
  * ダッシュボード全体のページコンポーネント
  */
 function DashboardPage() {
-  const { symbols, selectedSymbol, setSelectedSymbol } = useGetSymbols()
+  const { symbols, charts, selectedSymbol, setSelectedSymbol } = useGetSymbols();
   const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ番号
-
 
   // 検索フィルタリング
   const filteredStocks = useMemo(() => {
@@ -153,12 +109,12 @@ function DashboardPage() {
 
   // 選択された銘柄に対応するチャートデータを取得（ダミー）
   // 実際のアプリではAPIコールなどを行う
-  const currentChartData = useMemo(() => {
+  const { data: currentChartData, formatter } = useMemo(() => {
     // ここで selectedSymbol に基づいて適切なチャートデータを返す
-    // 今回はダミーデータをそのまま使う
-    console.log("Updating chart for:", selectedSymbol);
-    return chartData;
-  }, [selectedSymbol]);
+    if (!selectedSymbol || !charts) return { data: [] };
+    const chart = charts.get(selectedSymbol);
+    return { data: chart?.data ?? [], formatter: chart?.formatter };
+  }, [selectedSymbol, charts]);
 
   return (
     <Suspense fallback={<div className="text-center">Loading...</div>}>
@@ -207,7 +163,11 @@ function DashboardPage() {
         <div className="mt-8">
           {" "}
           {/* チャートの上にマージンを追加 */}
-          <StockChart data={currentChartData} selectedSymbol={selectedSymbol} />
+          <StockChart
+            data={currentChartData}
+            selectedSymbol={selectedSymbol}
+            tickFormatter={formatter}
+          />
         </div>
 
         {/* フッター等、他の要素をここに追加可能 */}

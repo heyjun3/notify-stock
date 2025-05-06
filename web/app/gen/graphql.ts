@@ -67,16 +67,16 @@ export type QuerySymbolsArgs = {
 
 export type Stock = {
   __typename?: "Stock";
-  close: Scalars["Float"]["output"];
+  price: Scalars["Float"]["output"];
   symbol: Scalars["ID"]["output"];
-  timestamp: Scalars["Time"]["output"];
+  timestamp: Scalars["String"]["output"];
 };
 
 export type Symbol = {
   __typename?: "Symbol";
-  chart?: Maybe<Array<Maybe<Stock>>>;
-  currentStock: Stock;
+  chart: Array<Stock>;
   detail: SymbolDetail;
+  id: Scalars["ID"]["output"];
   symbol: Scalars["ID"]["output"];
 };
 
@@ -109,6 +109,7 @@ export type GetSymbolsQuery = {
   __typename?: "Query";
   symbols: Array<{
     __typename?: "Symbol";
+    id: string;
     symbol: string;
     detail: {
       __typename?: "SymbolDetail";
@@ -122,18 +123,14 @@ export type GetSymbolsQuery = {
       marketCap?: string | null;
       currencySymbol: string;
     };
-    chart?: Array<{
-      __typename?: "Stock";
-      symbol: string;
-      timestamp: string;
-      close: number;
-    } | null> | null;
+    chart: Array<{ __typename?: "Stock"; symbol: string; timestamp: string; price: number }>;
   }>;
 };
 
 export const GetSymbolsDocument = gql`
     query GetSymbols($chartInput: ChartInput!) {
   symbols {
+    id
     symbol
     detail {
       symbol
@@ -149,7 +146,7 @@ export const GetSymbolsDocument = gql`
     chart(input: $chartInput) {
       symbol
       timestamp
-      close
+      price
     }
   }
 }

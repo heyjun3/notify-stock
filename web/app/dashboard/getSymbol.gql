@@ -1,5 +1,6 @@
 query GetSymbols($chartInput: ChartInput!) {
   symbols {
+    id
     symbol
     detail {
       symbol
@@ -15,7 +16,7 @@ query GetSymbols($chartInput: ChartInput!) {
     chart(input: $chartInput) {
       symbol
       timestamp
-      close
+      price
     }
   }
 }

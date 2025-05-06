@@ -13,7 +13,7 @@ type Stock = {
 type StockCardProps = {
   stock: Stock;
   isSelected: boolean;
-  onClick: (symbol: string) => void;
+  onClick: (symbol: { symbol: string; shortName: string }) => void;
 };
 
 /**
@@ -33,8 +33,8 @@ export function StockCard({ stock, isSelected, onClick }: StockCardProps) {
   return (
     <div
       className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border ${borderClass} cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02]`}
-      onClick={() => onClick(stock.shortName)}
-      onKeyDown={() => onClick(stock.shortName)}
+      onClick={() => onClick(stock)}
+      onKeyDown={() => onClick(stock)}
     >
       <div className="flex justify-between items-start mb-2">
         <div>

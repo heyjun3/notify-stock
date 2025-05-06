@@ -1,29 +1,67 @@
 import type React from "react";
 import { useState, useMemo, useEffect, Suspense } from "react";
-import { addYear, dayEnd, format } from "@formkit/tempo";
+import { addMonth, addYear, dayEnd, format } from "@formkit/tempo";
 
-import { StockChart } from "./stockChart";
+import { StockChart, type ChartData } from "./stockChart";
 import { Pagination } from "./pagination";
 import { StockCard } from "./stockCard";
 
 import { useGetSymbolsSuspenseQuery } from "../gen/graphql";
+import { PeriodSelector, type Period } from "./periodSelector";
 
 // 1ページあたりの表示件数
 const ITEMS_PER_PAGE = 4;
 
+const periodToTitle = (period: Period) => {
+  switch (period) {
+    case "1M":
+      return "過去1ヶ月の価格推移";
+    case "6M":
+      return "過去6ヶ月の価格推移";
+    case "1Y":
+      return "過去12ヶ月の価格推移";
+    case "5Y":
+      return "過去5年の価格推移";
+    default:
+      period satisfies never;
+      return "";
+  }
+};
+
+const periodToStart = (period: Period) => {
+  switch (period) {
+    case "1M":
+      return addMonth(new Date(), -1);
+    case "6M":
+      return addMonth(new Date(), -6);
+    case "1Y":
+      return addYear(new Date(), -1);
+    case "5Y":
+      return addYear(new Date(), -5);
+    default:
+      period satisfies never;
+      return new Date();
+  }
+};
+
+type Chart = {
+  data: ChartData[];
+  formatter?: (v: any) => string;
+};
+
 const useGetSymbols = () => {
-  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null); // 初期選択
-  const [charts, setCharts] = useState<
-    Map<
-      string,
-      { shortName: string; data: { name: string; price: number }[]; formatter: (v: any) => string }
-    >
-  >(new Map());
+  const [selectedSymbol, setSelectedSymbol] = useState<{
+    symbol: string;
+    shortName: string;
+  } | null>(null); // 初期選択
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>("1Y"); // 選択された期間
+  const [chartData, setChartData] = useState<Chart>({ data: [] });
   const { data } = useGetSymbolsSuspenseQuery({
     variables: {
       chartInput: {
-        start: dayEnd(addYear(new Date(), -1)).toISOString(),
+        start: dayEnd(periodToStart(selectedPeriod)).toISOString(),
         end: dayEnd(new Date()).toISOString(),
+        symbol: selectedSymbol?.symbol,
       },
     },
   });
@@ -31,37 +69,46 @@ const useGetSymbols = () => {
 
   useEffect(() => {
     if (data && data.symbols.length > 0) {
-      setSelectedSymbol(data.symbols[0].detail.shortName);
+      setSelectedSymbol(
+        (symbol) =>
+          symbol ?? {
+            symbol: data.symbols[0].detail.symbol,
+            shortName: data.symbols[0].detail.shortName,
+          },
+      );
     }
     if (!data) return;
-    const m = new Map<
-      string,
-      { shortName: string; data: { name: string; price: number }[]; formatter: (v: any) => string }
-    >();
     for (const symbol of data.symbols) {
-      const shortName = symbol.detail.shortName;
-      const chart = symbol.chart
-        ?.filter((data) => data != null)
-        .map((data) => ({
-          name: format(data.timestamp, "short"),
-          price: data.close,
-        }));
-      const formatter = (value: any) => `${symbol.detail.currencySymbol}${value}`;
-      if (chart) {
-        m.set(shortName, { shortName, data: chart, formatter });
+      const chart = symbol.chart;
+      if (chart && chart.length) {
+        const formatter = (value: any) => `${symbol.detail.currencySymbol}${value}`;
+        setChartData({ data: chart, formatter });
       }
     }
-    setCharts(m);
     return;
   }, [data]);
-  return { symbols, charts, selectedSymbol, setSelectedSymbol };
+  return {
+    symbols,
+    selectedSymbol,
+    setSelectedSymbol,
+    selectedPeriod,
+    setSelectedPeriod,
+    chartData,
+  };
 };
 
 /**
  * ダッシュボード全体のページコンポーネント
  */
 function DashboardPage() {
-  const { symbols, charts, selectedSymbol, setSelectedSymbol } = useGetSymbols();
+  const {
+    symbols,
+    selectedSymbol,
+    setSelectedSymbol,
+    selectedPeriod,
+    setSelectedPeriod,
+    chartData,
+  } = useGetSymbols();
   const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ番号
 
@@ -85,13 +132,8 @@ function DashboardPage() {
   }, [filteredStocks, currentPage]);
 
   // カードクリック時のハンドラ
-  const handleCardClick = (symbol: string) => {
+  const handleCardClick = (symbol: { symbol: string; shortName: string }) => {
     setSelectedSymbol(symbol);
-    // ここで選択された銘柄に応じてチャートデータを更新するロジックを追加
-    // 例: fetchChartData(symbol).then(data => setChartData(data));
-    console.log(`Selected stock: ${symbol}`);
-    // 必要であれば、チャートデータをAPIから取得し直す
-    // setChartData(fetchChartDataForSymbol(symbol)); // ダミー関数
   };
 
   // 検索入力ハンドラ
@@ -107,14 +149,12 @@ function DashboardPage() {
     }
   };
 
-  // 選択された銘柄に対応するチャートデータを取得（ダミー）
-  // 実際のアプリではAPIコールなどを行う
-  const { data: currentChartData, formatter } = useMemo(() => {
-    // ここで selectedSymbol に基づいて適切なチャートデータを返す
-    if (!selectedSymbol || !charts) return { data: [] };
-    const chart = charts.get(selectedSymbol);
-    return { data: chart?.data ?? [], formatter: chart?.formatter };
-  }, [selectedSymbol, charts]);
+  const title = useMemo(() => {
+    if (selectedSymbol) {
+      return `${selectedSymbol.shortName} - ${periodToTitle(selectedPeriod)}`;
+    }
+    return "銘柄を選択してください";
+  }, [selectedSymbol, selectedPeriod]);
 
   return (
     <Suspense fallback={<div className="text-center">Loading...</div>}>
@@ -142,7 +182,7 @@ function DashboardPage() {
                 <StockCard
                   key={stock.symbol}
                   stock={stock}
-                  isSelected={stock.shortName === selectedSymbol}
+                  isSelected={stock.symbol === selectedSymbol?.symbol}
                   onClick={handleCardClick}
                 />
               ))}
@@ -161,13 +201,13 @@ function DashboardPage() {
 
         {/* 株価チャート */}
         <div className="mt-8">
-          {" "}
-          {/* チャートの上にマージンを追加 */}
-          <StockChart
-            data={currentChartData}
-            selectedSymbol={selectedSymbol}
-            tickFormatter={formatter}
+          {/* 期間選択 */}
+          <PeriodSelector
+            currentPeriod={selectedPeriod}
+            onPeriodChange={(period: Period) => setSelectedPeriod(period)}
           />
+          {/* チャートの上にマージンを追加 */}
+          <StockChart data={chartData.data} title={title} tickFormatter={chartData.formatter} />
         </div>
 
         {/* フッター等、他の要素をここに追加可能 */}

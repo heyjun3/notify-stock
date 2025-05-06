@@ -8,9 +8,14 @@ import {
   Area,
 } from "recharts";
 
+export type ChartData = {
+  timestamp: string;
+  price: number;
+};
+
 type StockChartProps = {
-  data: { name: string; price: number }[]; // チャートデータ
-  selectedSymbol: string | null; // 選択中の銘柄シンボル
+  data: ChartData[]; // チャートデータ
+  title: string;
   tickFormatter?: (value: any) => string;
 };
 
@@ -20,13 +25,14 @@ type StockChartProps = {
  * @param {Array<object>} props.data - チャートデータ
  * @param {string} props.selectedSymbol - 選択中の銘柄シンボル
  */
-export function StockChart({ data, selectedSymbol, tickFormatter }: StockChartProps) {
+export function StockChart({ data, title, tickFormatter }: StockChartProps) {
+  const formatter = tickFormatter ?? ((value: any) => `${value}`); // デフォルトのフォーマッタを設定
   return (
     <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md h-[300px] sm:h-[400px]">
       <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
-        {selectedSymbol ? `${selectedSymbol} - 過去12ヶ月の価格推移` : "銘柄を選択してください"}
+        {title}
       </h3>
-      {selectedSymbol && data.length > 0 ? (
+      {data.length > 0 ? (
         <ResponsiveContainer width="100%" height="85%">
           <AreaChart
             data={data}
@@ -39,7 +45,7 @@ export function StockChart({ data, selectedSymbol, tickFormatter }: StockChartPr
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#4B5563" /> {/* グリッド線の色を調整 */}
             <XAxis
-              dataKey="name"
+              dataKey="timestamp"
               tick={{ fill: "#9CA3AF" }} // 目盛りの色
               tickLine={{ stroke: "#9CA3AF" }} // 目盛り線の色
               axisLine={{ stroke: "#9CA3AF" }} // 軸線の色
@@ -54,7 +60,7 @@ export function StockChart({ data, selectedSymbol, tickFormatter }: StockChartPr
               tickLine={{ stroke: "#9CA3AF" }}
               axisLine={{ stroke: "#9CA3AF" }}
               domain={["auto", "auto"]} // Y軸の範囲を自動調整
-              tickFormatter={tickFormatter} // ドル記号を追加
+              tickFormatter={formatter} // ドル記号を追加
             />
             <Tooltip
               contentStyle={{
@@ -65,7 +71,7 @@ export function StockChart({ data, selectedSymbol, tickFormatter }: StockChartPr
               itemStyle={{ color: "#E5E7EB" }} // テキストの色
               labelStyle={{ color: "#D1D5DB", fontWeight: "bold" }} // ラベルの色
               formatter={(value) => [
-                `$${typeof value === "number" ? value.toFixed(2) : value}`,
+                `${formatter(typeof value === "number" ? value.toFixed(2) : value)}`,
                 "価格",
               ]} // フォーマット調整
             />

@@ -15,6 +15,7 @@ require (
 	github.com/uptrace/bun/driver/pgdriver v1.2.6
 	github.com/uptrace/bun/extra/bundebug v1.2.6
 	github.com/vektah/gqlparser/v2 v2.5.25
+	golang.org/x/net v0.39.0
 )
 
 require (
@@ -43,7 +44,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.9-0.20240816141633-0a40785b4f41 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect

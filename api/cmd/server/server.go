@@ -42,6 +42,7 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Max-Age", "86400")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -70,9 +71,16 @@ func runServer() {
 		Cache: lru.New[string](100),
 	})
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", CORSMiddleware(loggerMiddleware(logger, srv)))
+	mux := http.NewServeMux()
+
+	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	mux.Handle("/query", CORSMiddleware(loggerMiddleware(logger, srv)))
+
+	s := &http.Server{
+		Addr:    ":" + port,
+		Handler: mux,
+	}
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(s.ListenAndServeTLS("localhost-cert.pem", "localhost-key.pem"))
 }

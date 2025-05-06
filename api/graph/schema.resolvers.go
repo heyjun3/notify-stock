@@ -30,6 +30,7 @@ func (r *mutationResolver) CreateNotification(ctx context.Context, input model.N
 // Symbol is the resolver for the symbol field.
 func (r *queryResolver) Symbol(ctx context.Context, input model.SymbolInput) (*model.Symbol, error) {
 	return &model.Symbol{
+		ID:     input.Symbol,
 		Symbol: input.Symbol,
 	}, nil
 }
@@ -45,6 +46,7 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 		sym := make([]*model.Symbol, 0, len(symbols))
 		for _, symbol := range symbols {
 			sym = append(sym, &model.Symbol{
+				ID:     symbol.Symbol,
 				Symbol: symbol.Symbol,
 				Detail: &model.SymbolDetail{
 					Symbol:         symbol.Symbol,
@@ -68,19 +70,6 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 	}, nil
 }
 
-// CurrentStock is the resolver for the currentStock field.
-func (r *symbolResolver) CurrentStock(ctx context.Context, obj *model.Symbol) (*model.Stock, error) {
-	stock, err := r.stockRepository.GetLatestStock(ctx, obj.Symbol)
-	if err != nil {
-		return nil, err
-	}
-	return &model.Stock{
-		Symbol:    obj.Symbol,
-		Close:     stock.Close,
-		Timestamp: stock.Timestamp,
-	}, nil
-}
-
 // Detail is the resolver for the detail field.
 func (r *symbolResolver) Detail(ctx context.Context, obj *model.Symbol) (*model.SymbolDetail, error) {
 	r.logger.Info("Fetching symbol detail", "symbol", obj.Symbol)
@@ -89,6 +78,12 @@ func (r *symbolResolver) Detail(ctx context.Context, obj *model.Symbol) (*model.
 
 // Chart is the resolver for the chart field.
 func (r *symbolResolver) Chart(ctx context.Context, obj *model.Symbol, input model.ChartInput) ([]*model.Stock, error) {
+	if input.Symbol == nil {
+		return []*model.Stock{}, nil
+	}
+	if *input.Symbol != obj.Symbol {
+		return []*model.Stock{}, nil
+	}
 	stocks, err := r.stockRepository.GetStockByPeriod(ctx, obj.Symbol, input.Start, input.End)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stock by period: %w", err)
@@ -97,8 +92,8 @@ func (r *symbolResolver) Chart(ctx context.Context, obj *model.Symbol, input mod
 	for _, stock := range stocks {
 		result = append(result, &model.Stock{
 			Symbol:    obj.Symbol,
-			Close:     stock.Close,
-			Timestamp: stock.Timestamp,
+			Price:     stock.Close,
+			Timestamp: stock.Timestamp.Format("2006/01/02"),
 		})
 	}
 	return result, nil

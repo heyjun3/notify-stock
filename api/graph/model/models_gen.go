@@ -7,8 +7,9 @@ import (
 )
 
 type ChartInput struct {
-	Start time.Time `json:"start"`
-	End   time.Time `json:"end"`
+	Symbol *string   `json:"symbol,omitempty"`
+	Start  time.Time `json:"start"`
+	End    time.Time `json:"end"`
 }
 
 type Mutation struct {
@@ -31,16 +32,16 @@ type Query struct {
 }
 
 type Stock struct {
-	Symbol    string    `json:"symbol"`
-	Timestamp time.Time `json:"timestamp"`
-	Close     float64   `json:"close"`
+	Symbol    string  `json:"symbol"`
+	Timestamp string  `json:"timestamp"`
+	Price     float64 `json:"price"`
 }
 
 type Symbol struct {
-	Symbol       string        `json:"symbol"`
-	CurrentStock *Stock        `json:"currentStock"`
-	Detail       *SymbolDetail `json:"detail"`
-	Chart        []*Stock      `json:"chart,omitempty"`
+	Symbol string        `json:"symbol"`
+	ID     string        `json:"id"`
+	Detail *SymbolDetail `json:"detail"`
+	Chart  []*Stock      `json:"chart"`
 }
 
 type SymbolDetail struct {

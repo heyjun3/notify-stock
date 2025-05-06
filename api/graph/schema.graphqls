@@ -6,15 +6,15 @@ scalar Time
 
 type Stock {
   symbol: ID!
-  timestamp: Time!
-  close: Float!
+  timestamp: String!
+  price: Float!
 }
 
 type Symbol {
   symbol: ID!
-  currentStock: Stock!
+  id: ID!
   detail: SymbolDetail!
-  chart(input: ChartInput!): [Stock]
+  chart(input: ChartInput!): [Stock!]!
 }
 
 type SymbolDetail {
@@ -47,6 +47,7 @@ input NotificationInput {
 }
 
 input ChartInput {
+  symbol: ID
   start: Time!
   end: Time!
 }

@@ -15,7 +15,6 @@ require (
 	github.com/uptrace/bun/driver/pgdriver v1.2.6
 	github.com/uptrace/bun/extra/bundebug v1.2.6
 	github.com/vektah/gqlparser/v2 v2.5.25
-	golang.org/x/net v0.39.0
 )
 
 require (

@@ -80,7 +80,6 @@ func runServer() {
 		Addr:    ":" + port,
 		Handler: mux,
 	}
-
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Printf("connect to https://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(s.ListenAndServeTLS("localhost-cert.pem", "localhost-key.pem"))
 }

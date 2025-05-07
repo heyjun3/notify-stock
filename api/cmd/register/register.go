@@ -55,24 +55,19 @@ func registerStockByWeek(symbols []string) error {
 
 func registerAllStockHistoryBySymbol(symbols []string) error {
 	register := notify.InitStockRegister(notify.Cfg.DBDSN, &http.Client{})
-	t := time.Unix(0, 0)
-	times := []time.Time{t}
+	end := time.Now().UTC()
 	for {
-		t = t.AddDate(5, 0, 0)
-		if t.After(time.Now().UTC()) {
-			t = time.Now().UTC()
-			times = append(times, t)
-			break
-		}
-		times = append(times, t)
-	}
-	for i := range len(times) - 1 {
+		start := end.AddDate(-5, 0, 0)
 		for _, symbol := range symbols {
-			if err := register.SaveStock(
-				symbol, times[i], times[i+1]); err != nil {
-				return err
+			if err := register.SaveStock(symbol, start, end); err != nil {
+				logger.Warn(err.Error())
+				continue
 			}
 			time.Sleep(2 * time.Second)
+		}
+		end = start
+		if end.Before(time.Unix(0, 0)) {
+			break
 		}
 	}
 	return register.RegisterSymbols(symbols)

@@ -46,3 +46,7 @@ type Config struct {
 	DBDSN     string
 	MailToken string
 }
+
+type SupportSymbol struct {
+	Symbols []string `yaml:"symbols"`
+}

@@ -2,6 +2,7 @@ package notifystock
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -25,37 +26,41 @@ func NewStockRegister(
 	}
 }
 
-func (s *StockRegister) SaveStock(symbol string, begging, end time.Time) error {
-	ctx := context.Background()
-	stock, err := s.client.FetchStock(symbol, begging, end, WithInterval("1d"))
+func (s *StockRegister) RegisterStockBySymbol(
+	ctx context.Context, symbol string, start, end time.Time) error {
+	stock, err := s.client.FetchStock(
+		symbol,
+		start,
+		end,
+		WithInterval("1d"),
+	)
 	if err != nil {
 		return err
 	}
 	if err := s.stockRepository.Save(ctx, stock.stocks); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (s *StockRegister) RegisterSymbol(symbol string) error {
-	ctx := context.Background()
-	stocks, err := s.client.FetchCurrentStock(symbol)
-	if err != nil {
-		return err
-	}
-	if err := s.symbolRepository.Save(ctx, []SymbolDetail{stocks.symbol}); err != nil {
+	if err := s.symbolRepository.Save(
+		ctx, []SymbolDetail{stock.symbol},
+	); err != nil {
 		return err
 	}
 	return nil
 }
-
-func (s *StockRegister) RegisterSymbols(symbols []string) error {
+func (s *StockRegister) RegisterStockBySymbols(
+	ctx context.Context, symbols []string, start, end time.Time) error {
+	var errs []error
 	for _, symbol := range symbols {
-		if err := s.RegisterSymbol(symbol); err != nil {
-			return err
+		if err := s.RegisterStockBySymbol(
+			ctx,
+			symbol,
+			start,
+			end,
+		); err != nil {
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 type MailService interface {
@@ -78,7 +83,12 @@ func (n *StockNotifier) Notify(symbols []string) error {
 	now := time.Now()
 	results := make([]*Stocks, 0, len(symbols))
 	for _, symbol := range symbols {
-		stocks, err := n.client.FetchStock(symbol, now.AddDate(0, -12, 0), now, WithInterval("1d"))
+		stocks, err := n.client.FetchStock(
+			symbol,
+			now.AddDate(0, -12, 0),
+			now,
+			WithInterval("1d"),
+		)
 		if err != nil {
 			return err
 		}

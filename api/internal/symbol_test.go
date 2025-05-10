@@ -98,6 +98,40 @@ func TestSymbolRepository(t *testing.T) {
 		assert.Equal(t, "JPY", symbol.Currency.String())
 	})
 
+	t.Run("get by symbols", func(t *testing.T) {
+		sp500 := notify.NewSymbolDetail(
+			"S&P500", "S&P500", "S&P 500", "USD",
+			decimal.NewFromInt(1000), decimal.NewFromInt(900))
+		n225 := notify.NewSymbolDetail(
+			"N225", "N225", "Nikkei 225", "JPY",
+			decimal.NewFromInt(1000), decimal.NewFromInt(900))
+		err := repo.Save(context.Background(), []notify.SymbolDetail{
+			*sp500, *n225,
+		})
+		assert.NoError(t, err)
+
+		symbols, err := repo.GetBySymbols(
+			context.Background(), []string{"S&P500", "N225"},
+		)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 2, len(symbols))
+
+		assert.Equal(t, n225.Symbol, symbols[0].Symbol)
+		assert.Equal(t, n225.ShortName, symbols[0].ShortName)
+		assert.Equal(t, n225.LongName, symbols[0].LongName)
+		assert.Equal(t, n225.PreviousClose.String(), symbols[0].PreviousClose.String())
+		assert.Equal(t, n225.Currency.String(), symbols[0].Currency.String())
+		assert.Equal(t, n225.MarketPrice.String(), symbols[0].MarketPrice.String())
+
+		assert.Equal(t, sp500.Symbol, symbols[1].Symbol)
+		assert.Equal(t, sp500.ShortName, symbols[1].ShortName)
+		assert.Equal(t, sp500.LongName, symbols[1].LongName)
+		assert.Equal(t, sp500.PreviousClose.String(), symbols[1].PreviousClose.String())
+		assert.Equal(t, sp500.Currency.String(), symbols[1].Currency.String())
+		assert.Equal(t, sp500.MarketPrice.String(), symbols[1].MarketPrice.String())
+	})
+
 	t.Run("get all symbols", func(t *testing.T) {
 		detail := notify.NewSymbolDetail("N225", "N225", "Nikkei 225", "JPY",
 			decimal.NewFromInt(1000), decimal.NewFromInt(900))

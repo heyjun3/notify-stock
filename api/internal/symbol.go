@@ -112,6 +112,19 @@ func (r *SymbolRepository) Get(ctx context.Context, symbol string) (*SymbolDetai
 	return &detail, nil
 }
 
+func (r *SymbolRepository) GetBySymbols(
+	ctx context.Context, symbols []string) ([]SymbolDetail, error) {
+	var details []SymbolDetail
+	err := r.db.NewSelect().Model(&details).
+		Where("symbol IN (?)", bun.In(symbols)).
+		Order("symbol ASC").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return details, nil
+}
+
 func (r *SymbolRepository) GetAll(ctx context.Context) ([]SymbolDetail, error) {
 	var details []SymbolDetail
 	err := r.db.NewSelect().Model(&details).Scan(ctx)

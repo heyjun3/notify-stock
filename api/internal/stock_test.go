@@ -2,6 +2,7 @@ package notifystock_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -55,7 +56,7 @@ func TestGetStockByPeriod(t *testing.T) {
 		minLength int
 	}{{
 		symbol: "N225",
-		err:    nil,
+		err:    fmt.Errorf("symbol N225 not found"),
 	}, {
 		symbol:    "N225",
 		begging:   time.Now().AddDate(-1, 0, 0),
@@ -68,7 +69,7 @@ func TestGetStockByPeriod(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			stocks, err := repo.GetStockByPeriod(context.Background(), tt.symbol, tt.begging, tt.end)
 
-			assert.NoError(t, err)
+			assert.Equal(t, tt.err, err)
 			assert.GreaterOrEqual(t, len(stocks), tt.minLength)
 			for _, stock := range stocks {
 				assert.True(t, tt.begging.Before(stock.Timestamp))
@@ -128,7 +129,7 @@ func TestStocksLatest(t *testing.T) {
 	}
 
 	t.Run("", func(t *testing.T) {
-		s, err := notify.NewStocks(notify.SymbolDetail{}, "JPY", stocks)
+		s, err := notify.NewStocks(notify.SymbolDetail{}, stocks)
 		assert.NoError(t, err)
 		latest := s.Latest()
 

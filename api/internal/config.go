@@ -3,6 +3,7 @@ package notifystock
 import (
 	"os"
 
+	yaml "github.com/goccy/go-yaml"
 	"github.com/joho/godotenv"
 )
 
@@ -49,4 +50,16 @@ type Config struct {
 
 type SupportSymbol struct {
 	Symbols []string `yaml:"symbols"`
+}
+
+func GetSupportSymbols(path string) (*SupportSymbol, error) {
+	buf, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var symbol SupportSymbol
+	if err := yaml.Unmarshal(buf, &symbol); err != nil {
+		return nil, err
+	}
+	return &symbol, nil
 }

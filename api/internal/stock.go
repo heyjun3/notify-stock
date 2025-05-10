@@ -45,20 +45,14 @@ type Stock struct {
 }
 
 type Stocks struct {
-	symbol   SymbolDetail
-	currency Currency
-	stocks   []Stock
+	symbol SymbolDetail
+	stocks []Stock
 }
 
-func NewStocks(symbol SymbolDetail, currency string, stocks []Stock) (*Stocks, error) {
-	cur, err := CurrencyString(currency)
-	if err != nil {
-		return nil, err
-	}
+func NewStocks(symbol SymbolDetail, stocks []Stock) (*Stocks, error) {
 	return &Stocks{
-		symbol:   symbol,
-		currency: cur,
-		stocks:   stocks,
+		symbol: symbol,
+		stocks: stocks,
 	}, nil
 }
 
@@ -96,7 +90,7 @@ func (s *Stocks) GenerateNotificationMessage() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	currency := s.currency
+	currency := s.symbol.Currency
 	text := strings.Join([]string{
 		s.symbol.ShortName,
 		fmt.Sprintf("Closing Price: %v %s", int(latest.Close), currency),
@@ -108,13 +102,11 @@ func (s *Stocks) GenerateNotificationMessage() (string, error) {
 
 func (s *Stocks) Json() ([]byte, error) {
 	t := struct {
-		Symbol   SymbolDetail `json:"symbol"`
-		Currency Currency     `json:"currency"`
-		Stocks   []Stock      `json:"stocks"`
+		Symbol SymbolDetail `json:"symbol"`
+		Stocks []Stock      `json:"stocks"`
 	}{
-		Symbol:   s.symbol,
-		Currency: s.currency,
-		Stocks:   s.stocks,
+		Symbol: s.symbol,
+		Stocks: s.stocks,
 	}
 	return json.Marshal(t)
 }
@@ -163,18 +155,47 @@ func (r *StockRepository) Save(ctx context.Context, stocks []Stock) error {
 func (r *StockRepository) GetStockByPeriod(
 	ctx context.Context, symbol string, begging, end time.Time) (
 	[]Stock, error) {
+	stocks, err := r.GetStockByPeriodAndSymbols(
+		ctx, []string{symbol}, begging, end,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if stock, ok := stocks[symbol]; !ok {
+		fmt.Println("stock not found", symbol)
+		return nil, fmt.Errorf("symbol %s not found", symbol)
+	} else {
+		return stock, nil
+	}
+}
+
+func (r *StockRepository) GetStockByPeriodAndSymbols(
+	ctx context.Context, symbols []string, begging, end time.Time) (
+	map[string][]Stock, error) {
+	if len(symbols) == 0 {
+		return nil, fmt.Errorf("symbols is empty")
+	}
 	var stocks []Stock
 	if err := r.db.NewSelect().
 		Model(&stocks).
 		DistinctOn("timestamp::date").
-		Where("symbol = ?", symbol).
+		Where("symbol IN (?)", bun.In(symbols)).
 		Where("timestamp::date BETWEEN ? AND ?", begging, end).
 		OrderExpr("timestamp::date").
 		Order("timestamp").
 		Scan(ctx); err != nil {
 		return nil, err
 	}
-	return stocks, nil
+	result := make(map[string][]Stock)
+	for _, stock := range stocks {
+		if arr, ok := result[stock.Symbol]; !ok {
+			result[stock.Symbol] = []Stock{stock}
+		} else {
+			arr = append(arr, stock)
+			result[stock.Symbol] = arr
+		}
+	}
+	return result, nil
 }
 
 func (r *StockRepository) GetLatestStock(ctx context.Context, symbol string) (*Stock, error) {

@@ -132,7 +132,6 @@ func ConvertResponseToStock(res ChartResponse) (*Stocks, error) {
 			"close", len(close), "high", len(high), "low", len(low))
 		return nil, fmt.Errorf("don't same length error")
 	}
-	currency := result[0].Meta.Currency
 	symbol := result[0].Meta.Symbol
 
 	stocks := make([]Stock, 0, len(timestamp))
@@ -151,7 +150,7 @@ func ConvertResponseToStock(res ChartResponse) (*Stocks, error) {
 	if err != nil {
 		return nil, err
 	}
-	s, err := NewStocks(*detail, currency, stocks)
+	s, err := NewStocks(*detail, stocks)
 	if err != nil {
 		return nil, err
 	}
@@ -245,5 +244,6 @@ func (c *FinanceClient) FetchStock(
 	if err := json.Unmarshal(body, &chart); err != nil {
 		return nil, err
 	}
+	time.Sleep(time.Second * 1)
 	return ConvertResponseToStock(chart)
 }

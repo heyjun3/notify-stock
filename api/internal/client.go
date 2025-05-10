@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type HTTPClientInterface interface {
@@ -71,6 +73,7 @@ type Meta struct {
 	LongName             string               `json:"longName"`
 	ShortName            string               `json:"shortName"`
 	ChartPreviousClose   float64              `json:"chartPreviousClose"`
+	PreviousClose        float64              `json:"previousClose"`
 	PriceHint            int                  `json:"priceHint"`
 	CurrentTradingPeriod CurrentTradingPeriod `json:"currentTradingPeriod"`
 	DataGranularity      string               `json:"dataGranularity"`
@@ -101,6 +104,94 @@ type Chart struct {
 	Error  any      `json:"error"`
 }
 
+func IsSameLen[T any](array ...[]T) bool {
+	for i := range len(array) - 1 {
+		if !(len(array[i]) == len(array[i+1])) {
+			return false
+		}
+	}
+	return true
+}
+func ConvertResponseToStock(res ChartResponse) (*Stocks, error) {
+	result := res.Chart.Result
+	if len(result) == 0 {
+		return nil, fmt.Errorf("result is nil")
+	}
+	quote := result[0].Indicators.Quote
+	if len(quote) == 0 {
+		return nil, fmt.Errorf("quote is nil")
+	}
+	timestamp := result[0].Timestamp
+	open := quote[0].Open
+	close := quote[0].Close
+	high := quote[0].High
+	low := quote[0].Low
+	if !IsSameLen(open, close, high, low) || len(timestamp) != len(open) {
+		logger.Error(
+			"same len error", "timestamp", len(timestamp), "open", len(open),
+			"close", len(close), "high", len(high), "low", len(low))
+		return nil, fmt.Errorf("don't same length error")
+	}
+	currency := result[0].Meta.Currency
+	symbol := result[0].Meta.Symbol
+
+	stocks := make([]Stock, 0, len(timestamp))
+	for i, t := range timestamp {
+		stock, err := NewStock(
+			symbol, time.Unix(int64(t), 0),
+			open[i], close[i], high[i], low[i],
+		)
+		if err != nil {
+			logger.Error("new stock error", "error", err)
+			continue
+		}
+		stocks = append(stocks, stock)
+	}
+	detail, err := ConvertResponseToSymbol(&res)
+	if err != nil {
+		return nil, err
+	}
+	s, err := NewStocks(*detail, currency, stocks)
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func ConvertResponseToSymbol(res *ChartResponse) (*SymbolDetail, error) {
+	result := res.Chart.Result
+	if len(result) == 0 {
+		return nil, fmt.Errorf("result is nil")
+	}
+	meta := result[0].Meta
+
+	previousClose, err := parsePreviousClose(res)
+	if err != nil {
+		return nil, err
+	}
+	detail := NewSymbolDetail(meta.Symbol, meta.ShortName, meta.LongName, meta.Currency,
+		decimal.NewFromFloat(meta.RegularMarketPrice), decimal.NewFromFloat(previousClose))
+	return detail, nil
+}
+func parsePreviousClose(res *ChartResponse) (float64, error) {
+	result := res.Chart.Result
+	if len(result) == 0 {
+		return 0, fmt.Errorf("result is nil")
+	}
+	meta := result[0].Meta
+	if meta.PreviousClose != 0 {
+		return meta.PreviousClose, nil
+	}
+	adjclose := result[0].Indicators.Adjclose
+	if len(adjclose) == 0 {
+		return meta.ChartPreviousClose, nil
+	}
+	if len(adjclose[0].Adjclose) > 1 {
+		return adjclose[0].Adjclose[len(adjclose[0].Adjclose)-2], nil
+	}
+	return meta.ChartPreviousClose, nil
+}
+
 type Option func(URL *url.URL) *url.URL
 
 func WithInterval(interval string) Option {
@@ -112,12 +203,14 @@ func WithInterval(interval string) Option {
 	}
 }
 
-func (c *FinanceClient) FetchCurrentStock(symbol string) (*ChartResponse, error) {
+func (c *FinanceClient) FetchCurrentStock(symbol string) (*Stocks, error) {
 	now := time.Now()
 	return c.FetchStock(symbol, now, now)
 }
 
-func (c *FinanceClient) FetchStock(symbol string, beggingOfPeriod, endOfPeriod time.Time, opts ...Option) (*ChartResponse, error) {
+func (c *FinanceClient) FetchStock(
+	symbol string, beggingOfPeriod, endOfPeriod time.Time, opts ...Option) (
+	*Stocks, error) {
 	URL, err := url.Parse(fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s", symbol))
 	if err != nil {
 		return nil, err
@@ -152,5 +245,5 @@ func (c *FinanceClient) FetchStock(symbol string, beggingOfPeriod, endOfPeriod t
 	if err := json.Unmarshal(body, &chart); err != nil {
 		return nil, err
 	}
-	return &chart, nil
+	return ConvertResponseToStock(chart)
 }

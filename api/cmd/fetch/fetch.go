@@ -1,10 +1,10 @@
 package fetch
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	notify "github.com/heyjun3/notify-stock/internal"
 	"github.com/spf13/cobra"
@@ -30,11 +30,13 @@ func init() {
 
 func fetch(symbol string) error {
 	client := notify.NewFinanceClient(&http.Client{})
-	res, err := client.FetchCurrentStock(symbol)
+	// res, err := client.FetchCurrentStock(symbol)
+	// res, err := client.FetchStock(symbol, time.Now().AddDate(0, 0, -7), time.Now(), notify.WithInterval("1d"))
+	res, err := client.FetchStock(symbol, time.Now().AddDate(0, 0, -7), time.Now())
 	if err != nil {
 		return err
 	}
-	bytes, err := json.Marshal(res)
+	bytes, err := res.Json()
 	if err != nil {
 		return err
 	}

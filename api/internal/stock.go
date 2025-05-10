@@ -3,6 +3,7 @@ package notifystock
 import (
 	"cmp"
 	"context"
+	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -103,6 +104,19 @@ func (s *Stocks) GenerateNotificationMessage() (string, error) {
 		fmt.Sprintf("Closing Price to 1-Year Moving Average Ratio: %v%s", ratio.Mul(decimal.New(100, 0)).RoundCeil(2), "%"),
 	}, "\n")
 	return text, nil
+}
+
+func (s *Stocks) Json() ([]byte, error) {
+	t := struct {
+		Symbol   SymbolDetail `json:"symbol"`
+		Currency Currency     `json:"currency"`
+		Stocks   []Stock      `json:"stocks"`
+	}{
+		Symbol:   s.symbol,
+		Currency: s.currency,
+		Stocks:   s.stocks,
+	}
+	return json.Marshal(t)
 }
 
 func CalcAVG[T cmp.Ordered](values []T) (decimal.Decimal, error) {

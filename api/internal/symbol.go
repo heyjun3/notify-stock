@@ -64,8 +64,8 @@ func NewSymbolDetail(symbol, shortName, longName, currency string,
 		Symbol:        symbol,
 		ShortName:     shortName,
 		LongName:      longName,
-		MarketPrice:   marketPrice,
-		PreviousClose: previousClose,
+		MarketPrice:   marketPrice.Round(2),
+		PreviousClose: previousClose.Round(2),
 		Currency:      &cur,
 	}
 	for _, option := range options {

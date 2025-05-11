@@ -1,7 +1,10 @@
 .PHONY:db-setup\ 
 	build\
 	notify\
-	gqlgen
+	gqlgen\
+	update\
+	update-all\
+	gen-local-key\
 
 db-setup:
 	docker compose up -d database
@@ -13,10 +16,10 @@ build:
 
 notify:
 	docker compose run --rm notify notify -s "^N225,^GSPC"
-register:
-	docker compose run --rm notify register -s "^N225,^GSPC"
-register-all:
-	docker compose run --rm notify register -s "^N225,^GSPC" -a
+update:
+	docker compose run --rm notify stock update
+update-all:
+	docker compose run --rm notify stock update -a
 gqlgen:
 	go run github.com/99designs/gqlgen generate
 

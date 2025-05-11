@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	"github.com/uptrace/bun"
 )
 
 func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
@@ -28,10 +29,22 @@ func InitSymbolFetcher(dsn string) *SymbolFetcher {
 	return &SymbolFetcher{}
 }
 
-func InitStockNotifier(ctx context.Context, token string, client HTTPClientInterface) (*StockNotifier, error) {
+type DBDSN string
+
+func wrapOpenDB(dsn DBDSN) *bun.DB {
+	return NewDB(string(dsn))
+}
+
+func InitStockNotifier(
+	ctx context.Context,
+	token string,
+	dsn DBDSN,
+) (*StockNotifier, error) {
 	wire.Build(
+		wrapOpenDB,
 		NewEmailClient,
-		NewFinanceClient,
+		NewStockRepository,
+		NewSymbolRepository,
 		NewStockNotifier,
 		wire.Bind(new(MailService), new(*EmailClient)),
 	)

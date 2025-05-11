@@ -3,7 +3,6 @@ package notify
 import (
 	"context"
 	"log"
-	"net/http"
 
 	"github.com/spf13/cobra"
 
@@ -25,7 +24,11 @@ func init() {
 }
 
 func notifyStock(symbols []string) {
-	notifier, err := notifyapp.InitStockNotifier(context.Background(), notifyapp.Cfg.MailToken, &http.Client{})
+	notifier, err := notifyapp.InitStockNotifier(
+		context.Background(),
+		notifyapp.Cfg.MailToken,
+		notifyapp.DBDSN(notifyapp.Cfg.DBDSN),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

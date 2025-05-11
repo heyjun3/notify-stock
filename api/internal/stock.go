@@ -86,6 +86,7 @@ func (s *Stocks) GenerateNotificationMessage() (string, error) {
 		return "", err
 	}
 	latest := s.Latest()
+	fmt.Println("latest", latest.Close)
 	ratio, err := s.ClosingPriceToAVGRatio()
 	if err != nil {
 		return "", err
@@ -162,7 +163,6 @@ func (r *StockRepository) GetStockByPeriod(
 		return nil, err
 	}
 	if stock, ok := stocks[symbol]; !ok {
-		fmt.Println("stock not found", symbol)
 		return nil, fmt.Errorf("symbol %s not found", symbol)
 	} else {
 		return stock, nil
@@ -178,11 +178,11 @@ func (r *StockRepository) GetStockByPeriodAndSymbols(
 	var stocks []Stock
 	if err := r.db.NewSelect().
 		Model(&stocks).
-		DistinctOn("timestamp::date").
+		DistinctOn("timestamp::date, symbol").
 		Where("symbol IN (?)", bun.In(symbols)).
 		Where("timestamp::date BETWEEN ? AND ?", begging, end).
 		OrderExpr("timestamp::date").
-		Order("timestamp").
+		Order("symbol").
 		Scan(ctx); err != nil {
 		return nil, err
 	}

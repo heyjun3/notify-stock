@@ -8,6 +8,7 @@ package notifystock
 
 import (
 	"context"
+	"github.com/uptrace/bun"
 )
 
 // Injectors from wire.go:
@@ -28,10 +29,12 @@ func InitSymbolFetcher(dsn string) *SymbolFetcher {
 	return symbolFetcher
 }
 
-func InitStockNotifier(ctx context.Context, token string, client HTTPClientInterface) (*StockNotifier, error) {
-	financeClient := NewFinanceClient(client)
+func InitStockNotifier(ctx context.Context, token string, dsn DBDSN) (*StockNotifier, error) {
 	emailClient := NewEmailClient(token)
-	stockNotifier := NewStockNotifier(financeClient, emailClient)
+	db := wrapOpenDB(dsn)
+	stockRepository := NewStockRepository(db)
+	symbolRepository := NewSymbolRepository(db)
+	stockNotifier := NewStockNotifier(emailClient, stockRepository, symbolRepository)
 	return stockNotifier, nil
 }
 
@@ -45,4 +48,12 @@ func InitNotificationRepository(dsn string) *NotificationRepository {
 	db := NewDB(dsn)
 	notificationRepository := NewNotificationRepository(db)
 	return notificationRepository
+}
+
+// wire.go:
+
+type DBDSN string
+
+func wrapOpenDB(dsn DBDSN) *bun.DB {
+	return NewDB(string(dsn))
 }

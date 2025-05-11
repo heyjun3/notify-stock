@@ -68,31 +68,50 @@ type MailService interface {
 }
 
 type StockNotifier struct {
-	client      *FinanceClient
-	mailService MailService
+	mailService      MailService
+	stockRepository  *StockRepository
+	symbolRepository *SymbolRepository
 }
 
-func NewStockNotifier(client *FinanceClient, mailService MailService) *StockNotifier {
+func NewStockNotifier(
+	mailService MailService,
+	stockRepository *StockRepository,
+	symbolRepository *SymbolRepository,
+) *StockNotifier {
 	return &StockNotifier{
-		client:      client,
-		mailService: mailService,
+		mailService:      mailService,
+		stockRepository:  stockRepository,
+		symbolRepository: symbolRepository,
 	}
 }
 
 func (n *StockNotifier) Notify(symbols []string) error {
+	ctx := context.Background()
+	symbolDetails, err := n.symbolRepository.GetBySymbols(
+		ctx, symbols,
+	)
+	if err != nil {
+		return err
+	}
+
 	now := time.Now()
+	stocks, err := n.stockRepository.GetStockByPeriodAndSymbols(
+		ctx, symbols, now.AddDate(-1, 0, 0), now,
+	)
+	if err != nil {
+		return err
+	}
 	results := make([]*Stocks, 0, len(symbols))
-	for _, symbol := range symbols {
-		stocks, err := n.client.FetchStock(
-			symbol,
-			now.AddDate(0, -12, 0),
-			now,
-			WithInterval("1d"),
-		)
+	for _, detail := range symbolDetails {
+		stock, ok := stocks[detail.Symbol]
+		if !ok {
+			return fmt.Errorf("symbol %s not found", detail.Symbol)
+		}
+		result, err := NewStocks(detail, stock)
 		if err != nil {
 			return err
 		}
-		results = append(results, stocks)
+		results = append(results, result)
 	}
 
 	subject := fmt.Sprintf("Market Summary %s", now.Format("January 02 2006"))

@@ -22,6 +22,3 @@ update-all:
 	docker compose run --rm notify stock update -a
 gqlgen:
 	go run github.com/99designs/gqlgen generate
-
-gen-local-key:
-	openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -keyout localhost-key.pem -out localhost-cert.pem

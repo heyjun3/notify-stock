@@ -10,6 +10,8 @@ RUN CGO_ENABLED=0 go build -o /build/app -ldflags="-s -w" -trimpath cmd/main.go
 
 FROM gcr.io/distroless/static-debian12
 
-COPY --from=builder /build/app /bin/app
+WORKDIR /app
+COPY --from=builder /build/app /app/bin/main
+COPY --from=builder /build/config.yaml /app/config.yaml
 
-ENTRYPOINT ["/bin/app"]
+ENTRYPOINT ["/app/bin/main"]

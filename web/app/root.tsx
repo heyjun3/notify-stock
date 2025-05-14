@@ -12,7 +12,7 @@ import "./app.css";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 
 const client = new ApolloClient({
-  uri: "http://localhost:8080/query",
+  uri: new URL("query", import.meta.env.VITE_BACKEND_URL).toString(),
   cache: new InMemoryCache(),
 });
 

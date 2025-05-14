@@ -1,6 +1,6 @@
 import type React from "react";
 import { useState, useMemo, useEffect, Suspense } from "react";
-import { addMonth, addYear, dayEnd, format } from "@formkit/tempo";
+import { addMonth, addYear, dayEnd } from "@formkit/tempo";
 
 import { StockChart, type ChartData } from "./stockChart";
 import { Pagination } from "./pagination";
@@ -158,7 +158,7 @@ function DashboardPage() {
 
   return (
     <Suspense fallback={<div className="text-center">Loading...</div>}>
-      <div className="p-4 sm:p-8 bg-gray-100 dark:bg-gray-900 min-h-screen font-sans">
+      <div className="p-4 sm:p-8 bg-gray-100 dark:bg-gray-900 min-h-screen font-sans lg:max-w-7xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-900 dark:text-white">
           株価ダッシュボード
         </h1>
@@ -222,7 +222,7 @@ function DashboardPage() {
 // --- Main App Component --- (変更なし)
 export default function App() {
   return (
-    <div>
+    <div className="bg-gray-100 dark:bg-gray-900">
       <DashboardPage />
     </div>
   );

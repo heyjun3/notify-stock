@@ -13,7 +13,6 @@ db-setup:
 
 build:
 	docker compose build notify
-
 notify:
 	docker compose run --rm notify notify -s "^N225,^GSPC"
 update:
@@ -22,3 +21,5 @@ update-all:
 	docker compose run --rm notify stock update -a
 gqlgen:
 	go run github.com/99designs/gqlgen generate
+db-connect:
+	psql -d notify-stock -h localhost -U postgres -p 5555

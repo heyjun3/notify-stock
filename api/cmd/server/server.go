@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -39,7 +40,12 @@ func loggerMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 }
 func CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		origin := r.Header.Get("Origin")
+		if strings.Contains(origin, "localhost") {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		} else {
+			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		}
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		w.Header().Set("Access-Control-Max-Age", "86400")
@@ -77,7 +83,7 @@ func runServer() {
 	mux.Handle("/query", CORSMiddleware(loggerMiddleware(logger, srv)))
 
 	s := &http.Server{
-		Addr:    ":" + port,
+		Addr:    "0.0.0.0" + ":" + port,
 		Handler: mux,
 	}
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)

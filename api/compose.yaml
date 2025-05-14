@@ -14,12 +14,26 @@ services:
       - DBDSN=postgres://${DB_USER}:${DB_PASSWORD}@database:5432/notify-stock?sslmode=disable
     working_dir: /app
 
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - FROM=${FROM}
+      - TO=${TO}
+      - MAIL_TOKEN=${MAIL_TOKEN}
+      - DBDSN=postgres://${DB_USER}:${DB_PASSWORD}@database:5432/notify-stock?sslmode=disable
+    command: ["server"]
+    ports:
+      - 8080:8080
+
   database:
     image: postgres:17
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_DB=notify-stock
+      - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
       - pgdata:/var/lib/postgresql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql

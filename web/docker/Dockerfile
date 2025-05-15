@@ -1,12 +1,9 @@
-# FROM oven/bun:latest AS base
-FROM node:24-slim AS base
+FROM oven/bun:1.2-debian AS base
 
 WORKDIR /work
 COPY ./ ./
-RUN npm install
-RUN npm run build
-# RUN bun install
-# RUN bun run build
+RUN bun install
+RUN bun run build
 
 FROM nginx:alpine
 COPY --from=base /work/build/client /var/www

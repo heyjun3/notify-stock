@@ -33,19 +33,37 @@ func init() {
 	if !ok {
 		dbdsn = "postgres://postgres:postgres@localhost:5555/notify-stock?sslmode=disable"
 	}
+	oauthClientID, ok := os.LookupEnv("OAUTH_CLIENT_ID")
+	if !ok {
+		panic("OAUTH_CLIENT_ID is not set")
+	}
+	oauthClientSecret, ok := os.LookupEnv("OAUTH_CLIENT_SECRET")
+	if !ok {
+		panic("OAUTH_CLIENT_SECRET is not set")
+	}
+	oauthRedirectURL, ok := os.LookupEnv("OAUTH_REDIRECT_URL")
+	if !ok {
+		panic("OAUTH_REDIRECT_URL is not set")
+	}
 	Cfg = Config{
 		FROM:      from,
 		TO:        to,
 		DBDSN:     dbdsn,
 		MailToken: mailToken,
+		OauthClientID:     oauthClientID,
+		OauthClientSecret: oauthClientSecret,
+		OauthRedirectURL:  oauthRedirectURL,
 	}
 }
 
 type Config struct {
-	FROM      string
-	TO        string
-	DBDSN     string
-	MailToken string
+	FROM              string
+	TO                string
+	DBDSN             string
+	MailToken         string
+	OauthClientID     string
+	OauthClientSecret string
+	OauthRedirectURL  string
 }
 
 type SupportSymbol struct {

@@ -81,6 +81,8 @@ func runServer() {
 
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	mux.Handle("/query", CORSMiddleware(loggerMiddleware(logger, srv)))
+	mux.HandleFunc("GET /login", notifystock.LoginHandler)
+	mux.HandleFunc("GET /auth/callback", notifystock.CallbackHandler)
 
 	s := &http.Server{
 		Addr:    "0.0.0.0" + ":" + port,

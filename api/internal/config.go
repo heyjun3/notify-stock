@@ -45,15 +45,18 @@ func init() {
 	if !ok {
 		panic("OAUTH_REDIRECT_URL is not set")
 	}
+	logLevel := os.Getenv("LOG_LEVEL")
 	Cfg = Config{
-		FROM:      from,
-		TO:        to,
-		DBDSN:     dbdsn,
-		MailToken: mailToken,
+		FROM:              from,
+		TO:                to,
+		DBDSN:             dbdsn,
+		MailToken:         mailToken,
 		OauthClientID:     oauthClientID,
 		OauthClientSecret: oauthClientSecret,
 		OauthRedirectURL:  oauthRedirectURL,
+		LogLevel:          logLevel,
 	}
+	logger = createLogger(Cfg.LogLevel)
 }
 
 type Config struct {
@@ -64,6 +67,7 @@ type Config struct {
 	OauthClientID     string
 	OauthClientSecret string
 	OauthRedirectURL  string
+	LogLevel          string
 }
 
 type SupportSymbol struct {

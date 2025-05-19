@@ -111,4 +111,10 @@ func TestNotificationRepository(t *testing.T) {
 			assert.Equal(t, "test+001@example.com", n.Email)
 		}
 	})
+
+	t.Run("get notification by email not found", func(t *testing.T) {
+		ns, err := repo.GetByEmail(context.Background(), uuid.New().String())
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(ns))
+	})
 }

@@ -92,6 +92,17 @@ func (r *NotificationRepository) GetByHour(ctx context.Context, time TimeOfHour)
 	}
 	return n, nil
 }
+func (r *NotificationRepository) GetByEmail(
+	ctx context.Context, email string) ([]Notification, error) {
+	var n []Notification
+	if err := r.db.NewSelect().
+		Model(&n).
+		Where("email = ?", email).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return n, nil
+}
 
 type NotificationCreator struct {
 	notificationRepository *NotificationRepository

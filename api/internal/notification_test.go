@@ -93,4 +93,22 @@ func TestNotificationRepository(t *testing.T) {
 			assert.Equal(t, n.Time.Hour.Hour(), notify.NewTimeOfHour(time.Now()).Hour.Hour())
 		}
 	})
+
+	t.Run("get notification by email", func(t *testing.T) {
+		notifications := []notify.Notification{
+			NoError(notify.NewNotification(
+				nil, "N225", "test+001@example.com", time.Now())),
+			NoError(notify.NewNotification(
+				nil, "N225", "test+001@example.com", time.Now().Add(2*time.Hour))),
+		}
+		err := repo.Save(context.Background(), notifications)
+		assert.NoError(t, err)
+
+		ns, err := repo.GetByEmail(context.Background(), "test+001@example.com")
+		assert.NoError(t, err)
+		assert.Greater(t, len(ns), 0)
+		for _, n := range ns {
+			assert.Equal(t, "test+001@example.com", n.Email)
+		}
+	})
 }

@@ -55,6 +55,7 @@ input ChartInput {
 type Query {
   symbol(input: SymbolInput!): Symbol!
   symbols(input: SymbolInput): [Symbol!]!
+  notifications: [Notification!]!
 }
 
 type Mutation {

@@ -70,6 +70,11 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 	}, nil
 }
 
+// Notifications is the resolver for the notifications field.
+func (r *queryResolver) Notifications(ctx context.Context) ([]*model.Notification, error) {
+	panic(fmt.Errorf("not implemented: Notifications - notifications"))
+}
+
 // Detail is the resolver for the detail field.
 func (r *symbolResolver) Detail(ctx context.Context, obj *model.Symbol) (*model.SymbolDetail, error) {
 	r.logger.Info("Fetching symbol detail", "symbol", obj.Symbol)

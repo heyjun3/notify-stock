@@ -1,19 +1,14 @@
 package notifystock
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"io"
 	"net/http"
 	"net/url"
-	"slices"
 	"strings"
-	"time"
 )
 
 const googleOauthURL = "https://accounts.google.com/o/oauth2/v2/auth"
 const googleAccessTokenURL = "https://oauth2.googleapis.com/token"
-const CookieName = "notify-stock"
 
 var (
 	scope = []string{
@@ -21,62 +16,19 @@ var (
 		"https://www.googleapis.com/auth/userinfo.profile",
 		"https://www.googleapis.com/auth/userinfo.email",
 	}
-	sessionStore = make(map[string]*session)
 )
 
-type session struct {
-	state    string
-	isActive bool
-}
-
-func randomString() (string, error) {
-	randBytes := make([]byte, 64)
-	_, err := io.ReadFull(rand.Reader, randBytes)
-	if err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(randBytes), nil
-}
-
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	cookie := r.Header.Get("Cookie")
-	if cookie != "" {
-		cookies, err := http.ParseCookie(cookie)
-		if err != nil {
-			http.Error(w, "Failed to parse cookie", http.StatusBadRequest)
-			return
-		}
-		for _, c := range cookies {
-			if c.Name != CookieName {
-				continue
-			}
-			if session, ok := sessionStore[c.Value]; ok && session.isActive {
-				http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
-				return // already logged in
-			}
-		}
+	session, err := sessions.Get(r)
+	if err == nil && session.isActive {
+		http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
+		return // already logged in
 	}
-	cookieValue, err := randomString()
+	newSession, err := sessions.New(w)
 	if err != nil {
-		http.Error(w, "Failed to generate random string", http.StatusInternalServerError)
+		http.Error(w, "Failed to create session", http.StatusInternalServerError)
 		return
 	}
-	state, err := randomString()
-	if err != nil {
-		http.Error(w, "Failed to generate random string", http.StatusInternalServerError)
-		return
-	}
-	sessionStore[cookieValue] = &session{
-		state:    state,
-		isActive: false,
-	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     CookieName,
-		Value:    cookieValue,
-		Domain:   "localhost",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-	})
 
 	u, err := url.Parse(googleOauthURL)
 	if err != nil {
@@ -88,7 +40,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	q.Add("access_type", "offline")
 	q.Add("include_granted_scopes", "true")
 	q.Add("response_type", "code")
-	q.Add("state", state)
+	q.Add("state", newSession.state)
 	q.Add("redirect_uri", Cfg.OauthRedirectURL)
 	q.Add("client_id", Cfg.OauthClientID)
 
@@ -98,23 +50,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
-	cookie := r.Header.Get("Cookie")
-	cookies, err := http.ParseCookie(cookie)
+	session, err := sessions.Get(r)
 	if err != nil {
-		http.Error(w, "Failed to parse cookie", http.StatusBadRequest)
-		return
-	}
-	i := slices.IndexFunc(cookies, func(c *http.Cookie) bool {
-		return c.Name == CookieName
-	})
-	if i == -1 {
-		http.Error(w, "Cookie not found", http.StatusBadRequest)
-		return
-	}
-	key := cookies[i].Value
-	session, ok := sessionStore[key]
-	if !ok {
-		http.Error(w, "Session not found", http.StatusBadRequest)
+		logger.Error("CallbackHandler", "error", err)
+		http.Error(w, "Failed to get session", http.StatusBadRequest)
 		return
 	}
 	code := r.URL.Query().Get("code")
@@ -167,6 +106,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("CallbackHandler", "body", string(body))
 
 	session.isActive = true
-	sessionStore[key] = session
+	sessions.Store(session)
 	http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
 }

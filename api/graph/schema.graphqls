@@ -2,6 +2,8 @@
 #
 # https://gqlgen.com/getting-started/
 
+directive @auth on FIELD_DEFINITION
+
 scalar Time
 
 type Stock {
@@ -55,9 +57,9 @@ input ChartInput {
 type Query {
   symbol(input: SymbolInput!): Symbol!
   symbols(input: SymbolInput): [Symbol!]!
-  notifications: [Notification!]!
+  notifications: [Notification!]! @auth
 }
 
 type Mutation {
-  createNotification(input: NotificationInput!): Notification!
+  createNotification(input: NotificationInput!): Notification! @auth
 }

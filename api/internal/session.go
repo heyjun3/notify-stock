@@ -1,12 +1,12 @@
 package notifystock
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
-	"slices"
 	"time"
 )
 
@@ -62,21 +62,14 @@ func NewSessions(opt SessionOption) *Sessions {
 }
 
 func (s *Sessions) Get(r *http.Request) (*Session, error) {
-	cookie := r.Header.Get("Cookie")
-	if cookie == "" {
-		return nil, fmt.Errorf("not found cookie header")
-	}
-	cookies, err := http.ParseCookie(cookie)
+	cookie, err := r.Cookie(CookieName)
 	if err != nil {
 		return nil, err
 	}
-	i := slices.IndexFunc(cookies, func(c *http.Cookie) bool {
-		return c.Name == CookieName
-	})
-	if i == -1 {
-		return nil, fmt.Errorf("not found support cookie")
+	if cookie == nil {
+		return nil, fmt.Errorf("not found cookie")
 	}
-	if session, ok := s.store[cookies[i].Value]; ok {
+	if session, ok := s.store[cookie.Value]; ok {
 		return session, nil
 	} else {
 		return nil, fmt.Errorf("session not found")
@@ -110,4 +103,29 @@ func randomString() (string, error) {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(randBytes), nil
+}
+
+type sessionKeyType string
+
+var sessionKey = sessionKeyType("session")
+
+func SessionMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := sessions.Get(r)
+		if err != nil {
+			logger.Error(err.Error())
+			next.ServeHTTP(w, r)
+			return
+		}
+		ctx := context.WithValue(r.Context(), sessionKey, session)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func GetSession(ctx context.Context) (*Session, error) {
+	session, ok := ctx.Value(sessionKey).(*Session)
+	if !ok {
+		return nil, fmt.Errorf("session not found")
+	}
+	return session, nil
 }

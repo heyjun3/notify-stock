@@ -72,7 +72,20 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 
 // Notifications is the resolver for the notifications field.
 func (r *queryResolver) Notifications(ctx context.Context) ([]*model.Notification, error) {
-	panic(fmt.Errorf("not implemented: Notifications - notifications"))
+	notifications, err := r.notificationFetcher.GetByEmail(ctx, "test@example.com")
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.Notification, 0, len(notifications))
+	for _, notification := range notifications {
+		result = append(result, &model.Notification{
+			ID:     notification.ID.String(),
+			Symbol: notification.Symbol,
+			Email:  notification.Email,
+			Time:   notification.Time.Hour,
+		})
+	}
+	return result, nil
 }
 
 // Detail is the resolver for the detail field.

@@ -15,6 +15,7 @@ type Resolver struct {
 	stockRepository     *notify.StockRepository
 	symbolFetcher       *notify.SymbolFetcher
 	notificationCreator *notify.NotificationCreator
+	notificationFetcher *notify.NotificationFetcher
 	logger              *slog.Logger
 }
 
@@ -22,11 +23,13 @@ func NewResolver(
 	stockRepository *notify.StockRepository,
 	symbolFetcher *notify.SymbolFetcher,
 	notificationCreator *notify.NotificationCreator,
+	notificationFetcher *notify.NotificationFetcher,
 ) *Resolver {
 	return &Resolver{
 		stockRepository:     stockRepository,
 		symbolFetcher:       symbolFetcher,
 		notificationCreator: notificationCreator,
+		notificationFetcher: notificationFetcher,
 		logger:              slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 }

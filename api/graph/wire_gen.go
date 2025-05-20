@@ -8,6 +8,7 @@ package graph
 
 import (
 	"github.com/heyjun3/notify-stock/internal"
+	"log/slog"
 )
 
 // Injectors from wire.go:
@@ -17,6 +18,13 @@ func InitResolver(dsn string) *Resolver {
 	symbolFetcher := notifystock.InitSymbolFetcher(dsn)
 	notificationRepository := notifystock.InitNotificationRepository(dsn)
 	notificationCreator := notifystock.NewNotificationCreator(notificationRepository)
-	resolver := NewResolver(stockRepository, symbolFetcher, notificationCreator)
+	notificationFetcher := notifystock.NewNotificationFetcher(notificationRepository)
+	resolver := NewResolver(stockRepository, symbolFetcher, notificationCreator, notificationFetcher)
 	return resolver
+}
+
+func InitRootDirective(logger *slog.Logger) *DirectiveRoot {
+	directive := NewAuthDirective(logger)
+	directiveRoot := NewDirectiveRoot(directive)
+	return directiveRoot
 }

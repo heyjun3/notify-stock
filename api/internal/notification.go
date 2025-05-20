@@ -104,6 +104,20 @@ func (r *NotificationRepository) GetByEmail(
 	return n, nil
 }
 
+type NotificationFetcher struct {
+	notificationRepository *NotificationRepository
+}
+
+func NewNotificationFetcher(notificationRepository *NotificationRepository) *NotificationFetcher {
+	return &NotificationFetcher{
+		notificationRepository: notificationRepository,
+	}
+}
+func (n *NotificationFetcher) GetByEmail(
+	ctx context.Context, email string) ([]Notification, error) {
+	return n.notificationRepository.GetByEmail(ctx, email)
+}
+
 type NotificationCreator struct {
 	notificationRepository *NotificationRepository
 }

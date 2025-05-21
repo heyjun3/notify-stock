@@ -9,14 +9,6 @@ CREATE TABLE IF NOT EXISTS
         PRIMARY KEY (symbol, TIMESTAMP)
     );
 
-CREATE TABLE IF NOT EXISTS
-    notifications (
-        id UUID PRIMARY KEY,
-        symbol TEXT,
-        Email TEXT,
-        Hour TIME
-    );
-
 CREATE TABLE IF NOT EXISTS 
     symbols (
         symbol TEXT PRIMARY KEY,
@@ -29,3 +21,24 @@ CREATE TABLE IF NOT EXISTS
     )
 ;
 ALTER TABLE symbols ADD COLUMN currency TEXT;
+
+CREATE TABLE IF NOT EXISTS
+    notifications (
+        id UUID PRIMARY KEY,
+        symbol TEXT,
+        Email TEXT,
+        Hour TIME
+    );
+
+CREATE TABLE IF NOT EXISTS 
+    notification_targets (
+        id UUID PRIMARY KEY,
+        symbol TEXT,
+        notification_id UUID,
+        FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE CASCADE
+    );
+
+ALTER TABLE notification_targets ADD CONSTRAINT fk_symbol
+    FOREIGN KEY (symbol)
+    REFERENCES symbols(symbol)
+    ON DELETE CASCADE;

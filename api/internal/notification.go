@@ -16,6 +16,8 @@ type Notification struct {
 	Symbol string     `bun:"symbol,type:text,notnull"`
 	Email  string     `bun:"email,type:text,notnull"`
 	Time   TimeOfHour `bun:"embed:"`
+
+	Targets []*NotificationTarget `bun:"rel:has-many,join:id=notification_id"`
 }
 
 type TimeOfHour struct {
@@ -37,11 +39,39 @@ func NewNotification(ID *uuid.UUID, symbol string, email string, hour time.Time)
 		}
 		ID = &id
 	}
+	target, err := NewNotificationTarget(nil, *ID, symbol)
+	if err != nil {
+		return nil, err
+	}
 	return &Notification{
-		ID:     *ID,
-		Symbol: symbol,
-		Email:  email,
-		Time:   NewTimeOfHour(hour),
+		ID:      *ID,
+		Symbol:  symbol,
+		Email:   email,
+		Time:    NewTimeOfHour(hour),
+		Targets: []*NotificationTarget{target},
+	}, nil
+}
+
+type NotificationTarget struct {
+	bun.BaseModel `bun:"table:notification_targets"`
+
+	ID             uuid.UUID `bun:"id,type:uuid,pk"`
+	NotificationID uuid.UUID `bun:"notification_id,type:uuid,notnull"`
+	Symbol         string    `bun:"symbol,type:text,notnull"`
+}
+
+func NewNotificationTarget(ID *uuid.UUID, notificationID uuid.UUID, symbol string) (*NotificationTarget, error) {
+	if ID == nil {
+		id, err := uuid.NewV7()
+		if err != nil {
+			return nil, err
+		}
+		ID = &id
+	}
+	return &NotificationTarget{
+		ID:             *ID,
+		NotificationID: notificationID,
+		Symbol:         symbol,
 	}, nil
 }
 
@@ -66,6 +96,24 @@ func (r *NotificationRepository) Save(ctx context.Context, n []Notification) err
 			"symbol = EXCLUDED.symbol",
 			"email = EXCLUDED.email",
 			"hour = EXCLUDED.hour",
+		}, ",")).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+	targets := make([]*NotificationTarget, 0, len(n))
+	for _, notification := range n {
+		targets = append(targets, notification.Targets...)
+	}
+	if len(targets) == 0 {
+		return nil
+	}
+	_, err = r.db.NewInsert().
+		Model(&targets).
+		On("CONFLICT (id) DO UPDATE").
+		Set(strings.Join([]string{
+			"notification_id = EXCLUDED.notification_id",
+			"symbol = EXCLUDED.symbol",
 		}, ",")).
 		Exec(ctx)
 	return err

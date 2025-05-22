@@ -123,6 +123,7 @@ func (r *NotificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*No
 	err := r.db.NewSelect().
 		Model(&n).
 		Where("id = ?", id).
+		Relation("Targets").
 		Scan(ctx)
 	if err != nil {
 		return nil, err

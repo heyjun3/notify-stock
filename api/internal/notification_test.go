@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 
 	notify "github.com/heyjun3/notify-stock/internal"
@@ -17,6 +18,11 @@ func NoError[T any](t *T, err error) T {
 
 func TestNotificationRepository(t *testing.T) {
 	db := openDB(t)
+	symbol := notify.NewSymbolDetail("N225", "NIKKEI 225", "NIKKEI", "JPY", decimal.NewFromInt(1000), decimal.NewFromInt(1000))
+	symbolRepo := notify.NewSymbolRepository(db)
+	if err := symbolRepo.Save(context.Background(), []notify.SymbolDetail{*symbol}); err != nil {
+		panic(err)
+	}
 	repo := notify.NewNotificationRepository(db)
 	t.Run("save notification with empty", func(t *testing.T) {
 		err := repo.Save(context.Background(), []notify.Notification{})
@@ -54,19 +60,20 @@ func TestNotificationRepository(t *testing.T) {
 	t.Run("get notification by id", func(t *testing.T) {
 		id := uuid.New()
 
-		notifications := []notify.Notification{
-			NoError(notify.NewNotification(&id, "N225", "test@exsample.com", time.Now())),
-		}
-		err := repo.Save(context.Background(), notifications)
+		n, err := notify.NewNotification(&id, "N225", "test@exsample.com", time.Now())
+		assert.NoError(t, err)
+
+		err = repo.Save(context.Background(), []notify.Notification{*n})
 		assert.NoError(t, err)
 
 		notification, err := repo.GetByID(context.Background(), id)
 		assert.NoError(t, err)
 
 		assert.Equal(t, notification.ID, id)
-		assert.Equal(t, notification.Symbol, notifications[0].Symbol)
-		assert.Equal(t, notification.Email, notifications[0].Email)
-		assert.Equal(t, notification.Time.Hour.Hour(), notifications[0].Time.Hour.Hour())
+		assert.Equal(t, notification.Symbol, n.Symbol)
+		assert.Equal(t, notification.Email,n .Email)
+		assert.Equal(t, notification.Time.Hour.Hour(), n.Time.Hour.Hour())
+		assert.Equal(t, notification.Targets, n.Targets)
 	})
 	t.Run("get notification by id not found", func(t *testing.T) {
 		notification, err := repo.GetByID(context.Background(), uuid.New())

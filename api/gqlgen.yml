@@ -161,3 +161,7 @@ models:
         resolver: true
       chart:
         resolver: true
+  Notification:
+    fields:
+      targets:
+        resolver: true

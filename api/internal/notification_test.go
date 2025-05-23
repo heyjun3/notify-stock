@@ -71,7 +71,7 @@ func TestNotificationRepository(t *testing.T) {
 
 		assert.Equal(t, notification.ID, id)
 		assert.Equal(t, notification.Symbol, n.Symbol)
-		assert.Equal(t, notification.Email,n .Email)
+		assert.Equal(t, notification.Email, n.Email)
 		assert.Equal(t, notification.Time.Hour.Hour(), n.Time.Hour.Hour())
 		assert.Equal(t, notification.Targets, n.Targets)
 	})

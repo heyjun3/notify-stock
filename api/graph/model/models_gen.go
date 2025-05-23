@@ -16,10 +16,11 @@ type Mutation struct {
 }
 
 type Notification struct {
-	ID     string    `json:"id"`
-	Symbol string    `json:"symbol"`
-	Email  string    `json:"email"`
-	Time   time.Time `json:"time"`
+	ID      string          `json:"id"`
+	Symbol  string          `json:"symbol"`
+	Email   string          `json:"email"`
+	Time    time.Time       `json:"time"`
+	Targets []*SymbolDetail `json:"targets"`
 }
 
 type NotificationInput struct {

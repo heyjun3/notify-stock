@@ -41,6 +41,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	Notification() NotificationResolver
 	Query() QueryResolver
 	Symbol() SymbolResolver
 }
@@ -55,10 +56,11 @@ type ComplexityRoot struct {
 	}
 
 	Notification struct {
-		Email  func(childComplexity int) int
-		ID     func(childComplexity int) int
-		Symbol func(childComplexity int) int
-		Time   func(childComplexity int) int
+		Email   func(childComplexity int) int
+		ID      func(childComplexity int) int
+		Symbol  func(childComplexity int) int
+		Targets func(childComplexity int) int
+		Time    func(childComplexity int) int
 	}
 
 	Query struct {
@@ -95,6 +97,9 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateNotification(ctx context.Context, input model.NotificationInput) (*model.Notification, error)
+}
+type NotificationResolver interface {
+	Targets(ctx context.Context, obj *model.Notification) ([]*model.SymbolDetail, error)
 }
 type QueryResolver interface {
 	Symbol(ctx context.Context, input model.SymbolInput) (*model.Symbol, error)
@@ -157,6 +162,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Notification.Symbol(childComplexity), true
+
+	case "Notification.targets":
+		if e.complexity.Notification.Targets == nil {
+			break
+		}
+
+		return e.complexity.Notification.Targets(childComplexity), true
 
 	case "Notification.time":
 		if e.complexity.Notification.Time == nil {
@@ -724,6 +736,8 @@ func (ec *executionContext) fieldContext_Mutation_createNotification(ctx context
 				return ec.fieldContext_Notification_email(ctx, field)
 			case "time":
 				return ec.fieldContext_Notification_time(ctx, field)
+			case "targets":
+				return ec.fieldContext_Notification_targets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Notification", field.Name)
 		},
@@ -913,6 +927,70 @@ func (ec *executionContext) fieldContext_Notification_time(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Notification_targets(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Notification_targets(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Notification().Targets(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.SymbolDetail)
+	fc.Result = res
+	return ec.marshalNSymbolDetail2ᚕᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐSymbolDetailᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Notification_targets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Notification",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "symbol":
+				return ec.fieldContext_SymbolDetail_symbol(ctx, field)
+			case "shortName":
+				return ec.fieldContext_SymbolDetail_shortName(ctx, field)
+			case "longName":
+				return ec.fieldContext_SymbolDetail_longName(ctx, field)
+			case "price":
+				return ec.fieldContext_SymbolDetail_price(ctx, field)
+			case "change":
+				return ec.fieldContext_SymbolDetail_change(ctx, field)
+			case "changePercent":
+				return ec.fieldContext_SymbolDetail_changePercent(ctx, field)
+			case "volume":
+				return ec.fieldContext_SymbolDetail_volume(ctx, field)
+			case "marketCap":
+				return ec.fieldContext_SymbolDetail_marketCap(ctx, field)
+			case "currencySymbol":
+				return ec.fieldContext_SymbolDetail_currencySymbol(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SymbolDetail", field.Name)
 		},
 	}
 	return fc, nil
@@ -1117,6 +1195,8 @@ func (ec *executionContext) fieldContext_Query_notifications(_ context.Context, 
 				return ec.fieldContext_Notification_email(ctx, field)
 			case "time":
 				return ec.fieldContext_Notification_time(ctx, field)
+			case "targets":
+				return ec.fieldContext_Notification_targets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Notification", field.Name)
 		},
@@ -4123,23 +4203,59 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 		case "id":
 			out.Values[i] = ec._Notification_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "symbol":
 			out.Values[i] = ec._Notification_symbol(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "email":
 			out.Values[i] = ec._Notification_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "time":
 			out.Values[i] = ec._Notification_time(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "targets":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Notification_targets(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5094,6 +5210,50 @@ func (ec *executionContext) marshalNSymbol2ᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑ
 
 func (ec *executionContext) marshalNSymbolDetail2githubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐSymbolDetail(ctx context.Context, sel ast.SelectionSet, v model.SymbolDetail) graphql.Marshaler {
 	return ec._SymbolDetail(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSymbolDetail2ᚕᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐSymbolDetailᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SymbolDetail) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSymbolDetail2ᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐSymbolDetail(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNSymbolDetail2ᚖgithubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐSymbolDetail(ctx context.Context, sel ast.SelectionSet, v *model.SymbolDetail) graphql.Marshaler {

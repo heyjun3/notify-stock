@@ -36,6 +36,7 @@ type Notification {
   symbol: ID!
   email: String!
   time: Time!
+  targets: [SymbolDetail!]!
 }
 
 input SymbolInput {

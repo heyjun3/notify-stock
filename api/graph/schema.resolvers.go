@@ -27,6 +27,11 @@ func (r *mutationResolver) CreateNotification(ctx context.Context, input model.N
 	}, nil
 }
 
+// Targets is the resolver for the targets field.
+func (r *notificationResolver) Targets(ctx context.Context, obj *model.Notification) ([]*model.SymbolDetail, error) {
+	return obj.Targets, nil
+}
+
 // Symbol is the resolver for the symbol field.
 func (r *queryResolver) Symbol(ctx context.Context, input model.SymbolInput) (*model.Symbol, error) {
 	return &model.Symbol{
@@ -78,11 +83,18 @@ func (r *queryResolver) Notifications(ctx context.Context) ([]*model.Notificatio
 	}
 	result := make([]*model.Notification, 0, len(notifications))
 	for _, notification := range notifications {
+		targets := make([]*model.SymbolDetail, 0, len(notification.Targets))
+		for _, target := range notification.Targets {
+			targets = append(targets, &model.SymbolDetail{
+				Symbol: target.Symbol,
+			})
+		}
 		result = append(result, &model.Notification{
-			ID:     notification.ID.String(),
-			Symbol: notification.Symbol,
-			Email:  notification.Email,
-			Time:   notification.Time.Hour,
+			ID:      notification.ID.String(),
+			Symbol:  notification.Symbol,
+			Email:   notification.Email,
+			Time:    notification.Time.Hour,
+			Targets: targets,
 		})
 	}
 	return result, nil
@@ -120,6 +132,9 @@ func (r *symbolResolver) Chart(ctx context.Context, obj *model.Symbol, input mod
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+// Notification returns NotificationResolver implementation.
+func (r *Resolver) Notification() NotificationResolver { return &notificationResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
@@ -127,5 +142,6 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 func (r *Resolver) Symbol() SymbolResolver { return &symbolResolver{r} }
 
 type mutationResolver struct{ *Resolver }
+type notificationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type symbolResolver struct{ *Resolver }

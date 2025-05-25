@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/heyjun3/notify-stock/graph/model"
@@ -29,7 +30,15 @@ func (r *mutationResolver) CreateNotification(ctx context.Context, input model.N
 
 // Targets is the resolver for the targets field.
 func (r *notificationResolver) Targets(ctx context.Context, obj *model.Notification) ([]*model.SymbolDetail, error) {
-	return obj.Targets, nil
+	symbols := make([]string, 0, len(obj.Targets))
+	for _, target := range obj.Targets {
+		symbols = append(symbols, target.Symbol)
+	}
+	details, err := r.loader.SymbolDetail.LoadMany(ctx, symbols)()
+	if err != nil {
+		return nil, errors.Join(err...)
+	}
+	return convertToSymbolDetails(details), nil
 }
 
 // Symbol is the resolver for the symbol field.

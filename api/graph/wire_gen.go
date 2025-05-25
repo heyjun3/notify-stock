@@ -19,7 +19,8 @@ func InitResolver(dsn string) *Resolver {
 	notificationRepository := notifystock.InitNotificationRepository(dsn)
 	notificationCreator := notifystock.NewNotificationCreator(notificationRepository)
 	notificationFetcher := notifystock.NewNotificationFetcher(notificationRepository)
-	resolver := NewResolver(stockRepository, symbolRepository, notificationCreator, notificationFetcher)
+	dataLoader := notifystock.NewDataLoader(symbolRepository)
+	resolver := NewResolver(stockRepository, symbolRepository, notificationCreator, notificationFetcher, dataLoader)
 	return resolver
 }
 

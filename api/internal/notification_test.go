@@ -114,8 +114,10 @@ func TestNotificationRepository(t *testing.T) {
 		ns, err := repo.GetByEmail(context.Background(), "test+001@example.com")
 		assert.NoError(t, err)
 		assert.Greater(t, len(ns), 0)
-		for _, n := range ns {
+		for i, n := range ns {
 			assert.Equal(t, "test+001@example.com", n.Email)
+			assert.NotNil(t, n.Targets)
+			assert.Equal(t, n.Targets, notifications[i].Targets)
 		}
 	})
 

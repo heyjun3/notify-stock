@@ -147,6 +147,7 @@ func (r *NotificationRepository) GetByEmail(
 	if err := r.db.NewSelect().
 		Model(&n).
 		Where("email = ?", email).
+		Relation("Targets").
 		Scan(ctx); err != nil {
 		return nil, err
 	}

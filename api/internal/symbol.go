@@ -3,6 +3,7 @@ package notifystock
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/shopspring/decimal"
@@ -114,6 +115,9 @@ func (r *SymbolRepository) Get(ctx context.Context, symbol string) (*SymbolDetai
 
 func (r *SymbolRepository) GetBySymbols(
 	ctx context.Context, symbols []string) ([]SymbolDetail, error) {
+	if len(symbols) == 0 {
+		return nil, fmt.Errorf("required len")
+	}
 	var details []SymbolDetail
 	err := r.db.NewSelect().Model(&details).
 		Where("symbol IN (?)", bun.In(symbols)).
@@ -133,27 +137,3 @@ func (r *SymbolRepository) GetAll(ctx context.Context) ([]SymbolDetail, error) {
 	}
 	return details, nil
 }
-
-// type SymbolFetcher struct {
-// 	symbolRepository *SymbolRepository
-// }
-
-// func NewSymbolFetcher(symbolRepository *SymbolRepository) *SymbolFetcher {
-// 	return &SymbolFetcher{
-// 		symbolRepository: symbolRepository,
-// 	}
-// }
-// func (f *SymbolFetcher) Fetch(ctx context.Context, symbol string) (*SymbolDetail, error) {
-// 	sym, err := f.symbolRepository.Get(ctx, symbol)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return sym, nil
-// }
-// func (f *SymbolFetcher) FetchAll(ctx context.Context) ([]SymbolDetail, error) {
-// 	details, err := f.symbolRepository.GetAll(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return details, nil
-// }

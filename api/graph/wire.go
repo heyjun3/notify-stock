@@ -15,6 +15,7 @@ func InitResolver(dsn string) *Resolver {
 		notify.InitSymbolRepository,
 		notify.NewNotificationCreator,
 		notify.NewNotificationFetcher,
+		notify.NewDataLoader,
 		NewResolver,
 	)
 	return &Resolver{}

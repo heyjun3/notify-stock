@@ -1,0 +1,6 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <title>株価ダッシュボード Favicon</title>
+  <desc>右肩上がりの折れ線グラフと、成長を示す上向きの矢印のデザインです。</desc>
+  <path d="M2 13L5 10L8 12L11 9" stroke="#0D6EFD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M11 9L14 6M14 6L12.5 7.5M14 6L12.5 4.5" stroke="#198754" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

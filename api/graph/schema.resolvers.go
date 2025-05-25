@@ -43,7 +43,7 @@ func (r *queryResolver) Symbol(ctx context.Context, input model.SymbolInput) (*m
 // Symbols is the resolver for the symbols field.
 func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) ([]*model.Symbol, error) {
 	if input == nil {
-		symbols, err := r.symbolFetcher.FetchAll(ctx)
+		symbols, err := r.symbolRepository.GetAll(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +66,7 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 		}
 		return sym, nil
 	}
-	symbol, err := r.symbolFetcher.Fetch(ctx, input.Symbol)
+	symbol, err := r.symbolRepository.Get(ctx, input.Symbol)
 	if err != nil {
 		return nil, err
 	}

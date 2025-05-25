@@ -22,11 +22,10 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	return stockRegister
 }
 
-func InitSymbolFetcher(dsn string) *SymbolFetcher {
+func InitSymbolRepository(dsn string) *SymbolRepository {
 	db := NewDB(dsn)
 	symbolRepository := NewSymbolRepository(db)
-	symbolFetcher := NewSymbolFetcher(symbolRepository)
-	return symbolFetcher
+	return symbolRepository
 }
 
 func InitStockNotifier(ctx context.Context, token string, dsn DBDSN) (*StockNotifier, error) {

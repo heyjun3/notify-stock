@@ -134,26 +134,26 @@ func (r *SymbolRepository) GetAll(ctx context.Context) ([]SymbolDetail, error) {
 	return details, nil
 }
 
-type SymbolFetcher struct {
-	symbolRepository *SymbolRepository
-}
+// type SymbolFetcher struct {
+// 	symbolRepository *SymbolRepository
+// }
 
-func NewSymbolFetcher(symbolRepository *SymbolRepository) *SymbolFetcher {
-	return &SymbolFetcher{
-		symbolRepository: symbolRepository,
-	}
-}
-func (f *SymbolFetcher) Fetch(ctx context.Context, symbol string) (*SymbolDetail, error) {
-	sym, err := f.symbolRepository.Get(ctx, symbol)
-	if err != nil {
-		return nil, err
-	}
-	return sym, nil
-}
-func (f *SymbolFetcher) FetchAll(ctx context.Context) ([]SymbolDetail, error) {
-	details, err := f.symbolRepository.GetAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return details, nil
-}
+// func NewSymbolFetcher(symbolRepository *SymbolRepository) *SymbolFetcher {
+// 	return &SymbolFetcher{
+// 		symbolRepository: symbolRepository,
+// 	}
+// }
+// func (f *SymbolFetcher) Fetch(ctx context.Context, symbol string) (*SymbolDetail, error) {
+// 	sym, err := f.symbolRepository.Get(ctx, symbol)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return sym, nil
+// }
+// func (f *SymbolFetcher) FetchAll(ctx context.Context) ([]SymbolDetail, error) {
+// 	details, err := f.symbolRepository.GetAll(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return details, nil
+// }

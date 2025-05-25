@@ -20,13 +20,12 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	return &StockRegister{}
 }
 
-func InitSymbolFetcher(dsn string) *SymbolFetcher {
+func InitSymbolRepository(dsn string) *SymbolRepository {
 	wire.Build(
 		NewDB,
 		NewSymbolRepository,
-		NewSymbolFetcher,
 	)
-	return &SymbolFetcher{}
+	return &SymbolRepository{}
 }
 
 type DBDSN string

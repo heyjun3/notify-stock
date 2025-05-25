@@ -15,11 +15,11 @@ import (
 
 func InitResolver(dsn string) *Resolver {
 	stockRepository := notifystock.InitStockRepository(dsn)
-	symbolFetcher := notifystock.InitSymbolFetcher(dsn)
+	symbolRepository := notifystock.InitSymbolRepository(dsn)
 	notificationRepository := notifystock.InitNotificationRepository(dsn)
 	notificationCreator := notifystock.NewNotificationCreator(notificationRepository)
 	notificationFetcher := notifystock.NewNotificationFetcher(notificationRepository)
-	resolver := NewResolver(stockRepository, symbolFetcher, notificationCreator, notificationFetcher)
+	resolver := NewResolver(stockRepository, symbolRepository, notificationCreator, notificationFetcher)
 	return resolver
 }
 

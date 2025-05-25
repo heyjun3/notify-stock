@@ -12,9 +12,9 @@ func InitResolver(dsn string) *Resolver {
 	wire.Build(
 		notify.InitStockRepository,
 		notify.InitNotificationRepository,
+		notify.InitSymbolRepository,
 		notify.NewNotificationCreator,
 		notify.NewNotificationFetcher,
-		notify.InitSymbolFetcher,
 		NewResolver,
 	)
 	return &Resolver{}

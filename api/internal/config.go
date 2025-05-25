@@ -1,6 +1,7 @@
 package notifystock
 
 import (
+	"log/slog"
 	"os"
 
 	yaml "github.com/goccy/go-yaml"
@@ -14,7 +15,7 @@ func init() {
 	if err != nil {
 		err = godotenv.Load("../.env")
 		if err != nil {
-			logger.Info(err.Error())
+			slog.Info(err.Error())
 		}
 	}
 	from, ok := os.LookupEnv("FROM")

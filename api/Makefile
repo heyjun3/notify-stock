@@ -12,7 +12,7 @@ db-setup:
 	PGPASSWORD=postgres psql -d notify-stock-test -U postgres -p 5555 -h localhost < schema.sql
 
 build:
-	docker compose build notify api-server
+	docker compose build notify
 notify:
 	docker compose run --rm notify notify -s "^N225,^GSPC"
 update:

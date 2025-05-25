@@ -18,7 +18,7 @@ type DataLoader struct {
 func NewDataLoader(
 	symbolRepository *SymbolRepository,
 ) *DataLoader {
-	symbolDetail := dataloader.NewBatchedLoader[string, *SymbolDetail](func(ctx context.Context, keys []string) []*dataloader.Result[*SymbolDetail] {
+	symbolDetail := dataloader.NewBatchedLoader(func(ctx context.Context, keys []string) []*dataloader.Result[*SymbolDetail] {
 		symbols, err := symbolRepository.GetBySymbols(ctx, keys)
 		if err != nil {
 			return []*dataloader.Result[*SymbolDetail]{

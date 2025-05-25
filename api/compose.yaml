@@ -23,6 +23,10 @@ services:
       - TO=${TO}
       - MAIL_TOKEN=${MAIL_TOKEN}
       - DBDSN=postgres://${DB_USER}:${DB_PASSWORD}@database:5432/notify-stock?sslmode=disable
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+      - OAUTH_REDIRECT_URL=${OAUTH_REDIRECT_URL}
+      - LOG_LEVEL=${LOG_LEVEL}
     command: ["server"]
     ports:
       - 8080:8080

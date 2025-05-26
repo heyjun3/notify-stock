@@ -1,6 +1,7 @@
 package notifystock
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -18,94 +19,124 @@ var (
 	}
 )
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	session, err := sessions.Get(r)
-	if err == nil && session.isActive {
-		http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
-		return // already logged in
-	}
-	newSession, err := sessions.New(w)
-	if err != nil {
-		http.Error(w, "Failed to create session", http.StatusInternalServerError)
-		return
-	}
+func LoginHandler(sessions *Sessions) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// 既存セッションの確認
+		session, err := sessions.Get(r)
+		if err == nil && session.IsActive {
+			http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
+			return // already logged in
+		}
 
-	u, err := url.Parse(googleOauthURL)
-	if err != nil {
-		http.Error(w, "Failed to parse URL", http.StatusInternalServerError)
-		return
-	}
-	q := url.Values{}
-	q.Add("scope", strings.Join(scope, " "))
-	q.Add("access_type", "offline")
-	q.Add("include_granted_scopes", "true")
-	q.Add("response_type", "code")
-	q.Add("state", newSession.state)
-	q.Add("redirect_uri", Cfg.OauthRedirectURL)
-	q.Add("client_id", Cfg.OauthClientID)
+		// 新しいセッションの作成
+		newSession, err := sessions.New(w, r.Context())
+		if err != nil {
+			WriteErrorResponse(w, WrapError(err, ErrCodeSession, "Failed to create session"))
+			return
+		}
 
-	u.RawQuery = q.Encode()
-	logger.Info("LoginHandler", "url", u.String())
-	http.Redirect(w, r, u.String(), http.StatusFound)
+		// OAuth URLの構築
+		u, err := url.Parse(googleOauthURL)
+		if err != nil {
+			WriteErrorResponse(w, WrapError(err, ErrCodeInternalServer, "Failed to parse OAuth URL"))
+			return
+		}
+
+		q := url.Values{}
+		q.Add("scope", strings.Join(scope, " "))
+		q.Add("access_type", "offline")
+		q.Add("include_granted_scopes", "true")
+		q.Add("response_type", "code")
+		q.Add("state", newSession.State)
+		q.Add("redirect_uri", Cfg.OauthRedirectURL)
+		q.Add("client_id", Cfg.OauthClientID)
+
+		u.RawQuery = q.Encode()
+		logger.Info("OAuth redirect URL generated", "url", u.String())
+		http.Redirect(w, r, u.String(), http.StatusFound)
+	}
 }
 
-func CallbackHandler(w http.ResponseWriter, r *http.Request) {
-	session, err := sessions.Get(r)
-	if err != nil {
-		logger.Error("CallbackHandler", "error", err)
-		http.Error(w, "Failed to get session", http.StatusBadRequest)
-		return
-	}
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		http.Error(w, "Code not found", http.StatusBadRequest)
-		return
-	}
-	s := r.URL.Query().Get("state")
-	if s != session.state {
-		http.Error(w, "Invalid state", http.StatusBadRequest)
-		return
-	}
+func CallbackHandler(sessions *Sessions) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// セッションの取得
+		session, err := sessions.Get(r)
+		if err != nil {
+			WriteErrorResponse(w, WrapError(err, ErrCodeSession, "Failed to get session"))
+			return
+		}
 
-	f := url.Values{}
-	f.Add("code", code)
-	f.Add("client_id", Cfg.OauthClientID)
-	f.Add("client_secret", Cfg.OauthClientSecret)
-	f.Add("redirect_uri", Cfg.OauthRedirectURL)
-	f.Add("grant_type", "authorization_code")
-	form := f.Encode()
-	logger.Debug("CallbackHandler", "form", form)
+		// OAuth認証コードの確認
+		code := r.URL.Query().Get("code")
+		if code == "" {
+			WriteErrorResponse(w, NewValidationError("Authorization code is missing", "code parameter is required"))
+			return
+		}
 
-	u, err := url.Parse(googleAccessTokenURL)
-	if err != nil {
-		http.Error(w, "Failed to parse URL", http.StatusInternalServerError)
-		return
-	}
+		// CSRF対策: stateパラメータの確認
+		state := r.URL.Query().Get("state")
+		if state != session.State {
+			WriteErrorResponse(w, NewUnauthorizedError("Invalid state parameter"))
+			return
+		}
 
-	req, err := http.NewRequest(
-		http.MethodPost, u.String(),
-		strings.NewReader(form),
-	)
-	if err != nil {
-		http.Error(w, "Failed to create request", http.StatusInternalServerError)
-		return
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	c := &http.Client{}
-	res, err := c.Do(req)
-	if err != nil {
-		http.Error(w, "Failed to get access token", http.StatusInternalServerError)
-		return
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		http.Error(w, "Failed to read response body", http.StatusInternalServerError)
-		return
-	}
-	logger.Debug("CallbackHandler", "body", string(body))
+		// OAuth トークン交換リクエストの準備
+		tokenRequest := url.Values{}
+		tokenRequest.Add("code", code)
+		tokenRequest.Add("client_id", Cfg.OauthClientID)
+		tokenRequest.Add("client_secret", Cfg.OauthClientSecret)
+		tokenRequest.Add("redirect_uri", Cfg.OauthRedirectURL)
+		tokenRequest.Add("grant_type", "authorization_code")
 
-	session.isActive = true
-	sessions.Store(session)
-	http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
+		logger.Debug("Exchanging OAuth code for token")
+
+		// OAuth トークンエンドポイントの呼び出し
+		tokenURL, err := url.Parse(googleAccessTokenURL)
+		if err != nil {
+			WriteErrorResponse(w, WrapError(err, ErrCodeInternalServer, "Failed to parse token URL"))
+			return
+		}
+
+		req, err := http.NewRequestWithContext(r.Context(),
+			http.MethodPost, tokenURL.String(),
+			strings.NewReader(tokenRequest.Encode()))
+		if err != nil {
+			WriteErrorResponse(w, WrapError(err, ErrCodeInternalServer, "Failed to create token request"))
+			return
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		client := &http.Client{}
+		res, err := client.Do(req)
+		if err != nil {
+			WriteErrorResponse(w, WrapError(err, ErrCodeExternalService, "Failed to exchange OAuth code"))
+			return
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			WriteErrorResponse(w, NewAppError(ErrCodeExternalService,
+				fmt.Sprintf("OAuth token exchange failed with status %d", res.StatusCode), nil))
+			return
+		}
+
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			WriteErrorResponse(w, WrapError(err, ErrCodeExternalService, "Failed to read token response"))
+			return
+		}
+
+		logger.Debug("OAuth token exchange successful", "response_length", len(body))
+
+		// セッションの有効化
+		session.IsActive = true
+		err = sessions.Store(r.Context(), session)
+		if err != nil {
+			WriteErrorResponse(w, WrapError(err, ErrCodeSession, "Failed to update session"))
+			return
+		}
+
+		logger.Info("User successfully authenticated", "session_id", session.ID)
+		http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
+	}
 }

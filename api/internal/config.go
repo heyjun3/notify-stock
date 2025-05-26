@@ -1,6 +1,7 @@
 package notifystock
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -11,53 +12,73 @@ import (
 var Cfg Config
 
 func init() {
+	if err := initConfig(); err != nil {
+		slog.Error("Failed to initialize configuration", "error", err)
+		panic(err) // initではpanicが必要だが、エラー情報を改善
+	}
+}
+
+func initConfig() error {
 	err := godotenv.Load(".env")
 	if err != nil {
 		err = godotenv.Load("../.env")
 		if err != nil {
-			slog.Info(err.Error())
+			slog.Info("No .env file found, using environment variables")
 		}
 	}
-	from, ok := os.LookupEnv("FROM")
-	if !ok {
-		panic("FROM is not set")
+
+	cfg, err := loadConfigFromEnv()
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
 	}
-	to, ok := os.LookupEnv("TO")
-	if !ok {
-		panic("TO is not set")
+
+	Cfg = *cfg
+	logger = createLogger(Cfg.LogLevel)
+	return nil
+}
+
+func loadConfigFromEnv() (*Config, error) {
+	requiredEnvs := map[string]string{
+		"FROM":                "",
+		"TO":                  "",
+		"MAIL_TOKEN":          "",
+		"OAUTH_CLIENT_ID":     "",
+		"OAUTH_CLIENT_SECRET": "",
+		"OAUTH_REDIRECT_URL":  "",
 	}
-	mailToken, ok := os.LookupEnv("MAIL_TOKEN")
-	if !ok {
-		panic("MAIL_TOKEN is not set")
+
+	// 必須環境変数の確認
+	for key := range requiredEnvs {
+		value, ok := os.LookupEnv(key)
+		if !ok {
+			return nil, fmt.Errorf("required environment variable %s is not set", key)
+		}
+		requiredEnvs[key] = value
 	}
+
+	// オプショナル環境変数
 	dbdsn, ok := os.LookupEnv("DBDSN")
 	if !ok {
 		dbdsn = "postgres://postgres:postgres@localhost:5555/notify-stock?sslmode=disable"
 	}
-	oauthClientID, ok := os.LookupEnv("OAUTH_CLIENT_ID")
-	if !ok {
-		panic("OAUTH_CLIENT_ID is not set")
-	}
-	oauthClientSecret, ok := os.LookupEnv("OAUTH_CLIENT_SECRET")
-	if !ok {
-		panic("OAUTH_CLIENT_SECRET is not set")
-	}
-	oauthRedirectURL, ok := os.LookupEnv("OAUTH_REDIRECT_URL")
-	if !ok {
-		panic("OAUTH_REDIRECT_URL is not set")
-	}
+
 	logLevel := os.Getenv("LOG_LEVEL")
-	Cfg = Config{
-		FROM:              from,
-		TO:                to,
-		DBDSN:             dbdsn,
-		MailToken:         mailToken,
-		OauthClientID:     oauthClientID,
-		OauthClientSecret: oauthClientSecret,
-		OauthRedirectURL:  oauthRedirectURL,
-		LogLevel:          logLevel,
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "development"
 	}
-	logger = createLogger(Cfg.LogLevel)
+
+	return &Config{
+		FROM:              requiredEnvs["FROM"],
+		TO:                requiredEnvs["TO"],
+		DBDSN:             dbdsn,
+		MailToken:         requiredEnvs["MAIL_TOKEN"],
+		OauthClientID:     requiredEnvs["OAUTH_CLIENT_ID"],
+		OauthClientSecret: requiredEnvs["OAUTH_CLIENT_SECRET"],
+		OauthRedirectURL:  requiredEnvs["OAUTH_REDIRECT_URL"],
+		LogLevel:          logLevel,
+		Environment:       env,
+	}, nil
 }
 
 type Config struct {
@@ -69,6 +90,15 @@ type Config struct {
 	OauthClientSecret string
 	OauthRedirectURL  string
 	LogLevel          string
+	Environment       string
+}
+
+func (c *Config) IsProduction() bool {
+	return c.Environment == "production"
+}
+
+func (c *Config) IsDevelopment() bool {
+	return c.Environment == "development"
 }
 
 type SupportSymbol struct {

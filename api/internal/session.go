@@ -3,31 +3,47 @@ package notifystock
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
-var sessions *Sessions
-
-func init() {
-	sessions = NewSessions(SessionOption{
-		Domain: "localhost",
-		Expire: 24 * time.Hour,
+func InitSessionsWithRepo(repo SessionRepository) *Sessions {
+	domain := "localhost"
+	if Cfg.IsProduction() {
+		domain = "" // 本番環境では空文字でサブドメインも含める
+	}
+	return NewSessions(SessionOption{
+		Repository: repo,
+		Domain:     domain,
+		Expire:     24 * time.Hour,
 	})
 }
 
 const CookieName = "notify-stock"
 
-type Session struct {
-	ID       string
-	state    string
-	isActive bool
+type SessionRepository interface {
+	Get(ctx context.Context, sessionID string) (*Session, error)
+	Create(ctx context.Context, session *Session) error
+	Update(ctx context.Context, session *Session) error
+	Delete(ctx context.Context, sessionID string) error
+	CleanExpired(ctx context.Context) error
 }
 
-func NewSession() (*Session, error) {
+type Session struct {
+	ID        string    `bun:"id,pk"`
+	State     string    `bun:"state,notnull"`
+	IsActive  bool      `bun:"is_active,notnull,default:false"`
+	CreatedAt time.Time `bun:"created_at,notnull,default:current_timestamp"`
+	ExpiresAt time.Time `bun:"expires_at,notnull"`
+}
+
+func NewSession(expire time.Duration) (*Session, error) {
 	id, err := randomString()
 	if err != nil {
 		return nil, err
@@ -36,28 +52,94 @@ func NewSession() (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
+	now := time.Now()
 	return &Session{
-		ID:       id,
-		state:    state,
-		isActive: false,
+		ID:        id,
+		State:     state,
+		IsActive:  false,
+		CreatedAt: now,
+		ExpiresAt: now.Add(expire),
 	}, nil
 }
 
+type SessionDatabaseRepository struct {
+	db *bun.DB
+}
+
+func NewSessionRepository(db *bun.DB) SessionRepository {
+	return &SessionDatabaseRepository{db: db}
+}
+
+func (r *SessionDatabaseRepository) Get(ctx context.Context, sessionID string) (*Session, error) {
+	session := &Session{}
+	err := r.db.NewSelect().
+		Model(session).
+		Where("id = ? AND expires_at > NOW()", sessionID).
+		Scan(ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("session not found")
+		}
+		return nil, err
+	}
+	return session, nil
+}
+
+func (r *SessionDatabaseRepository) Create(ctx context.Context, session *Session) error {
+	_, err := r.db.NewInsert().
+		Model(session).
+		Exec(ctx)
+	return err
+}
+
+func (r *SessionDatabaseRepository) Update(ctx context.Context, session *Session) error {
+	_, err := r.db.NewUpdate().
+		Model(session).
+		Where("id = ?", session.ID).
+		Exec(ctx)
+	return err
+}
+
+func (r *SessionDatabaseRepository) Delete(ctx context.Context, sessionID string) error {
+	_, err := r.db.NewDelete().
+		Model((*Session)(nil)).
+		Where("id = ?", sessionID).
+		Exec(ctx)
+	return err
+}
+
+func (r *SessionDatabaseRepository) CleanExpired(ctx context.Context) error {
+	_, err := r.db.NewDelete().
+		Model((*Session)(nil)).
+		Where("expires_at <= NOW()").
+		Exec(ctx)
+	return err
+}
+
 type Sessions struct {
-	store  map[string]*Session
+	repo   SessionRepository
 	domain string
 	expire time.Duration
 }
 type SessionOption struct {
-	Domain string
-	Expire time.Duration
+	Repository SessionRepository
+	Domain     string
+	Expire     time.Duration
 }
 
 func NewSessions(opt SessionOption) *Sessions {
 	return &Sessions{
-		store:  make(map[string]*Session),
+		repo:   opt.Repository,
 		domain: opt.Domain,
 		expire: opt.Expire,
+	}
+}
+
+func NewSessionsWithDefaults(repo SessionRepository) *Sessions {
+	return &Sessions{
+		repo:   repo,
+		domain: "localhost",
+		expire: 24 * time.Hour,
 	}
 }
 
@@ -69,31 +151,43 @@ func (s *Sessions) Get(r *http.Request) (*Session, error) {
 	if cookie == nil {
 		return nil, fmt.Errorf("not found cookie")
 	}
-	if session, ok := s.store[cookie.Value]; ok {
-		return session, nil
-	} else {
-		return nil, fmt.Errorf("session not found")
-	}
+
+	return s.repo.Get(r.Context(), cookie.Value)
 }
 
-func (s *Sessions) New(w http.ResponseWriter) (*Session, error) {
-	session, err := NewSession()
+func (s *Sessions) New(w http.ResponseWriter, ctx context.Context) (*Session, error) {
+	session, err := NewSession(s.expire)
 	if err != nil {
 		return nil, err
 	}
-	s.store[session.ID] = session
+
+	err = s.repo.Create(ctx, session)
+	if err != nil {
+		return nil, err
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
 		Value:    session.ID,
 		Domain:   s.domain,
-		Expires:  time.Now().Add(s.expire),
+		Expires:  session.ExpiresAt,
 		HttpOnly: true,
+		Secure:   Cfg.IsProduction(),
+		SameSite: http.SameSiteLaxMode,
 	})
 	return session, nil
 }
 
-func (s *Sessions) Store(session *Session) {
-	s.store[session.ID] = session
+func (s *Sessions) Store(ctx context.Context, session *Session) error {
+	return s.repo.Update(ctx, session)
+}
+
+func (s *Sessions) CleanExpired(ctx context.Context) error {
+	return s.repo.CleanExpired(ctx)
+}
+
+func (s *Sessions) Delete(ctx context.Context, sessionID string) error {
+	return s.repo.Delete(ctx, sessionID)
 }
 
 func randomString() (string, error) {
@@ -109,16 +203,18 @@ type sessionKeyType string
 
 var sessionKey = sessionKeyType("session")
 
-func SessionMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := sessions.Get(r)
-		if err != nil {
-			logger.Error(err.Error())
-			next.ServeHTTP(w, r)
-			return
-		}
-		ctx := context.WithValue(r.Context(), sessionKey, session)
-		next.ServeHTTP(w, r.WithContext(ctx))
+func SessionMiddleware(sessions *Sessions) func(next http.Handler) http.Handler {
+	return (func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			session, err := sessions.Get(r)
+			if err != nil {
+				logger.Error(err.Error())
+				next.ServeHTTP(w, r)
+				return
+			}
+			ctx := context.WithValue(r.Context(), sessionKey, session)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	})
 }
 

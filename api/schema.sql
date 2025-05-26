@@ -42,3 +42,12 @@ ALTER TABLE notification_targets ADD CONSTRAINT fk_symbol
     FOREIGN KEY (symbol)
     REFERENCES symbols(symbol)
     ON DELETE CASCADE;
+
+CREATE TABLE IF NOT EXISTS
+    sessions (
+        id TEXT PRIMARY KEY,
+        state TEXT NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMP NOT NULL
+    );

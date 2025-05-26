@@ -63,6 +63,11 @@ func runServer() {
 		port = defaultPort
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	db := notifystock.NewDB(notifystock.Cfg.DBDSN)
+	sessionRepo := notifystock.NewSessionRepository(db)
+	sessions := notifystock.InitSessionsWithRepo(sessionRepo)
+
 	resolver := graph.InitResolver(notifystock.Cfg.DBDSN)
 	directives := graph.InitRootDirective(logger)
 	c := graph.Config{
@@ -85,9 +90,9 @@ func runServer() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	mux.Handle("/query", notifystock.SessionMiddleware(CORSMiddleware(loggerMiddleware(logger, srv))))
-	mux.HandleFunc("GET /login", notifystock.LoginHandler)
-	mux.HandleFunc("GET /auth/callback", notifystock.CallbackHandler)
+	mux.Handle("/query", notifystock.SessionMiddleware(sessions)(CORSMiddleware(loggerMiddleware(logger, srv))))
+	mux.HandleFunc("GET /login", notifystock.LoginHandler(sessions))
+	mux.HandleFunc("GET /auth/callback", notifystock.CallbackHandler(sessions))
 
 	s := &http.Server{
 		Addr:    "0.0.0.0" + ":" + port,

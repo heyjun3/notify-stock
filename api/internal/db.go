@@ -17,3 +17,7 @@ func NewDB(dsn string) *bun.DB {
 	))
 	return db
 }
+
+func NewDBFromConfig(cfg *Config) *bun.DB {
+	return NewDB(cfg.DBDSN)
+}

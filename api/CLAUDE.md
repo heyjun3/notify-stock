@@ -61,8 +61,24 @@ The project uses Cobra CLI with commands in `cmd/` directory:
 
 ### Configuration
 - `config.yaml` - Supported stock symbols (^N225, ^GSPC, ^DJI, ^IXIC, ^XDN)
-- Environment variables for email config, database DSN, OAuth settings
+- Environment variables for email config, database connection, OAuth settings
 - `compose.yaml` - PostgreSQL service on port 5555
+
+#### Database Environment Variables
+The application supports both unified DSN and separate database connection parameters:
+
+**Option 1: Unified DSN (legacy)**
+- `DBDSN` - Complete PostgreSQL connection string
+
+**Option 2: Separate Parameters (recommended)**
+- `DB_HOST` - Database host (default: localhost)
+- `DB_PORT` - Database port (default: 5555)
+- `DB_USER` - Database username (default: postgres)
+- `DB_PASSWORD` - Database password (default: postgres)
+- `DB_NAME` - Database name (default: notify-stock)
+- `DB_SSLMODE` - SSL mode (default: disable)
+
+If both are provided, DBDSN takes precedence for backward compatibility.
 
 ### Key Files
 - `schema.sql` - Database migrations

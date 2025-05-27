@@ -56,10 +56,18 @@ func loadConfigFromEnv() (*Config, error) {
 		requiredEnvs[key] = value
 	}
 
-	// オプショナル環境変数
+	// データベース環境変数（デフォルト値付き）
+	dbHost := getEnvOrDefault("DB_HOST", "localhost")
+	dbPort := getEnvOrDefault("DB_PORT", "5555")
+	dbUser := getEnvOrDefault("DB_USER", "postgres")
+	dbPassword := getEnvOrDefault("DB_PASSWORD", "postgres")
+	dbName := getEnvOrDefault("DB_NAME", "notify-stock")
+	dbSSLMode := getEnvOrDefault("DB_SSLMODE", "disable")
+
+	// 後方互換性のため、DBDSNが設定されている場合はそれを優先
 	dbdsn, ok := os.LookupEnv("DBDSN")
 	if !ok {
-		dbdsn = "postgres://postgres:postgres@localhost:5555/notify-stock?sslmode=disable"
+		dbdsn = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbUser, dbPassword, dbHost, dbPort, dbName, dbSSLMode)
 	}
 
 	logLevel := os.Getenv("LOG_LEVEL")
@@ -72,6 +80,12 @@ func loadConfigFromEnv() (*Config, error) {
 		FROM:              requiredEnvs["FROM"],
 		TO:                requiredEnvs["TO"],
 		DBDSN:             dbdsn,
+		DBHost:            dbHost,
+		DBPort:            dbPort,
+		DBUser:            dbUser,
+		DBPassword:        dbPassword,
+		DBName:            dbName,
+		DBSSLMode:         dbSSLMode,
 		MailToken:         requiredEnvs["MAIL_TOKEN"],
 		OauthClientID:     requiredEnvs["OAUTH_CLIENT_ID"],
 		OauthClientSecret: requiredEnvs["OAUTH_CLIENT_SECRET"],
@@ -85,6 +99,12 @@ type Config struct {
 	FROM              string
 	TO                string
 	DBDSN             string
+	DBHost            string
+	DBPort            string
+	DBUser            string
+	DBPassword        string
+	DBName            string
+	DBSSLMode         string
 	MailToken         string
 	OauthClientID     string
 	OauthClientSecret string
@@ -103,6 +123,13 @@ func (c *Config) IsDevelopment() bool {
 
 type SupportSymbol struct {
 	Symbols []string `yaml:"symbols"`
+}
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 func GetSupportSymbols(path string) (*SupportSymbol, error) {

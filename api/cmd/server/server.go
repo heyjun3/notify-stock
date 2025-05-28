@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -39,12 +38,19 @@ func loggerMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 	})
 }
 func CORSMiddleware(next http.Handler) http.Handler {
+	allowedOrigin := []string{
+		"http://localhost:5173",
+		"https://web-server-166226611413.us-west1.run.app",
+		"https://marketwatcher.shop",
+	}
+	origins := make(map[string]struct{})
+	for _, origin := range allowedOrigin {
+		origins[origin] = struct{}{}
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if strings.Contains(origin, "localhost") {
+		if _, ok := origins[origin]; ok {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
-		} else {
-			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
 		}
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -88,8 +94,9 @@ func runServer() {
 	})
 
 	mux := http.NewServeMux()
-
-	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	if notifystock.Cfg.IsDevelopment() {
+		mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	}
 	mux.Handle("/query", notifystock.SessionMiddleware(sessions)(CORSMiddleware(loggerMiddleware(logger, srv))))
 	mux.HandleFunc("GET /login", notifystock.LoginHandler(sessions))
 	mux.HandleFunc("GET /auth/callback", notifystock.CallbackHandler(sessions))

@@ -13,6 +13,10 @@ db-setup:
 
 build:
 	docker compose build notify
+	docker image tag api-notify us-west1-docker.pkg.dev/kj-project-0/notify-stock/api-server
+push-image:
+	docker push us-west1-docker.pkg.dev/kj-project-0/notify-stock/api-server
+
 notify:
 	docker compose run --rm notify notify -s "^N225,^GSPC"
 update:

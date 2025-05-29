@@ -3,12 +3,15 @@
 package graph
 
 import (
-	"github.com/google/wire"
-	notify "github.com/heyjun3/notify-stock/internal"
 	"log/slog"
+
+	"github.com/google/wire"
+	"github.com/uptrace/bun"
+
+	notify "github.com/heyjun3/notify-stock/internal"
 )
 
-func InitResolver(dsn string) *Resolver {
+func InitResolver(db *bun.DB) *Resolver {
 	wire.Build(
 		notify.InitStockRepository,
 		notify.InitNotificationRepository,

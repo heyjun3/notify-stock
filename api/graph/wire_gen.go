@@ -8,15 +8,16 @@ package graph
 
 import (
 	"github.com/heyjun3/notify-stock/internal"
+	"github.com/uptrace/bun"
 	"log/slog"
 )
 
 // Injectors from wire.go:
 
-func InitResolver(dsn string) *Resolver {
-	stockRepository := notifystock.InitStockRepository(dsn)
-	symbolRepository := notifystock.InitSymbolRepository(dsn)
-	notificationRepository := notifystock.InitNotificationRepository(dsn)
+func InitResolver(db *bun.DB) *Resolver {
+	stockRepository := notifystock.InitStockRepository(db)
+	symbolRepository := notifystock.InitSymbolRepository(db)
+	notificationRepository := notifystock.InitNotificationRepository(db)
 	notificationCreator := notifystock.NewNotificationCreator(notificationRepository)
 	notificationFetcher := notifystock.NewNotificationFetcher(notificationRepository)
 	dataLoader := notifystock.NewDataLoader(symbolRepository)

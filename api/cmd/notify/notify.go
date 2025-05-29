@@ -24,10 +24,11 @@ func init() {
 }
 
 func notifyStock(symbols []string) {
+	db := notifyapp.NewDB(notifyapp.Cfg.DBDSN)
 	notifier, err := notifyapp.InitStockNotifier(
 		context.Background(),
 		notifyapp.Cfg.MailToken,
-		notifyapp.DBDSN(notifyapp.Cfg.DBDSN),
+		db,
 	)
 	if err != nil {
 		log.Fatal(err)

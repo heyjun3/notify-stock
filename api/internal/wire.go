@@ -9,9 +9,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
+func InitStockRegister(db *bun.DB, client HTTPClientInterface) *StockRegister {
 	wire.Build(
-		NewDB,
 		NewFinanceClient,
 		NewStockRepository,
 		NewSymbolRepository,
@@ -20,27 +19,19 @@ func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
 	return &StockRegister{}
 }
 
-func InitSymbolRepository(dsn string) *SymbolRepository {
+func InitSymbolRepository(db *bun.DB) *SymbolRepository {
 	wire.Build(
-		NewDB,
 		NewSymbolRepository,
 	)
 	return &SymbolRepository{}
 }
 
-type DBDSN string
-
-func wrapOpenDB(dsn DBDSN) *bun.DB {
-	return NewDB(string(dsn))
-}
-
 func InitStockNotifier(
 	ctx context.Context,
 	token string,
-	dsn DBDSN,
+	db *bun.DB,
 ) (*StockNotifier, error) {
 	wire.Build(
-		wrapOpenDB,
 		NewEmailClient,
 		NewStockRepository,
 		NewSymbolRepository,
@@ -50,17 +41,15 @@ func InitStockNotifier(
 	return &StockNotifier{}, nil
 }
 
-func InitStockRepository(dsn string) *StockRepository {
+func InitStockRepository(db *bun.DB) *StockRepository {
 	wire.Build(
-		NewDB,
 		NewStockRepository,
 	)
 	return &StockRepository{}
 }
 
-func InitNotificationRepository(dsn string) *NotificationRepository {
+func InitNotificationRepository(db *bun.DB) *NotificationRepository {
 	wire.Build(
-		NewDB,
 		NewNotificationRepository,
 	)
 	return &NotificationRepository{}

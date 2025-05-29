@@ -13,46 +13,33 @@ import (
 
 // Injectors from wire.go:
 
-func InitStockRegister(dsn string, client HTTPClientInterface) *StockRegister {
+func InitStockRegister(db *bun.DB, client HTTPClientInterface) *StockRegister {
 	financeClient := NewFinanceClient(client)
-	db := NewDB(dsn)
 	stockRepository := NewStockRepository(db)
 	symbolRepository := NewSymbolRepository(db)
 	stockRegister := NewStockRegister(financeClient, stockRepository, symbolRepository)
 	return stockRegister
 }
 
-func InitSymbolRepository(dsn string) *SymbolRepository {
-	db := NewDB(dsn)
+func InitSymbolRepository(db *bun.DB) *SymbolRepository {
 	symbolRepository := NewSymbolRepository(db)
 	return symbolRepository
 }
 
-func InitStockNotifier(ctx context.Context, token string, dsn DBDSN) (*StockNotifier, error) {
+func InitStockNotifier(ctx context.Context, token string, db *bun.DB) (*StockNotifier, error) {
 	emailClient := NewEmailClient(token)
-	db := wrapOpenDB(dsn)
 	stockRepository := NewStockRepository(db)
 	symbolRepository := NewSymbolRepository(db)
 	stockNotifier := NewStockNotifier(emailClient, stockRepository, symbolRepository)
 	return stockNotifier, nil
 }
 
-func InitStockRepository(dsn string) *StockRepository {
-	db := NewDB(dsn)
+func InitStockRepository(db *bun.DB) *StockRepository {
 	stockRepository := NewStockRepository(db)
 	return stockRepository
 }
 
-func InitNotificationRepository(dsn string) *NotificationRepository {
-	db := NewDB(dsn)
+func InitNotificationRepository(db *bun.DB) *NotificationRepository {
 	notificationRepository := NewNotificationRepository(db)
 	return notificationRepository
-}
-
-// wire.go:
-
-type DBDSN string
-
-func wrapOpenDB(dsn DBDSN) *bun.DB {
-	return NewDB(string(dsn))
 }

@@ -71,10 +71,13 @@ func runServer() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	db := notifystock.NewDB(notifystock.Cfg.DBDSN)
+	if err := db.Ping(); err != nil {
+		panic(err)
+	}
 	sessionRepo := notifystock.NewSessionRepository(db)
 	sessions := notifystock.InitSessionsWithRepo(sessionRepo)
 
-	resolver := graph.InitResolver(notifystock.Cfg.DBDSN)
+	resolver := graph.InitResolver(db)
 	directives := graph.InitRootDirective(logger)
 	c := graph.Config{
 		Resolvers:  resolver,

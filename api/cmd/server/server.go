@@ -71,9 +71,6 @@ func runServer() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	db := notifystock.NewDB(notifystock.Cfg.DBDSN)
-	if err := db.Ping(); err != nil {
-		panic(err)
-	}
 	sessionRepo := notifystock.NewSessionRepository(db)
 	sessions := notifystock.InitSessionsWithRepo(sessionRepo)
 

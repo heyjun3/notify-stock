@@ -111,7 +111,6 @@ func (r *queryResolver) Notifications(ctx context.Context) ([]*model.Notificatio
 
 // Detail is the resolver for the detail field.
 func (r *symbolResolver) Detail(ctx context.Context, obj *model.Symbol) (*model.SymbolDetail, error) {
-	r.logger.Info("Fetching symbol detail", "symbol", obj.Symbol)
 	return obj.Detail, nil
 }
 

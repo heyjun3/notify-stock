@@ -5,6 +5,7 @@ import (
 
 	"github.com/heyjun3/notify-stock/cmd/email"
 	"github.com/heyjun3/notify-stock/cmd/fetch"
+	"github.com/heyjun3/notify-stock/cmd/logger"
 	"github.com/heyjun3/notify-stock/cmd/notify"
 	"github.com/heyjun3/notify-stock/cmd/server"
 	"github.com/heyjun3/notify-stock/cmd/stock"
@@ -20,6 +21,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(
+
 		version.VersionCommand,
 		notify.NotifyCommand,
 		server.ServerCommand,
@@ -27,6 +29,7 @@ func init() {
 		fetch.FetchCommand,
 		yaml.YamlCommand,
 		stock.Command,
+		logger.Command,
 	)
 }
 

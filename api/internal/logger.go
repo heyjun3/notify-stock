@@ -10,7 +10,7 @@ var logger *slog.Logger
 
 func createLogger(level string) *slog.Logger {
 	var logLevel slog.Level
-	l := strings.ToUpper(Cfg.LogLevel)
+	l := strings.ToUpper(level)
 	switch l {
 	case "DEBUG":
 		logLevel = slog.LevelDebug
@@ -25,5 +25,14 @@ func createLogger(level string) *slog.Logger {
 	}
 	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: logLevel,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == "level" {
+				a.Key = "severity"
+			}
+			if a.Key == "msg" {
+				a.Key = "message"
+			}
+			return a
+		},
 	}))
 }

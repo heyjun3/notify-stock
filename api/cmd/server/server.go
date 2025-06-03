@@ -69,6 +69,7 @@ func runServer() {
 		port = defaultPort
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger.Info("Start set up server")
 
 	db := notifystock.NewDB(notifystock.Cfg.DBDSN)
 	sessionRepo := notifystock.NewSessionRepository(db)

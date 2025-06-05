@@ -208,7 +208,7 @@ func SessionMiddleware(sessions *Sessions) func(next http.Handler) http.Handler 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, err := sessions.Get(r)
 			if err != nil {
-				logger.Error(err.Error())
+				logger.Info(err.Error())
 				next.ServeHTTP(w, r)
 				return
 			}

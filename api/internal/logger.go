@@ -8,7 +8,7 @@ import (
 
 var logger *slog.Logger
 
-func createLogger(level string) *slog.Logger {
+func CreateLogger(level string) *slog.Logger {
 	var logLevel slog.Level
 	l := strings.ToUpper(level)
 	switch l {

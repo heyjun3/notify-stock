@@ -2,7 +2,6 @@ package graph
 
 import (
 	"log/slog"
-	"os"
 
 	notify "github.com/heyjun3/notify-stock/internal"
 )
@@ -32,7 +31,7 @@ func NewResolver(
 		symbolRepository:    symbolRepository,
 		notificationCreator: notificationCreator,
 		notificationFetcher: notificationFetcher,
-		logger:              slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		logger:              notify.CreateLogger("info"),
 		loader:              loader,
 	}
 }

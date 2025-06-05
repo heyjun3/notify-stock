@@ -33,7 +33,7 @@ func initConfig() error {
 	}
 
 	Cfg = *cfg
-	logger = createLogger(Cfg.LogLevel)
+	logger = CreateLogger(Cfg.LogLevel)
 	return nil
 }
 

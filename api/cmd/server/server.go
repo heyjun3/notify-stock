@@ -68,7 +68,7 @@ func runServer() {
 	if port == "" {
 		port = defaultPort
 	}
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := notifystock.CreateLogger(notifystock.Cfg.LogLevel)
 	logger.Info("Start set up server")
 
 	db := notifystock.NewDB(notifystock.Cfg.DBDSN)

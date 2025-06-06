@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+type Node interface {
+	IsNode()
+	GetID() string
+}
+
 type ChartInput struct {
 	Symbol *string   `json:"symbol,omitempty"`
 	Start  time.Time `json:"start"`
@@ -23,6 +28,9 @@ type Notification struct {
 	Targets []*SymbolDetail `json:"targets"`
 }
 
+func (Notification) IsNode()            {}
+func (this Notification) GetID() string { return this.ID }
+
 type NotificationInput struct {
 	Symbol string    `json:"symbol"`
 	Email  string    `json:"email"`
@@ -39,11 +47,14 @@ type Stock struct {
 }
 
 type Symbol struct {
-	Symbol string        `json:"symbol"`
 	ID     string        `json:"id"`
+	Symbol string        `json:"symbol"`
 	Detail *SymbolDetail `json:"detail"`
 	Chart  []*Stock      `json:"chart"`
 }
+
+func (Symbol) IsNode()            {}
+func (this Symbol) GetID() string { return this.ID }
 
 type SymbolDetail struct {
 	Symbol         string  `json:"symbol"`

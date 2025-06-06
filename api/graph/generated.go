@@ -64,6 +64,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Node          func(childComplexity int, id string) int
 		Notifications func(childComplexity int) int
 		Symbol        func(childComplexity int, input model.SymbolInput) int
 		Symbols       func(childComplexity int, input *model.SymbolInput) int
@@ -102,6 +103,7 @@ type NotificationResolver interface {
 	Targets(ctx context.Context, obj *model.Notification) ([]*model.SymbolDetail, error)
 }
 type QueryResolver interface {
+	Node(ctx context.Context, id string) (model.Node, error)
 	Symbol(ctx context.Context, input model.SymbolInput) (*model.Symbol, error)
 	Symbols(ctx context.Context, input *model.SymbolInput) ([]*model.Symbol, error)
 	Notifications(ctx context.Context) ([]*model.Notification, error)
@@ -176,6 +178,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Notification.Time(childComplexity), true
+
+	case "Query.node":
+		if e.complexity.Query.Node == nil {
+			break
+		}
+
+		args, err := ec.field_Query_node_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Node(childComplexity, args["id"].(string)), true
 
 	case "Query.notifications":
 		if e.complexity.Query.Notifications == nil {
@@ -492,6 +506,29 @@ func (ec *executionContext) field_Query___type_argsName(
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 	if tmp, ok := rawArgs["name"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_node_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_node_argsID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
 	}
 
 	var zeroVal string
@@ -996,6 +1033,58 @@ func (ec *executionContext) fieldContext_Notification_targets(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_node(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Node(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.Node)
+	fc.Result = res
+	return ec.marshalONode2githubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐNode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_node_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_symbol(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_symbol(ctx, field)
 	if err != nil {
@@ -1035,10 +1124,10 @@ func (ec *executionContext) fieldContext_Query_symbol(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "symbol":
-				return ec.fieldContext_Symbol_symbol(ctx, field)
 			case "id":
 				return ec.fieldContext_Symbol_id(ctx, field)
+			case "symbol":
+				return ec.fieldContext_Symbol_symbol(ctx, field)
 			case "detail":
 				return ec.fieldContext_Symbol_detail(ctx, field)
 			case "chart":
@@ -1100,10 +1189,10 @@ func (ec *executionContext) fieldContext_Query_symbols(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "symbol":
-				return ec.fieldContext_Symbol_symbol(ctx, field)
 			case "id":
 				return ec.fieldContext_Symbol_id(ctx, field)
+			case "symbol":
+				return ec.fieldContext_Symbol_symbol(ctx, field)
 			case "detail":
 				return ec.fieldContext_Symbol_detail(ctx, field)
 			case "chart":
@@ -1467,50 +1556,6 @@ func (ec *executionContext) fieldContext_Stock_price(_ context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Symbol_symbol(ctx context.Context, field graphql.CollectedField, obj *model.Symbol) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Symbol_symbol(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Symbol, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Symbol_symbol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Symbol",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Symbol_id(ctx context.Context, field graphql.CollectedField, obj *model.Symbol) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Symbol_id(ctx, field)
 	if err != nil {
@@ -1543,6 +1588,50 @@ func (ec *executionContext) _Symbol_id(ctx context.Context, field graphql.Collec
 }
 
 func (ec *executionContext) fieldContext_Symbol_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Symbol",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Symbol_symbol(ctx context.Context, field graphql.CollectedField, obj *model.Symbol) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Symbol_symbol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Symbol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Symbol_symbol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Symbol",
 		Field:      field,
@@ -4136,6 +4225,29 @@ func (ec *executionContext) unmarshalInputSymbolInput(ctx context.Context, obj a
 
 // region    ************************** interface.gotpl ***************************
 
+func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj model.Node) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.Symbol:
+		return ec._Symbol(ctx, sel, &obj)
+	case *model.Symbol:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Symbol(ctx, sel, obj)
+	case model.Notification:
+		return ec._Notification(ctx, sel, &obj)
+	case *model.Notification:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Notification(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
@@ -4189,7 +4301,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
-var notificationImplementors = []string{"Notification"}
+var notificationImplementors = []string{"Notification", "Node"}
 
 func (ec *executionContext) _Notification(ctx context.Context, sel ast.SelectionSet, obj *model.Notification) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, notificationImplementors)
@@ -4298,6 +4410,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "node":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_node(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "symbol":
 			field := field
 
@@ -4444,7 +4575,7 @@ func (ec *executionContext) _Stock(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
-var symbolImplementors = []string{"Symbol"}
+var symbolImplementors = []string{"Symbol", "Node"}
 
 func (ec *executionContext) _Symbol(ctx context.Context, sel ast.SelectionSet, obj *model.Symbol) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, symbolImplementors)
@@ -4455,13 +4586,13 @@ func (ec *executionContext) _Symbol(ctx context.Context, sel ast.SelectionSet, o
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Symbol")
-		case "symbol":
-			out.Values[i] = ec._Symbol_symbol(ctx, field, obj)
+		case "id":
+			out.Values[i] = ec._Symbol_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "id":
-			out.Values[i] = ec._Symbol_id(ctx, field, obj)
+		case "symbol":
+			out.Values[i] = ec._Symbol_symbol(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -5577,6 +5708,13 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	}
 	res := graphql.MarshalID(*v)
 	return res
+}
+
+func (ec *executionContext) marshalONode2githubᚗcomᚋheyjun3ᚋnotifyᚑstockᚋgraphᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Node(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

@@ -41,6 +41,11 @@ func (r *notificationResolver) Targets(ctx context.Context, obj *model.Notificat
 	return convertToSymbolDetails(details), nil
 }
 
+// Node is the resolver for the node field.
+func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
+	panic(fmt.Errorf("not implemented: Node - node"))
+}
+
 // Symbol is the resolver for the symbol field.
 func (r *queryResolver) Symbol(ctx context.Context, input model.SymbolInput) (*model.Symbol, error) {
 	return &model.Symbol{

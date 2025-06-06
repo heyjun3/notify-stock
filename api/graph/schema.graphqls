@@ -6,15 +6,19 @@ directive @auth on FIELD_DEFINITION
 
 scalar Time
 
+interface Node {
+  id: ID!
+}
+
 type Stock {
   symbol: ID!
   timestamp: String!
   price: Float!
 }
 
-type Symbol {
-  symbol: ID!
+type Symbol implements Node {
   id: ID!
+  symbol: ID!
   detail: SymbolDetail!
   chart(input: ChartInput!): [Stock!]!
 }
@@ -31,7 +35,7 @@ type SymbolDetail {
   currencySymbol: String!
 }
 
-type Notification {
+type Notification implements Node {
   id: ID!
   symbol: ID!
   email: String!
@@ -56,6 +60,7 @@ input ChartInput {
 }
 
 type Query {
+  node(id: ID!): Node
   symbol(input: SymbolInput!): Symbol!
   symbols(input: SymbolInput): [Symbol!]!
   notifications: [Notification!]! @auth

@@ -38,6 +38,9 @@ func (s *SymbolDetail) ChangePercent() string {
 	}
 	return p.String() + "%"
 }
+func (s *SymbolDetail) Key() string {
+	return s.Symbol
+}
 
 type SymbolDetailOption func(detail *SymbolDetail) *SymbolDetail
 

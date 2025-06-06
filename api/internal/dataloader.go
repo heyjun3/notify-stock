@@ -25,28 +25,33 @@ func NewDataLoader(
 				{Data: nil, Error: err},
 			}
 		}
-		m := make(map[string]*SymbolDetail, len(symbols))
-		for _, symbol := range symbols {
-			m[symbol.Symbol] = &symbol
+		sym := make([]*SymbolDetail, 0, len(symbols))
+		for i := range symbols {
+			sym = append(sym, &symbols[i])
 		}
-
-		results := make([]*dataloader.Result[*SymbolDetail], len(keys))
-		for i, key := range keys {
-			if symbol, ok := m[key]; ok {
-				results[i] = &dataloader.Result[*SymbolDetail]{
-					Data:  symbol,
-					Error: nil,
-				}
-			} else {
-				results[i] = &dataloader.Result[*SymbolDetail]{
-					Data:  nil,
-					Error: fmt.Errorf("symbol %s not found", key),
-				}
-			}
-		}
-		return results
+		return createResult(sym, keys)
 	}, dataloader.WithCache(Ptr(dataloader.NoCache[string, *SymbolDetail]{})))
 	return &DataLoader{
 		SymbolDetail: symbolDetail,
 	}
+}
+
+type DataLoaderKey interface {
+	Key() string
+}
+
+func createResult[T DataLoaderKey](data []T, keys []string) []*dataloader.Result[T] {
+	m := make(map[string]T, len(data))
+	for _, v := range data {
+		m[v.Key()] = v
+	}
+	results := make([]*dataloader.Result[T], len(keys))
+	for i, key := range keys {
+		if v, ok := m[key]; ok {
+			results[i] = &dataloader.Result[T]{Data: v, Error: nil}
+		} else {
+			results[i] = &dataloader.Result[T]{Error: fmt.Errorf("key %v not found", key)}
+		}
+	}
+	return results
 }

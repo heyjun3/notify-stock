@@ -45,6 +45,7 @@ func loadConfigFromEnv() (*Config, error) {
 		"OAUTH_CLIENT_ID":     "",
 		"OAUTH_CLIENT_SECRET": "",
 		"OAUTH_REDIRECT_URL":  "",
+		"FRONTEND_URL":        "",
 	}
 
 	// 必須環境変数の確認
@@ -90,6 +91,7 @@ func loadConfigFromEnv() (*Config, error) {
 		OauthClientID:     requiredEnvs["OAUTH_CLIENT_ID"],
 		OauthClientSecret: requiredEnvs["OAUTH_CLIENT_SECRET"],
 		OauthRedirectURL:  requiredEnvs["OAUTH_REDIRECT_URL"],
+		FrontendURL:       requiredEnvs["FRONTEND_URL"],
 		LogLevel:          logLevel,
 		Environment:       env,
 	}, nil
@@ -109,6 +111,7 @@ type Config struct {
 	OauthClientID     string
 	OauthClientSecret string
 	OauthRedirectURL  string
+	FrontendURL       string // フロントエンドのURLを追加
 	LogLevel          string
 	Environment       string
 }

@@ -24,7 +24,7 @@ func LoginHandler(sessions *Sessions) func(http.ResponseWriter, *http.Request) {
 		// 既存セッションの確認
 		session, err := sessions.Get(r)
 		if err == nil && session.IsActive {
-			http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
+			http.Redirect(w, r, Cfg.FrontendURL, http.StatusFound)
 			return // already logged in
 		}
 
@@ -137,6 +137,6 @@ func CallbackHandler(sessions *Sessions) func(http.ResponseWriter, *http.Request
 		}
 
 		logger.Info("User successfully authenticated", "session_id", session.ID)
-		http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
+		http.Redirect(w, r, Cfg.FrontendURL, http.StatusFound)
 	}
 }

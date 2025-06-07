@@ -28,7 +28,9 @@ func TestDataLoaderSymbolDetail(t *testing.T) {
 		err := symbolRepository.Save(context.Background(), []notify.SymbolDetail{*symbol})
 		assert.NoError(t, err)
 
-		result, err := dataloader.SymbolDetail.Load(context.Background(), "N225")()
+		dataloader.SymbolDetail.Load(context.Background(), "N225")
+		thunk := dataloader.SymbolDetail.Load(context.Background(), "N225")
+		result, err := thunk()
 
 		assert.NoError(t, err)
 		assert.Equal(t, symbol.Symbol, result.Symbol)

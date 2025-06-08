@@ -26,6 +26,11 @@ var ServerCommand = &cobra.Command{
 		runServer()
 	},
 }
+var isTLS bool
+
+func init() {
+	ServerCommand.Flags().BoolVar(&isTLS, "tls", false, "Run server with TLS")
+}
 
 const defaultPort = "8080"
 
@@ -54,6 +59,7 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		}
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Max-Age", "86400")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
@@ -106,6 +112,11 @@ func runServer() {
 		Addr:    "0.0.0.0" + ":" + port,
 		Handler: mux,
 	}
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(s.ListenAndServe())
+	if isTLS {
+		log.Printf("connect to https://localhost:%s/ for GraphQL playground", port)
+		log.Fatal(s.ListenAndServeTLS("localhost-cert.pem", "localhost-key.pem"))
+	} else {
+		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+		log.Fatal(s.ListenAndServe())
+	}
 }

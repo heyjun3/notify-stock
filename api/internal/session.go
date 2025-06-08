@@ -165,14 +165,12 @@ func (s *Sessions) New(w http.ResponseWriter, ctx context.Context) (*Session, er
 	if err != nil {
 		return nil, err
 	}
-
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
 		Value:    session.ID,
-		Domain:   s.domain,
 		Expires:  session.ExpiresAt,
 		HttpOnly: true,
-		Secure:   Cfg.IsProduction(),
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 	return session, nil

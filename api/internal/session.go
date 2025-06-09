@@ -176,6 +176,26 @@ func (s *Sessions) New(w http.ResponseWriter, ctx context.Context) (*Session, er
 	return session, nil
 }
 
+func (s *Sessions) Clear(w http.ResponseWriter, r *http.Request) error {
+	session, err := s.Get(r)
+	if err != nil {
+		return err
+	}
+	err = s.Delete(r.Context(), session.ID)
+	if err != nil {
+		return err
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     CookieName,
+		Value:    "",
+		Expires:  time.Unix(0, 0), // Set to a past time to delete the cookie
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	return nil
+}
+
 func (s *Sessions) Store(ctx context.Context, session *Session) error {
 	return s.repo.Update(ctx, session)
 }

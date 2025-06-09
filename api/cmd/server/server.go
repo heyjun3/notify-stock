@@ -80,6 +80,7 @@ func runServer() {
 	db := notifystock.NewDB(notifystock.Cfg.DBDSN)
 	sessionRepo := notifystock.NewSessionRepository(db)
 	sessions := notifystock.InitSessionsWithRepo(sessionRepo)
+	authHandler := notifystock.NewAuthHandler(sessions)
 
 	resolver := graph.InitResolver(db)
 	directives := graph.InitRootDirective(logger)
@@ -105,8 +106,9 @@ func runServer() {
 		mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	}
 	mux.Handle("/query", notifystock.SessionMiddleware(sessions)(CORSMiddleware(loggerMiddleware(logger, srv))))
-	mux.HandleFunc("GET /login", notifystock.LoginHandler(sessions))
-	mux.HandleFunc("GET /auth/callback", notifystock.CallbackHandler(sessions))
+	mux.HandleFunc("GET /login", authHandler.LoginHandler)
+	mux.Handle("GET /logout", CORSMiddleware(http.HandlerFunc(authHandler.LogoutHandler)))
+	mux.HandleFunc("GET /auth/callback", authHandler.CallbackHandler)
 
 	s := &http.Server{
 		Addr:    "0.0.0.0" + ":" + port,

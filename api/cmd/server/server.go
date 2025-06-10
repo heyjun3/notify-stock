@@ -105,14 +105,16 @@ func runServer() {
 	if notifystock.Cfg.IsDevelopment() {
 		mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	}
-	mux.Handle("/query", notifystock.SessionMiddleware(sessions)(CORSMiddleware(loggerMiddleware(logger, srv))))
+	mux.Handle("POST /query", notifystock.SessionMiddleware(sessions)(srv))
 	mux.HandleFunc("GET /login", authHandler.LoginHandler)
-	mux.Handle("GET /logout", CORSMiddleware(http.HandlerFunc(authHandler.LogoutHandler)))
+	mux.HandleFunc("GET /logout", authHandler.LogoutHandler)
 	mux.HandleFunc("GET /auth/callback", authHandler.CallbackHandler)
+
+	muxWithMiddleware := CORSMiddleware(loggerMiddleware(logger, mux))
 
 	s := &http.Server{
 		Addr:    "0.0.0.0" + ":" + port,
-		Handler: mux,
+		Handler: muxWithMiddleware,
 	}
 	if isTLS {
 		log.Printf("connect to https://localhost:%s/ for GraphQL playground", port)

@@ -1,17 +1,12 @@
 package notifystock
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
 const googleOauthURL = "https://accounts.google.com/o/oauth2/v2/auth"
-const googleAccessTokenURL = "https://oauth2.googleapis.com/token"
-const googleUserInfoURL = "https://www.googleapis.com/oauth2/v1/userinfo"
 
 var (
 	scope = []string{
@@ -29,23 +24,15 @@ type Token struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-type GoogleUserInfo struct {
-	ID            string `json:"id"`
-	Email         string `json:"email"`
-	VerifiedEmail bool   `json:"verified_email"`
-	Name          string `json:"name"`
-	GivenName     string `json:"given_name"`
-	FamilyName    string `json:"family_name"`
-	Picture       string `json:"picture"`
-}
-
 type AuthHandler struct {
-	Sessions *Sessions
+	Sessions     *Sessions
+	googleClient *GoogleClient
 }
 
-func NewAuthHandler(sessions *Sessions) *AuthHandler {
+func NewAuthHandler(sessions *Sessions, googleClient *GoogleClient) *AuthHandler {
 	return &AuthHandler{
-		Sessions: sessions,
+		Sessions:     sessions,
+		googleClient: googleClient,
 	}
 }
 
@@ -119,81 +106,19 @@ func (h *AuthHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// OAuth トークン交換リクエストの準備
-	tokenRequest := url.Values{}
-	tokenRequest.Add("code", code)
-	tokenRequest.Add("client_id", Cfg.OauthClientID)
-	tokenRequest.Add("client_secret", Cfg.OauthClientSecret)
-	tokenRequest.Add("redirect_uri", Cfg.OauthRedirectURL)
-	tokenRequest.Add("grant_type", "authorization_code")
-
-	logger.Debug("Exchanging OAuth code for token")
-
-	// OAuth トークンエンドポイントの呼び出し
-	tokenURL, err := url.Parse(googleAccessTokenURL)
-	if err != nil {
-		WriteErrorResponse(w, WrapError(err, ErrCodeInternalServer, "Failed to parse token URL"))
-		return
-	}
-
-	req, err := http.NewRequestWithContext(r.Context(),
-		http.MethodPost, tokenURL.String(),
-		strings.NewReader(tokenRequest.Encode()))
-	if err != nil {
-		WriteErrorResponse(w, WrapError(err, ErrCodeInternalServer, "Failed to create token request"))
-		return
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	client := &http.Client{}
-	res, err := client.Do(req)
+	token, err := h.googleClient.ExchangeToken(r.Context(), code)
 	if err != nil {
 		WriteErrorResponse(w, WrapError(err, ErrCodeExternalService, "Failed to exchange OAuth code"))
 		return
 	}
-	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK {
-		WriteErrorResponse(w, NewAppError(ErrCodeExternalService,
-			fmt.Sprintf("OAuth token exchange failed with status %d", res.StatusCode), nil))
-		return
-	}
-
-	body, err := io.ReadAll(res.Body)
+	userInfo, err := h.googleClient.GetUserInfo(r.Context(), token)
 	if err != nil {
-		WriteErrorResponse(w, WrapError(err, ErrCodeExternalService, "Failed to read token response"))
-		return
-	}
-	var token Token
-	if err := json.Unmarshal(body, &token); err != nil {
-		WriteErrorResponse(w, WrapError(err, ErrCodeExternalService, "Failed to parse token response"))
+		WriteErrorResponse(w, WrapError(err, ErrCodeExternalService, "Failed to get user info"))
 		return
 	}
 
-	req, err = http.NewRequest(http.MethodGet, googleUserInfoURL, nil)
-	if err != nil {
-		WriteErrorResponse(w, WrapError(err, ErrCodeInternalServer, "Failed to create user info request"))
-		return
-	}
-	req.Header.Set("Authorization", token.TokenType+" "+token.AccessToken)
-	res, err = client.Do(req)
-	if err != nil {
-		WriteErrorResponse(w, WrapError(err, ErrCodeExternalService, "Failed to fetch user info"))
-		return
-	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		WriteErrorResponse(w, NewAppError(ErrCodeExternalService,
-			fmt.Sprintf("Failed to fetch user info with status %d", res.StatusCode), nil))
-		return
-	}
-	body, err = io.ReadAll(res.Body)
-	if err != nil {
-		WriteErrorResponse(w, WrapError(err, ErrCodeExternalService, "Failed to read user info response"))
-		return
-	}
-
-	logger.Info("User info response received", "response", string(body))
+	logger.Info("User info response received", "response", userInfo)
 
 	// セッションの有効化
 	session.IsActive = true

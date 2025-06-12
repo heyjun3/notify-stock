@@ -17,6 +17,8 @@ func openDB(t *testing.T) *bun.DB {
 		(*notify.Stock)(nil),
 		(*notify.Notification)(nil),
 		(*notify.SymbolDetail)(nil),
+		(*notify.Member)(nil),
+		(*notify.GoogleMember)(nil),
 	} {
 		db.NewDelete().Model(table).Where("1 = 1").Exec(context.Background())
 	}

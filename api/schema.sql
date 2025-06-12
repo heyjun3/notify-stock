@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS
         PRIMARY KEY (symbol, TIMESTAMP)
     );
 
-CREATE TABLE IF NOT EXISTS 
+CREATE TABLE IF NOT EXISTS
     symbols (
         symbol TEXT PRIMARY KEY,
         short_name TEXT NOT NULL,
@@ -18,30 +18,24 @@ CREATE TABLE IF NOT EXISTS
         previous_close DECIMAL NOT NULL,
         volume INTEGER,
         market_cap INTEGER
-    )
-;
-ALTER TABLE symbols ADD COLUMN currency TEXT;
-
-CREATE TABLE IF NOT EXISTS
-    notifications (
-        id UUID PRIMARY KEY,
-        symbol TEXT,
-        Email TEXT,
-        Hour TIME
     );
 
-CREATE TABLE IF NOT EXISTS 
+ALTER TABLE symbols
+ADD COLUMN currency TEXT;
+
+CREATE TABLE IF NOT EXISTS
+    notifications (id UUID PRIMARY KEY, symbol TEXT, Email TEXT, HOUR TIME);
+
+CREATE TABLE IF NOT EXISTS
     notification_targets (
         id UUID PRIMARY KEY,
         symbol TEXT,
         notification_id UUID,
-        FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE CASCADE
+        FOREIGN KEY (notification_id) REFERENCES notifications (id) ON DELETE CASCADE
     );
 
-ALTER TABLE notification_targets ADD CONSTRAINT fk_symbol
-    FOREIGN KEY (symbol)
-    REFERENCES symbols(symbol)
-    ON DELETE CASCADE;
+ALTER TABLE notification_targets
+ADD CONSTRAINT fk_symbol FOREIGN KEY (symbol) REFERENCES symbols (symbol) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS
     sessions (
@@ -50,4 +44,20 @@ CREATE TABLE IF NOT EXISTS
         is_active BOOLEAN NOT NULL DEFAULT FALSE,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         expires_at TIMESTAMP NOT NULL
+    );
+
+CREATE TABLE IF NOT EXISTS
+    members (id UUID PRIMARY KEY);
+
+CREATE TABLE IF NOT EXISTS
+    google_members (
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL,
+        verified_email BOOLEAN NOT NULL,
+        NAME TEXT NOT NULL,
+        given_name TEXT NOT NULL,
+        family_name TEXT NOT NULL,
+        picture TEXT NOT NULL,
+        member_id UUID NOT NULL,
+        FOREIGN KEY (member_id) REFERENCES members (id) ON DELETE CASCADE
     );

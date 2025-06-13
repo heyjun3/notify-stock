@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	notify "github.com/heyjun3/notify-stock/internal"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,10 +15,11 @@ func TestMemberRepository(t *testing.T) {
 
 	t.Run("save and get member", func(t *testing.T) {
 		ctx := context.Background()
-		member, err := notify.NewMember(nil)
+		v7, err := uuid.NewV7()
 		assert.NoError(t, err)
 
-		member.GoogleMember = notify.NewGoogleMember(
+		member, err := notify.NewGoogleMember(
+			&v7,
 			"google-id",
 			"email",
 			true,
@@ -25,8 +27,8 @@ func TestMemberRepository(t *testing.T) {
 			"GivenName",
 			"FamilyName",
 			"PictureURL",
-			member.ID,
 		)
+		assert.NoError(t, err)
 
 		err = repo.Save(ctx, []*notify.Member{member})
 		assert.NoError(t, err)
@@ -35,5 +37,10 @@ func TestMemberRepository(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, member, savedMember)
 		assert.Equal(t, member.GoogleMember, savedMember.GoogleMember)
+
+		googleMember, err := repo.GetByGoogleID(ctx, "google-id")
+		assert.NoError(t, err)
+		assert.Equal(t, member, googleMember)
+		assert.Equal(t, member.GoogleMember, googleMember.GoogleMember)
 	})
 }

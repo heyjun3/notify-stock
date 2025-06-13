@@ -27,8 +27,11 @@ func notifyStock(symbols []string) {
 	db := notifyapp.NewDB(notifyapp.Cfg.DBDSN)
 	notifier, err := notifyapp.InitStockNotifier(
 		context.Background(),
-		notifyapp.Cfg.MailToken,
 		db,
+		notifyapp.MailGunClientConfig{
+			Domain: notifyapp.Cfg.MailDomain,
+			ApiKey: notifyapp.Cfg.MailGunAPIKey,
+		},
 	)
 	if err != nil {
 		log.Fatal(err)

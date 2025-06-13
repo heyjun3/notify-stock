@@ -28,15 +28,15 @@ func InitSymbolRepository(db *bun.DB) *SymbolRepository {
 
 func InitStockNotifier(
 	ctx context.Context,
-	token string,
 	db *bun.DB,
+	config MailGunClientConfig,
 ) (*StockNotifier, error) {
 	wire.Build(
-		NewEmailClient,
+		NewMailGunClient,
 		NewStockRepository,
 		NewSymbolRepository,
 		NewStockNotifier,
-		wire.Bind(new(MailService), new(*EmailClient)),
+		wire.Bind(new(MailService), new(*MailGunClient)),
 	)
 	return &StockNotifier{}, nil
 }

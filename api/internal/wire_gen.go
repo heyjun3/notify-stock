@@ -26,11 +26,11 @@ func InitSymbolRepository(db *bun.DB) *SymbolRepository {
 	return symbolRepository
 }
 
-func InitStockNotifier(ctx context.Context, token string, db *bun.DB) (*StockNotifier, error) {
-	emailClient := NewEmailClient(token)
+func InitStockNotifier(ctx context.Context, db *bun.DB, config MailGunClientConfig) (*StockNotifier, error) {
+	mailGunClient := NewMailGunClient(config)
 	stockRepository := NewStockRepository(db)
 	symbolRepository := NewSymbolRepository(db)
-	stockNotifier := NewStockNotifier(emailClient, stockRepository, symbolRepository)
+	stockNotifier := NewStockNotifier(mailGunClient, stockRepository, symbolRepository)
 	return stockNotifier, nil
 }
 

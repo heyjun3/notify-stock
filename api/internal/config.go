@@ -46,6 +46,8 @@ func loadConfigFromEnv() (*Config, error) {
 		"OAUTH_CLIENT_SECRET": "",
 		"OAUTH_REDIRECT_URL":  "",
 		"FRONTEND_URL":        "",
+		"MAIL_GUN_API_KEY":    "",
+		"MAIL_DOMAIN":         "",
 	}
 
 	// 必須環境変数の確認
@@ -88,6 +90,8 @@ func loadConfigFromEnv() (*Config, error) {
 		DBName:            dbName,
 		DBSSLMode:         dbSSLMode,
 		MailToken:         requiredEnvs["MAIL_TOKEN"],
+		MailDomain:        requiredEnvs["MAIL_DOMAIN"],
+		MailGunAPIKey:     requiredEnvs["MAIL_GUN_API_KEY"],
 		OauthClientID:     requiredEnvs["OAUTH_CLIENT_ID"],
 		OauthClientSecret: requiredEnvs["OAUTH_CLIENT_SECRET"],
 		OauthRedirectURL:  requiredEnvs["OAUTH_REDIRECT_URL"],
@@ -108,6 +112,8 @@ type Config struct {
 	DBName            string
 	DBSSLMode         string
 	MailToken         string
+	MailGunAPIKey     string
+	MailDomain        string
 	OauthClientID     string
 	OauthClientSecret string
 	OauthRedirectURL  string

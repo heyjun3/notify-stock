@@ -10,7 +10,10 @@ var EmailCommand = &cobra.Command{
 	Use:   "email",
 	Short: "send email.",
 	Run: func(cmd *cobra.Command, args []string) {
-		c := notifyStock.NewEmailClient(notifyStock.Cfg.MailToken)
+		c := notifyStock.NewMailGunClient(notifyStock.MailGunClientConfig{
+			Domain: notifyStock.Cfg.MailDomain,
+			ApiKey: notifyStock.Cfg.MailGunAPIKey,
+		})
 		c.Send(notifyStock.Cfg.FROM, notifyStock.Cfg.TO, "test mail", "hello")
 	},
 }

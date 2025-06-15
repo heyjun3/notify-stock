@@ -25,14 +25,16 @@ type Token struct {
 }
 
 type AuthHandler struct {
-	Sessions     *Sessions
-	googleClient *GoogleClient
+	Sessions         *Sessions
+	googleClient     *GoogleClient
+	memberRepository *MemberRepository
 }
 
-func NewAuthHandler(sessions *Sessions, googleClient *GoogleClient) *AuthHandler {
+func NewAuthHandler(sessions *Sessions, googleClient *GoogleClient, memberRepository *MemberRepository) *AuthHandler {
 	return &AuthHandler{
-		Sessions:     sessions,
-		googleClient: googleClient,
+		Sessions:         sessions,
+		googleClient:     googleClient,
+		memberRepository: memberRepository,
 	}
 }
 
@@ -115,6 +117,17 @@ func (h *AuthHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	userInfo, err := h.googleClient.GetUserInfo(r.Context(), token)
 	if err != nil {
 		WriteErrorResponse(w, WrapError(err, ErrCodeExternalService, "Failed to get user info"))
+		return
+	}
+
+	member, err := NewGoogleMember(nil, userInfo.ID, userInfo.Email, userInfo.VerifiedEmail,
+		userInfo.Name, userInfo.GivenName, userInfo.FamilyName, userInfo.Picture)
+	if err != nil {
+		WriteErrorResponse(w, WrapError(err, ErrCodeInternalServer, "Failed to create Google member"))
+		return
+	}
+	if _, err := h.memberRepository.GetOrCreateGoogleMember(r.Context(), member); err != nil {
+		WriteErrorResponse(w, WrapError(err, ErrCodeDatabase, "Failed to save or retrieve member"))
 		return
 	}
 

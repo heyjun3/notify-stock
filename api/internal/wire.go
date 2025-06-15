@@ -4,6 +4,7 @@ package notifystock
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/google/wire"
 	"github.com/uptrace/bun"
@@ -53,4 +54,13 @@ func InitNotificationRepository(db *bun.DB) *NotificationRepository {
 		NewNotificationRepository,
 	)
 	return &NotificationRepository{}
+}
+
+func InitAuthHandler(sessions *Sessions, db *bun.DB, client http.Client, option GoogleClientOption) *AuthHandler {
+	wire.Build(
+		NewGoogleClient,
+		NewMemberRepository,
+		NewAuthHandler,
+	)
+	return &AuthHandler{}
 }

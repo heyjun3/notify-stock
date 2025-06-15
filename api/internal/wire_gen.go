@@ -9,6 +9,7 @@ package notifystock
 import (
 	"context"
 	"github.com/uptrace/bun"
+	"net/http"
 )
 
 // Injectors from wire.go:
@@ -42,4 +43,11 @@ func InitStockRepository(db *bun.DB) *StockRepository {
 func InitNotificationRepository(db *bun.DB) *NotificationRepository {
 	notificationRepository := NewNotificationRepository(db)
 	return notificationRepository
+}
+
+func InitAuthHandler(sessions *Sessions, db *bun.DB, client http.Client, option GoogleClientOption) *AuthHandler {
+	googleClient := NewGoogleClient(client, option)
+	memberRepository := NewMemberRepository(db)
+	authHandler := NewAuthHandler(sessions, googleClient, memberRepository)
+	return authHandler
 }

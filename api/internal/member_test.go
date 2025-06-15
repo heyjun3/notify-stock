@@ -43,4 +43,33 @@ func TestMemberRepository(t *testing.T) {
 		assert.Equal(t, member, googleMember)
 		assert.Equal(t, member.GoogleMember, googleMember.GoogleMember)
 	})
+
+	t.Run("get or create google member", func(t *testing.T) {
+		ctx := context.Background()
+		member, err := notify.NewGoogleMember(
+			nil,
+			"google-id-1",
+			"email",
+			true,
+			"Name",
+			"GivenName",
+			"FamilyName",
+			"PictureURL",
+		)
+		assert.NoError(t, err)
+
+		createdMember, err := repo.GetOrCreateGoogleMember(ctx, member)
+		assert.NoError(t, err)
+		assert.Equal(t, member, createdMember)
+
+		existsMember, err := repo.GetOrCreateGoogleMember(ctx, member)
+		assert.NoError(t, err)
+		assert.Equal(t, member, existsMember)
+
+		invalidMember, err := notify.NewMember(nil)
+		assert.NoError(t, err)
+
+		_, err = repo.GetOrCreateGoogleMember(ctx, invalidMember)
+		assert.Error(t, err, "member does not have a GoogleMember")
+	})
 }

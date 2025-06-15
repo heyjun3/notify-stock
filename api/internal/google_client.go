@@ -34,12 +34,18 @@ type GoogleClient struct {
 	redirectURI  string
 }
 
-func NewGoogleClient(client http.Client, secret, id, redirectURL string) *GoogleClient {
+type GoogleClientOption struct {
+	ClientID    string
+	Secret      string
+	RedirectURI string
+}
+
+func NewGoogleClient(client http.Client, option GoogleClientOption) *GoogleClient {
 	return &GoogleClient{
 		Client:       &client,
-		clientSecret: secret,
-		clientID:     id,
-		redirectURI:  redirectURL,
+		clientSecret: option.Secret,
+		clientID:     option.ClientID,
+		redirectURI:  option.RedirectURI,
 	}
 }
 

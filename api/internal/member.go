@@ -2,6 +2,7 @@ package notifystock
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -51,7 +52,7 @@ func NewGoogleMember(
 	givenName string,
 	familyName string,
 	picture string,
-) (*Member, error){
+) (*Member, error) {
 	member, err := NewMember(ID)
 	if err != nil {
 		return nil, err
@@ -102,6 +103,27 @@ func (r *MemberRepository) GetByGoogleID(ctx context.Context, googleID string) (
 		return nil, err
 	}
 	return &member, nil
+}
+
+func (r *MemberRepository) GetOrCreateGoogleMember(ctx context.Context, member *Member) (*Member, error) {
+	if member.GoogleMember == nil {
+		return nil, fmt.Errorf("member does not have a GoogleMember")
+	}
+	exist, err := r.db.NewSelect().
+		Model((*Member)(nil)).
+		Relation("GoogleMember").
+		Where("google_member.id = ?", member.GoogleMember.ID).
+		Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if exist {
+		return member, nil
+	}
+	if err := r.Save(ctx, []*Member{member}); err != nil {
+		return nil, err
+	}
+	return member, nil
 }
 
 func (r *MemberRepository) Save(ctx context.Context, members []*Member) error {

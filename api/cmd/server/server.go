@@ -80,8 +80,16 @@ func runServer() {
 	db := notifystock.NewDB(notifystock.Cfg.DBDSN)
 	sessionRepo := notifystock.NewSessionRepository(db)
 	sessions := notifystock.InitSessionsWithRepo(sessionRepo)
-	googleClient := notifystock.NewGoogleClient(http.Client{}, notifystock.Cfg.OauthClientSecret, notifystock.Cfg.OauthClientID, notifystock.Cfg.OauthRedirectURL)
-	authHandler := notifystock.NewAuthHandler(sessions, googleClient)
+	authHandler := notifystock.InitAuthHandler(
+		sessions,
+		db,
+		http.Client{},
+		notifystock.GoogleClientOption{
+			ClientID:    notifystock.Cfg.OauthClientID,
+			Secret:      notifystock.Cfg.OauthClientSecret,
+			RedirectURI: notifystock.Cfg.OauthRedirectURL,
+		},
+	)
 
 	resolver := graph.InitResolver(db)
 	directives := graph.InitRootDirective(logger)

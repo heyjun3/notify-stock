@@ -2,6 +2,7 @@ package notifystock
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -43,25 +44,31 @@ type GoogleMember struct {
 }
 
 func NewGoogleMember(
-	id string,
+	ID *uuid.UUID,
+	googleID string,
 	email string,
 	verifiedEmail bool,
 	name string,
 	givenName string,
 	familyName string,
 	picture string,
-	memberID uuid.UUID,
-) *GoogleMember {
-	return &GoogleMember{
-		ID:            id,
+) (*Member, error) {
+	member, err := NewMember(ID)
+	if err != nil {
+		return nil, err
+	}
+	googleMember := &GoogleMember{
+		ID:            googleID,
 		Email:         email,
 		VerifiedEmail: verifiedEmail,
 		Name:          name,
 		GivenName:     givenName,
 		FamilyName:    familyName,
 		Picture:       picture,
-		MemberID:      memberID,
+		MemberID:      member.ID,
 	}
+	member.GoogleMember = googleMember
+	return member, nil
 }
 
 type MemberRepository struct {
@@ -76,15 +83,47 @@ func NewMemberRepository(db *bun.DB) *MemberRepository {
 
 func (r *MemberRepository) GetByID(ctx context.Context, id uuid.UUID) (*Member, error) {
 	var member Member
-	err := r.db.NewSelect().
+	if err := r.db.NewSelect().
 		Model(&member).
 		Where("member.id = ?", id).
 		Relation("GoogleMember").
-		Scan(ctx)
-	if err != nil {
+		Scan(ctx); err != nil {
 		return nil, err
 	}
 	return &member, nil
+}
+
+func (r *MemberRepository) GetByGoogleID(ctx context.Context, googleID string) (*Member, error) {
+	var member Member
+	if err := r.db.NewSelect().
+		Model(&member).
+		Relation("GoogleMember").
+		Where("google_member.id = ?", googleID).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return &member, nil
+}
+
+func (r *MemberRepository) GetOrCreateGoogleMember(ctx context.Context, member *Member) (*Member, error) {
+	if member.GoogleMember == nil {
+		return nil, fmt.Errorf("member does not have a GoogleMember")
+	}
+	exist, err := r.db.NewSelect().
+		Model((*Member)(nil)).
+		Relation("GoogleMember").
+		Where("google_member.id = ?", member.GoogleMember.ID).
+		Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if exist {
+		return member, nil
+	}
+	if err := r.Save(ctx, []*Member{member}); err != nil {
+		return nil, err
+	}
+	return member, nil
 }
 
 func (r *MemberRepository) Save(ctx context.Context, members []*Member) error {

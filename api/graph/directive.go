@@ -5,6 +5,8 @@ import (
 	"log/slog"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+
 	notifystock "github.com/heyjun3/notify-stock/internal"
 )
 
@@ -17,7 +19,13 @@ func NewAuthDirective(logger *slog.Logger) Directive {
 		_, err := notifystock.GetSession(ctx)
 		if err != nil {
 			logger.Error("failed to get session")
-			return nil, err
+			return nil, &gqlerror.Error{
+				Err: err,
+				Message: err.Error(),
+				Extensions: map[string]any{
+					"code": "UNAUTHORIZED",
+				},
+			}
 		}
 		return next(ctx)
 	}

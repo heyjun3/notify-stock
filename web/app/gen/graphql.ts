@@ -37,11 +37,16 @@ export type MutationCreateNotificationArgs = {
   input: NotificationInput;
 };
 
-export type Notification = {
+export type Node = {
+  id: Scalars["ID"]["output"];
+};
+
+export type Notification = Node & {
   __typename?: "Notification";
   email: Scalars["String"]["output"];
   id: Scalars["ID"]["output"];
   symbol: Scalars["ID"]["output"];
+  targets: Array<SymbolDetail>;
   time: Scalars["Time"]["output"];
 };
 
@@ -53,8 +58,14 @@ export type NotificationInput = {
 
 export type Query = {
   __typename?: "Query";
+  node?: Maybe<Node>;
+  notifications: Array<Notification>;
   symbol: Symbol;
   symbols: Array<Symbol>;
+};
+
+export type QueryNodeArgs = {
+  id: Scalars["ID"]["input"];
 };
 
 export type QuerySymbolArgs = {
@@ -72,7 +83,7 @@ export type Stock = {
   timestamp: Scalars["String"]["output"];
 };
 
-export type Symbol = {
+export type Symbol = Node & {
   __typename?: "Symbol";
   chart: Array<Stock>;
   detail: SymbolDetail;
@@ -125,6 +136,13 @@ export type GetSymbolsQuery = {
     };
     chart: Array<{ __typename?: "Stock"; symbol: string; timestamp: string; price: number }>;
   }>;
+};
+
+export type GetNotificationQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetNotificationQuery = {
+  __typename?: "Query";
+  notifications: Array<{ __typename?: "Notification"; id: string }>;
 };
 
 export const GetSymbolsDocument = gql`
@@ -200,3 +218,65 @@ export type GetSymbolsQueryHookResult = ReturnType<typeof useGetSymbolsQuery>;
 export type GetSymbolsLazyQueryHookResult = ReturnType<typeof useGetSymbolsLazyQuery>;
 export type GetSymbolsSuspenseQueryHookResult = ReturnType<typeof useGetSymbolsSuspenseQuery>;
 export type GetSymbolsQueryResult = Apollo.QueryResult<GetSymbolsQuery, GetSymbolsQueryVariables>;
+export const GetNotificationDocument = gql`
+    query getNotification {
+  notifications {
+    id
+  }
+}
+    `;
+
+/**
+ * __useGetNotificationQuery__
+ *
+ * To run a query within a React component, call `useGetNotificationQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNotificationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNotificationQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetNotificationQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetNotificationQuery, GetNotificationQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetNotificationQuery, GetNotificationQueryVariables>(
+    GetNotificationDocument,
+    options,
+  );
+}
+export function useGetNotificationLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetNotificationQuery, GetNotificationQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetNotificationQuery, GetNotificationQueryVariables>(
+    GetNotificationDocument,
+    options,
+  );
+}
+export function useGetNotificationSuspenseQuery(
+  baseOptions?:
+    | Apollo.SkipToken
+    | Apollo.SuspenseQueryHookOptions<GetNotificationQuery, GetNotificationQueryVariables>,
+) {
+  const options =
+    baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetNotificationQuery, GetNotificationQueryVariables>(
+    GetNotificationDocument,
+    options,
+  );
+}
+export type GetNotificationQueryHookResult = ReturnType<typeof useGetNotificationQuery>;
+export type GetNotificationLazyQueryHookResult = ReturnType<typeof useGetNotificationLazyQuery>;
+export type GetNotificationSuspenseQueryHookResult = ReturnType<
+  typeof useGetNotificationSuspenseQuery
+>;
+export type GetNotificationQueryResult = Apollo.QueryResult<
+  GetNotificationQuery,
+  GetNotificationQueryVariables
+>;

@@ -1,0 +1,5 @@
+query getNotification {
+  notifications {
+    id
+  }
+}

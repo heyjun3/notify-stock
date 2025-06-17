@@ -6,8 +6,10 @@ import { StockChart, type ChartData } from "./stockChart";
 import { Pagination } from "./pagination";
 import { StockCard } from "./stockCard";
 
-import { useGetSymbolsSuspenseQuery } from "../gen/graphql";
+import { useGetNotificationQuery, useGetSymbolsSuspenseQuery } from "../gen/graphql";
 import { PeriodSelector, type Period } from "./periodSelector";
+import { NotificationSection } from "./notification";
+import type { ApolloError } from "@apollo/client";
 
 // 1ページあたりの表示件数
 const ITEMS_PER_PAGE = 4;
@@ -97,6 +99,19 @@ const useGetSymbols = () => {
   };
 };
 
+const isError = (error?: ApolloError) => {
+  if (error === undefined) return false;
+  const extension = error.cause?.extensions
+  const extensions = Array.isArray(extension) ? extension : extension == null ? []: [extension];
+  return extensions.find((e) => e.code) ? true : false;
+}
+const useGetNotification = () => {
+  const { data, loading, error } = useGetNotificationQuery();
+  return {
+    data, loading, unAuthorization: isError(error),
+  }
+}
+
 /**
  * ダッシュボード全体のページコンポーネント
  */
@@ -111,6 +126,8 @@ function DashboardPage() {
   } = useGetSymbols();
   const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ番号
+
+  const { data, loading, unAuthorization} = useGetNotification();
 
   // 検索フィルタリング
   const filteredStocks = useMemo(() => {
@@ -200,7 +217,7 @@ function DashboardPage() {
         )}
 
         {/* 株価チャート */}
-        <div className="mt-8">
+        <div className="mt-8 mb-8">
           {/* 期間選択 */}
           <PeriodSelector
             currentPeriod={selectedPeriod}
@@ -209,6 +226,19 @@ function DashboardPage() {
           {/* チャートの上にマージンを追加 */}
           <StockChart data={chartData.data} title={title} tickFormatter={chartData.formatter} />
         </div>
+
+        {import.meta.env.VITE_ENABLE_STOCK_NOTIFICATION === "true" && (
+          <NotificationSection
+            user={{ displayName: "ゲストユーザー" }}
+            isAuthorized={!unAuthorization}
+            handleGoogleLogin={() => {}}
+            handleLogout={() => {}}
+            handleAddNotification={() => {}}
+            handleDeleteNotification={() => {}}
+            allStocks={symbols?.map(({ symbol, shortName }) => ({ symbol, name: shortName })) || []}
+            notifications={[]}
+          />
+        )}
 
         {/* フッター等、他の要素をここに追加可能 */}
         <footer className="mt-8 text-center text-gray-500 dark:text-gray-400 text-sm">

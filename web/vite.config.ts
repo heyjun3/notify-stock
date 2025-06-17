@@ -13,9 +13,4 @@ export default defineConfig({
       dependencies: ["@apollo/client"],
     }),
   ],
-  resolve: {
-    alias: {
-      'react-dom/server': 'react-dom/server.node',
-    }
-  }
 });

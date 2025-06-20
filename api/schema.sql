@@ -24,20 +24,6 @@ ALTER TABLE symbols
 ADD COLUMN currency TEXT;
 
 CREATE TABLE IF NOT EXISTS
-    notifications (id UUID PRIMARY KEY, symbol TEXT, Email TEXT, HOUR TIME);
-
-CREATE TABLE IF NOT EXISTS
-    notification_targets (
-        id UUID PRIMARY KEY,
-        symbol TEXT,
-        notification_id UUID,
-        FOREIGN KEY (notification_id) REFERENCES notifications (id) ON DELETE CASCADE
-    );
-
-ALTER TABLE notification_targets
-ADD CONSTRAINT fk_symbol FOREIGN KEY (symbol) REFERENCES symbols (symbol) ON DELETE CASCADE;
-
-CREATE TABLE IF NOT EXISTS
     sessions (
         id TEXT PRIMARY KEY,
         state TEXT NOT NULL,
@@ -60,4 +46,16 @@ CREATE TABLE IF NOT EXISTS
         picture TEXT NOT NULL,
         member_id UUID NOT NULL,
         FOREIGN KEY (member_id) REFERENCES members (id) ON DELETE CASCADE
+    );
+
+CREATE TABLE IF NOT EXISTS
+    notifications (id UUID PRIMARY KEY, member_id UUID, HOUR TIME, FOREIGN KEY (member_id) REFERENCES members (id) ON DELETE CASCADE);
+
+CREATE TABLE IF NOT EXISTS
+    notification_targets (
+        id UUID PRIMARY KEY,
+        symbol TEXT,
+        notification_id UUID,
+        FOREIGN KEY (notification_id) REFERENCES notifications (id) ON DELETE CASCADE,
+        FOREIGN KEY (symbol) REFERENCES symbols (symbol) ON DELETE CASCADE
     );

@@ -95,8 +95,7 @@ func (r *NotificationRepository) Save(ctx context.Context, n []Notification) err
 		Model(&n).
 		On("CONFLICT (id) DO UPDATE").
 		Set(strings.Join([]string{
-			"symbol = EXCLUDED.symbol",
-			"email = EXCLUDED.email",
+			"member_id = EXCLUDED.member_id",
 			"hour = EXCLUDED.hour",
 		}, ",")).
 		Exec(ctx)
@@ -139,18 +138,6 @@ func (r *NotificationRepository) GetByHour(ctx context.Context, time TimeOfHour)
 		Where("hour = ?", time.Hour.Format("15:04:05")).
 		Scan(ctx)
 	if err != nil {
-		return nil, err
-	}
-	return n, nil
-}
-func (r *NotificationRepository) GetByEmail(
-	ctx context.Context, email string) ([]Notification, error) {
-	var n []Notification
-	if err := r.db.NewSelect().
-		Model(&n).
-		Where("email = ?", email).
-		Relation("Targets").
-		Scan(ctx); err != nil {
 		return nil, err
 	}
 	return n, nil

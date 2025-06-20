@@ -14,18 +14,7 @@ import (
 
 // CreateNotification is the resolver for the createNotification field.
 func (r *mutationResolver) CreateNotification(ctx context.Context, input model.NotificationInput) (*model.Notification, error) {
-	notification, err := r.notificationCreator.Create(
-		ctx, input.Symbol, input.Email, input.Time,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &model.Notification{
-		ID:     notification.ID.String(),
-		Symbol: notification.Symbol,
-		Email:  notification.Email,
-		Time:   notification.Time.Hour,
-	}, nil
+	return nil, fmt.Errorf("not implement")
 }
 
 // Targets is the resolver for the targets field.
@@ -91,27 +80,7 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 
 // Notifications is the resolver for the notifications field.
 func (r *queryResolver) Notifications(ctx context.Context) ([]*model.Notification, error) {
-	notifications, err := r.notificationFetcher.GetByEmail(ctx, "test@example.com")
-	if err != nil {
-		return nil, err
-	}
-	result := make([]*model.Notification, 0, len(notifications))
-	for _, notification := range notifications {
-		targets := make([]*model.SymbolDetail, 0, len(notification.Targets))
-		for _, target := range notification.Targets {
-			targets = append(targets, &model.SymbolDetail{
-				Symbol: target.Symbol,
-			})
-		}
-		result = append(result, &model.Notification{
-			ID:      notification.ID.String(),
-			Symbol:  notification.Symbol,
-			Email:   notification.Email,
-			Time:    notification.Time.Hour,
-			Targets: targets,
-		})
-	}
-	return result, nil
+	return nil, fmt.Errorf("not implement")
 }
 
 // Detail is the resolver for the detail field.

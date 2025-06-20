@@ -11,27 +11,24 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	stockRepository     *notify.StockRepository
-	symbolRepository    *notify.SymbolRepository
-	notificationCreator *notify.NotificationCreator
-	notificationFetcher *notify.NotificationFetcher
-	logger              *slog.Logger
-	loader              *notify.DataLoader
+	stockRepository        *notify.StockRepository
+	symbolRepository       *notify.SymbolRepository
+	notificationRepository *notify.NotificationRepository
+	logger                 *slog.Logger
+	loader                 *notify.DataLoader
 }
 
 func NewResolver(
 	stockRepository *notify.StockRepository,
 	symbolRepository *notify.SymbolRepository,
-	notificationCreator *notify.NotificationCreator,
-	notificationFetcher *notify.NotificationFetcher,
+	notificationRepository *notify.NotificationRepository,
 	loader *notify.DataLoader,
 ) *Resolver {
 	return &Resolver{
-		stockRepository:     stockRepository,
-		symbolRepository:    symbolRepository,
-		notificationCreator: notificationCreator,
-		notificationFetcher: notificationFetcher,
-		logger:              notify.CreateLogger("info"),
-		loader:              loader,
+		stockRepository:        stockRepository,
+		symbolRepository:       symbolRepository,
+		notificationRepository: notificationRepository,
+		logger:                 notify.CreateLogger("info"),
+		loader:                 loader,
 	}
 }

@@ -20,7 +20,7 @@ func NewAuthDirective(logger *slog.Logger) Directive {
 		if err != nil {
 			logger.Error("failed to get session")
 			return nil, &gqlerror.Error{
-				Err: err,
+				Err:     err,
 				Message: err.Error(),
 				Extensions: map[string]any{
 					"code": "UNAUTHORIZED",

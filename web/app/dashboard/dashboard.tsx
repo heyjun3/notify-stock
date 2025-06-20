@@ -101,16 +101,18 @@ const useGetSymbols = () => {
 
 const isError = (error?: ApolloError) => {
   if (error === undefined) return false;
-  const extension = error.cause?.extensions
-  const extensions = Array.isArray(extension) ? extension : extension == null ? []: [extension];
+  const extension = error.cause?.extensions;
+  const extensions = Array.isArray(extension) ? extension : extension == null ? [] : [extension];
   return extensions.find((e) => e.code) ? true : false;
-}
+};
 const useGetNotification = () => {
   const { data, loading, error } = useGetNotificationQuery();
   return {
-    data, loading, unAuthorization: isError(error),
-  }
-}
+    data,
+    loading,
+    unAuthorization: isError(error),
+  };
+};
 
 /**
  * ダッシュボード全体のページコンポーネント
@@ -127,7 +129,7 @@ function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ番号
 
-  const { data, loading, unAuthorization} = useGetNotification();
+  const { data, loading, unAuthorization } = useGetNotification();
 
   // 検索フィルタリング
   const filteredStocks = useMemo(() => {

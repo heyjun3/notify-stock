@@ -12,10 +12,9 @@ import (
 type Notification struct {
 	bun.BaseModel `bun:"table:notifications"`
 
-	ID     uuid.UUID  `bun:"id,type:uuid,pk,default:gen_random_uuid()"`
-	Symbol string     `bun:"symbol,type:text,notnull"`
-	Email  string     `bun:"email,type:text,notnull"`
-	Time   TimeOfHour `bun:"embed:"`
+	ID       uuid.UUID  `bun:"id,type:uuid,pk,default:gen_random_uuid()"`
+	MemberID uuid.UUID  `bun:"member_id,type:uuid"`
+	Time     TimeOfHour `bun:"embed:"`
 
 	Targets []*NotificationTarget `bun:"rel:has-many,join:id=notification_id"`
 }
@@ -31,7 +30,7 @@ func NewTimeOfHour(hour time.Time) TimeOfHour {
 	}
 }
 
-func NewNotification(ID *uuid.UUID, symbol string, email string, hour time.Time) (*Notification, error) {
+func NewNotification(ID *uuid.UUID, memberID uuid.UUID, symbols []string, hour time.Time) (*Notification, error) {
 	if ID == nil {
 		id, err := uuid.NewV7()
 		if err != nil {
@@ -39,16 +38,19 @@ func NewNotification(ID *uuid.UUID, symbol string, email string, hour time.Time)
 		}
 		ID = &id
 	}
-	target, err := NewNotificationTarget(nil, *ID, symbol)
-	if err != nil {
-		return nil, err
+	targets := make([]*NotificationTarget, 0, len(symbols))
+	for _, symbol := range symbols {
+		target, err := NewNotificationTarget(nil, *ID, symbol)
+		if err != nil {
+			return nil, err
+		}
+		targets = append(targets, target)
 	}
 	return &Notification{
-		ID:      *ID,
-		Symbol:  symbol,
-		Email:   email,
-		Time:    NewTimeOfHour(hour),
-		Targets: []*NotificationTarget{target},
+		ID:       *ID,
+		MemberID: memberID,
+		Time:     NewTimeOfHour(hour),
+		Targets:  targets,
 	}, nil
 }
 
@@ -93,8 +95,7 @@ func (r *NotificationRepository) Save(ctx context.Context, n []Notification) err
 		Model(&n).
 		On("CONFLICT (id) DO UPDATE").
 		Set(strings.Join([]string{
-			"symbol = EXCLUDED.symbol",
-			"email = EXCLUDED.email",
+			"member_id = EXCLUDED.member_id",
 			"hour = EXCLUDED.hour",
 		}, ",")).
 		Exec(ctx)
@@ -140,53 +141,4 @@ func (r *NotificationRepository) GetByHour(ctx context.Context, time TimeOfHour)
 		return nil, err
 	}
 	return n, nil
-}
-func (r *NotificationRepository) GetByEmail(
-	ctx context.Context, email string) ([]Notification, error) {
-	var n []Notification
-	if err := r.db.NewSelect().
-		Model(&n).
-		Where("email = ?", email).
-		Relation("Targets").
-		Scan(ctx); err != nil {
-		return nil, err
-	}
-	return n, nil
-}
-
-type NotificationFetcher struct {
-	notificationRepository *NotificationRepository
-}
-
-func NewNotificationFetcher(notificationRepository *NotificationRepository) *NotificationFetcher {
-	return &NotificationFetcher{
-		notificationRepository: notificationRepository,
-	}
-}
-func (n *NotificationFetcher) GetByEmail(
-	ctx context.Context, email string) ([]Notification, error) {
-	return n.notificationRepository.GetByEmail(ctx, email)
-}
-
-type NotificationCreator struct {
-	notificationRepository *NotificationRepository
-}
-
-func NewNotificationCreator(notificationRepository *NotificationRepository) *NotificationCreator {
-	return &NotificationCreator{
-		notificationRepository: notificationRepository,
-	}
-}
-
-func (n *NotificationCreator) Create(
-	ctx context.Context, symbol string, email string, hour time.Time) (
-	*Notification, error) {
-	notification, err := NewNotification(nil, symbol, email, hour)
-	if err != nil {
-		return nil, err
-	}
-	if err := n.notificationRepository.Save(ctx, []Notification{*notification}); err != nil {
-		return nil, err
-	}
-	return notification, nil
 }

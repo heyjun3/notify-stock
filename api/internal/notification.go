@@ -2,6 +2,7 @@ package notifystock
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -91,32 +92,35 @@ func (r *NotificationRepository) Save(ctx context.Context, n []Notification) err
 	if len(n) == 0 {
 		return nil
 	}
-	_, err := r.db.NewInsert().
-		Model(&n).
-		On("CONFLICT (id) DO UPDATE").
-		Set(strings.Join([]string{
-			"member_id = EXCLUDED.member_id",
-			"hour = EXCLUDED.hour",
-		}, ",")).
-		Exec(ctx)
-	if err != nil {
+	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := r.db.NewInsert().
+			Model(&n).
+			On("CONFLICT (id) DO UPDATE").
+			Set(strings.Join([]string{
+				"member_id = EXCLUDED.member_id",
+				"hour = EXCLUDED.hour",
+			}, ",")).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		targets := make([]*NotificationTarget, 0, len(n))
+		for _, notification := range n {
+			targets = append(targets, notification.Targets...)
+		}
+		if len(targets) == 0 {
+			return nil
+		}
+		_, err = r.db.NewInsert().
+			Model(&targets).
+			On("CONFLICT (id) DO UPDATE").
+			Set(strings.Join([]string{
+				"notification_id = EXCLUDED.notification_id",
+				"symbol = EXCLUDED.symbol",
+			}, ",")).
+			Exec(ctx)
 		return err
-	}
-	targets := make([]*NotificationTarget, 0, len(n))
-	for _, notification := range n {
-		targets = append(targets, notification.Targets...)
-	}
-	if len(targets) == 0 {
-		return nil
-	}
-	_, err = r.db.NewInsert().
-		Model(&targets).
-		On("CONFLICT (id) DO UPDATE").
-		Set(strings.Join([]string{
-			"notification_id = EXCLUDED.notification_id",
-			"symbol = EXCLUDED.symbol",
-		}, ",")).
-		Exec(ctx)
+	})
 	return err
 }
 func (r *NotificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*Notification, error) {
@@ -135,10 +139,46 @@ func (r *NotificationRepository) GetByHour(ctx context.Context, time TimeOfHour)
 	var n []Notification
 	err := r.db.NewSelect().
 		Model(&n).
+		Relation("Targets").
 		Where("hour = ?", time.Hour.Format("15:04:05")).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return n, nil
+}
+
+type NotificationCreator struct {
+	notificationRepository *NotificationRepository
+	symbolRepository       *SymbolRepository
+}
+
+func NewNotificationCreator(
+	notificationRepository *NotificationRepository,
+	symbolRepository *SymbolRepository,
+) *NotificationCreator {
+	return &NotificationCreator{
+		notificationRepository: notificationRepository,
+		symbolRepository:       symbolRepository,
+	}
+}
+
+func (n *NotificationCreator) Create(
+	ctx context.Context, memberID uuid.UUID, symbols []string, hour time.Time,
+) (*Notification, error) {
+	symbolDetails, err := n.symbolRepository.GetBySymbols(ctx, symbols)
+	if err != nil {
+		return nil, err
+	}
+	if len(symbolDetails) != len(symbols) {
+		return nil, fmt.Errorf("unsupported symbols: %v", symbols)
+	}
+	notification, err := NewNotification(nil, memberID, symbols, hour)
+	if err != nil {
+		return nil, err
+	}
+	if err := n.notificationRepository.Save(ctx, []Notification{*notification}); err != nil {
+		return nil, err
+	}
+	return notification, nil
 }

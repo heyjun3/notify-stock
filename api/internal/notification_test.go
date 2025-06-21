@@ -104,6 +104,10 @@ func TestNotificationRepository(t *testing.T) {
 		assert.Greater(t, len(ns), 0)
 		for _, n := range ns {
 			assert.Equal(t, n.Time.Hour.Hour(), notify.NewTimeOfHour(time.Now()).Hour.Hour())
+			assert.Greater(t, len(n.Targets), 0)
+			for _, target := range n.Targets {
+				assert.NotNil(t, target)
+			}
 		}
 	})
 }

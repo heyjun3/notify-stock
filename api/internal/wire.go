@@ -64,3 +64,12 @@ func InitAuthHandler(sessions *Sessions, db *bun.DB, client http.Client, option 
 	)
 	return &AuthHandler{}
 }
+
+func InitNotificationCreator(db *bun.DB) *NotificationCreator {
+	wire.Build(
+		NewNotificationRepository,
+		NewSymbolRepository,
+		NewNotificationCreator,
+	)
+	return &NotificationCreator{}
+}

@@ -123,6 +123,7 @@ func (r *NotificationRepository) Save(ctx context.Context, n []Notification) err
 	})
 	return err
 }
+
 func (r *NotificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*Notification, error) {
 	var n Notification
 	err := r.db.NewSelect().
@@ -135,6 +136,20 @@ func (r *NotificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*No
 	}
 	return &n, nil
 }
+
+func (r *NotificationRepository) GetByMemberID(ctx context.Context, memberID uuid.UUID) ([]*Notification, error) {
+	var n []*Notification
+	err := r.db.NewSelect().
+		Model(&n).
+		Where("member_id = ?", memberID).
+		Relation("Targets").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return n, nil
+}
+
 func (r *NotificationRepository) GetByHour(ctx context.Context, time TimeOfHour) ([]Notification, error) {
 	var n []Notification
 	err := r.db.NewSelect().
@@ -146,6 +161,14 @@ func (r *NotificationRepository) GetByHour(ctx context.Context, time TimeOfHour)
 		return nil, err
 	}
 	return n, nil
+}
+
+func (r *NotificationRepository) DeleteByMemberID(ctx context.Context, memberID uuid.UUID) error {
+	_, err := r.db.NewDelete().
+		Model((*Notification)(nil)).
+		Where("member_id = ?", memberID).
+		Exec(ctx)
+	return err
 }
 
 type NotificationCreator struct {
@@ -175,6 +198,9 @@ func (n *NotificationCreator) Create(
 	}
 	notification, err := NewNotification(nil, memberID, symbols, hour)
 	if err != nil {
+		return nil, err
+	}
+	if err := n.notificationRepository.DeleteByMemberID(ctx, memberID); err != nil {
 		return nil, err
 	}
 	if err := n.notificationRepository.Save(ctx, []Notification{*notification}); err != nil {

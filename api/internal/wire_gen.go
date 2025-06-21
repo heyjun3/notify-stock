@@ -51,3 +51,10 @@ func InitAuthHandler(sessions *Sessions, db *bun.DB, client http.Client, option 
 	authHandler := NewAuthHandler(sessions, googleClient, memberRepository)
 	return authHandler
 }
+
+func InitNotificationCreator(db *bun.DB) *NotificationCreator {
+	notificationRepository := NewNotificationRepository(db)
+	symbolRepository := NewSymbolRepository(db)
+	notificationCreator := NewNotificationCreator(notificationRepository, symbolRepository)
+	return notificationCreator
+}

@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS
         expires_at TIMESTAMP NOT NULL
     );
 
+ALTER TABLE sessions ADD COLUMN member_id UUID;
+
 CREATE TABLE IF NOT EXISTS
     members (id UUID PRIMARY KEY);
 

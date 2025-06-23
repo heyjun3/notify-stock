@@ -104,6 +104,63 @@ func TestNotificationRepository(t *testing.T) {
 		assert.Greater(t, len(ns), 0)
 		for _, n := range ns {
 			assert.Equal(t, n.Time.Hour.Hour(), notify.NewTimeOfHour(time.Now()).Hour.Hour())
+			assert.Greater(t, len(n.Targets), 0)
+			for _, target := range n.Targets {
+				assert.NotNil(t, target)
+			}
 		}
+	})
+}
+
+func TestNotificationCreator(t *testing.T) {
+	ctx := context.Background()
+	db := openDB(t)
+
+	memberRepository := notify.NewMemberRepository(db)
+	symbolRepository := notify.NewSymbolRepository(db)
+	notificationRepository := notify.NewNotificationRepository(db)
+
+	symbol := notify.NewSymbolDetail("TEST", "test name", "test long", "JPY", decimal.New(1000, 0), decimal.New(10000, 0))
+	symbol2 := notify.NewSymbolDetail("TEST2", "test name", "test long", "JPY", decimal.New(1000, 0), decimal.New(10000, 0))
+	err := symbolRepository.Save(ctx, []notify.SymbolDetail{*symbol, *symbol2})
+	assert.NoError(t, err)
+
+	t.Run("create notification", func(t *testing.T) {
+		member, err := notify.NewMember(nil)
+		assert.NoError(t, err)
+		err = memberRepository.Save(ctx, []*notify.Member{member})
+		assert.NoError(t, err)
+
+		creator := notify.InitNotificationCreator(db)
+
+		notification, err := creator.Create(ctx, member.ID, []string{symbol.Symbol}, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC))
+		assert.NoError(t, err)
+
+		assert.Equal(t, 12, notification.Time.Hour.Hour())
+		assert.Equal(t, symbol.Symbol, notification.Targets[0].Symbol)
+	})
+
+	t.Run("only one notification per member", func(t *testing.T) {
+		member, err := notify.NewMember(nil)
+		assert.NoError(t, err)
+		err = memberRepository.Save(ctx, []*notify.Member{member})
+		assert.NoError(t, err)
+
+		creator := notify.InitNotificationCreator(db)
+
+		notification, err := creator.Create(ctx, member.ID, []string{symbol.Symbol}, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC))
+		assert.NoError(t, err)
+
+		assert.Equal(t, 12, notification.Time.Hour.Hour())
+		assert.Equal(t, symbol.Symbol, notification.Targets[0].Symbol)
+
+		notification, err = creator.Create(ctx, member.ID, []string{symbol2.Symbol}, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC))
+		assert.NoError(t, err)
+
+		notifications, err := notificationRepository.GetByMemberID(ctx, member.ID)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 1, len(notifications))
+		assert.Equal(t, symbol2.Symbol, notification.Targets[0].Symbol)
 	})
 }

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
@@ -41,6 +42,7 @@ type Session struct {
 	IsActive  bool      `bun:"is_active,notnull,default:false"`
 	CreatedAt time.Time `bun:"created_at,notnull,default:current_timestamp"`
 	ExpiresAt time.Time `bun:"expires_at,notnull"`
+	MemberID  uuid.UUID `bun:"member_id,type:uuid"`
 }
 
 func NewSession(expire time.Duration) (*Session, error) {

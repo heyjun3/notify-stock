@@ -126,14 +126,15 @@ func (h *AuthHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, WrapError(err, ErrCodeInternalServer, "Failed to create Google member"))
 		return
 	}
-	if _, err := h.memberRepository.GetOrCreateGoogleMember(r.Context(), member); err != nil {
+	member, err = h.memberRepository.GetOrCreateGoogleMember(r.Context(), member)
+	if err != nil {
 		WriteErrorResponse(w, WrapError(err, ErrCodeDatabase, "Failed to save or retrieve member"))
 		return
 	}
-
 	logger.Info("User info response received", "response", userInfo)
 
 	// セッションの有効化
+	session.MemberID = member.ID
 	session.IsActive = true
 	err = h.Sessions.Store(r.Context(), session)
 	if err != nil {

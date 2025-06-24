@@ -16,6 +16,14 @@ func NoError[T any](t *T, err error) T {
 	return *t
 }
 
+func createMember(t *testing.T, repo *notify.MemberRepository) *notify.Member {
+	member, err := notify.NewMember(nil)
+	assert.NoError(t, err)
+	err = repo.Save(t.Context(), []*notify.Member{member})
+	assert.NoError(t, err)
+	return member
+}
+
 func TestNotificationRepository(t *testing.T) {
 	ctx := context.Background()
 	db := openDB(t)
@@ -109,6 +117,24 @@ func TestNotificationRepository(t *testing.T) {
 				assert.NotNil(t, target)
 			}
 		}
+	})
+
+	t.Run("delete notification by member id", func(t *testing.T) {
+		deleteMember := createMember(t, memberRepository)
+
+		notifications := []notify.Notification{
+			NoError(notify.NewNotification(
+				nil, deleteMember.ID, []string{"N225"}, time.Now().Add(2*time.Hour))),
+		}
+
+		err = repo.Save(ctx, notifications)
+		assert.NoError(t, err)
+
+		deleted, err := repo.DeleteByMemberID(ctx, deleteMember.ID)
+		assert.NoError(t, err)
+
+		assert.Equal(t, deleteMember.ID, deleted[0].MemberID)
+		assert.Equal(t, notifications[0].ID, deleted[0].ID)
 	})
 }
 

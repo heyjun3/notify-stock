@@ -18,8 +18,9 @@ func InitResolver(db *bun.DB) *Resolver {
 	stockRepository := notifystock.InitStockRepository(db)
 	symbolRepository := notifystock.InitSymbolRepository(db)
 	notificationRepository := notifystock.InitNotificationRepository(db)
+	notificationCreator := notifystock.InitNotificationCreator(db)
 	dataLoader := notifystock.NewDataLoader(symbolRepository)
-	resolver := NewResolver(stockRepository, symbolRepository, notificationRepository, dataLoader)
+	resolver := NewResolver(stockRepository, symbolRepository, notificationRepository, notificationCreator, dataLoader)
 	return resolver
 }
 

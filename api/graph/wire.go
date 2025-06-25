@@ -16,6 +16,7 @@ func InitResolver(db *bun.DB) *Resolver {
 		notify.InitStockRepository,
 		notify.InitNotificationRepository,
 		notify.InitSymbolRepository,
+		notify.InitNotificationCreator,
 		notify.NewDataLoader,
 		NewResolver,
 	)

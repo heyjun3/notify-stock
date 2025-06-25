@@ -14,6 +14,7 @@ type Resolver struct {
 	stockRepository        *notify.StockRepository
 	symbolRepository       *notify.SymbolRepository
 	notificationRepository *notify.NotificationRepository
+	notificationCreator    *notify.NotificationCreator
 	logger                 *slog.Logger
 	loader                 *notify.DataLoader
 }
@@ -22,12 +23,14 @@ func NewResolver(
 	stockRepository *notify.StockRepository,
 	symbolRepository *notify.SymbolRepository,
 	notificationRepository *notify.NotificationRepository,
+	notificationCreator *notify.NotificationCreator,
 	loader *notify.DataLoader,
 ) *Resolver {
 	return &Resolver{
 		stockRepository:        stockRepository,
 		symbolRepository:       symbolRepository,
 		notificationRepository: notificationRepository,
+		notificationCreator:    notificationCreator,
 		logger:                 notify.CreateLogger("info"),
 		loader:                 loader,
 	}

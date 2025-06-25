@@ -163,12 +163,14 @@ func (r *NotificationRepository) GetByHour(ctx context.Context, time TimeOfHour)
 	return n, nil
 }
 
-func (r *NotificationRepository) DeleteByMemberID(ctx context.Context, memberID uuid.UUID) error {
+func (r *NotificationRepository) DeleteByMemberID(ctx context.Context, memberID uuid.UUID) ([]*Notification, error) {
+	var notifications []*Notification
 	_, err := r.db.NewDelete().
-		Model((*Notification)(nil)).
+		Model(&notifications).
 		Where("member_id = ?", memberID).
+		Returning("*").
 		Exec(ctx)
-	return err
+	return notifications, err
 }
 
 type NotificationCreator struct {
@@ -200,7 +202,7 @@ func (n *NotificationCreator) Create(
 	if err != nil {
 		return nil, err
 	}
-	if err := n.notificationRepository.DeleteByMemberID(ctx, memberID); err != nil {
+	if _, err := n.notificationRepository.DeleteByMemberID(ctx, memberID); err != nil {
 		return nil, err
 	}
 	if err := n.notificationRepository.Save(ctx, []Notification{*notification}); err != nil {

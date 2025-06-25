@@ -14,7 +14,31 @@ import (
 
 // CreateNotification is the resolver for the createNotification field.
 func (r *mutationResolver) CreateNotification(ctx context.Context, input model.NotificationInput) (*model.Notification, error) {
-	return nil, fmt.Errorf("not implement")
+	memberID, err := GetMemberID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	notification, err := r.notificationCreator.Create(ctx, *memberID, input.Symbols, input.Time)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Notification{
+		ID:   notification.ID.String(),
+		Time: notification.Time.Hour,
+	}, nil
+}
+
+// DeleteNotification is the resolver for the deleteNotification field.
+func (r *mutationResolver) DeleteNotification(ctx context.Context) (string, error) {
+	memberID, err := GetMemberID(ctx)
+	if err != nil {
+		return "", err
+	}
+	deletedNotification, err := r.notificationRepository.DeleteByMemberID(ctx, *memberID)
+	if err != nil {
+		return "", err
+	}
+	return deletedNotification[0].ID.String(), nil
 }
 
 // Targets is the resolver for the targets field.
@@ -75,6 +99,25 @@ func (r *queryResolver) Symbols(ctx context.Context, input *model.SymbolInput) (
 	}
 	return []*model.Symbol{
 		{Symbol: symbol.Symbol},
+	}, nil
+}
+
+// Notification is the resolver for the notification field.
+func (r *queryResolver) Notification(ctx context.Context) (*model.Notification, error) {
+	memberID, err := GetMemberID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	notifications, err := r.notificationRepository.GetByMemberID(ctx, *memberID)
+	if err != nil {
+		return nil, err
+	}
+	if len(notifications) == 0 {
+		return nil, fmt.Errorf("not found notification")
+	}
+	return &model.Notification{
+		ID:   notifications[0].ID.String(),
+		Time: notifications[0].Time.Hour,
 	}, nil
 }
 

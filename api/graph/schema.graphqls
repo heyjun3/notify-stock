@@ -37,8 +37,6 @@ type SymbolDetail {
 
 type Notification implements Node {
   id: ID!
-  symbol: ID!
-  email: String!
   time: Time!
   targets: [SymbolDetail!]!
 }
@@ -48,8 +46,7 @@ input SymbolInput {
 }
 
 input NotificationInput {
-  symbol: ID!
-  email: String!
+  symbols: [ID!]!
   time: Time!
 }
 
@@ -63,9 +60,11 @@ type Query {
   node(id: ID!): Node
   symbol(input: SymbolInput!): Symbol!
   symbols(input: SymbolInput): [Symbol!]!
+  notification: Notification @auth
   notifications: [Notification!]! @auth
 }
 
 type Mutation {
   createNotification(input: NotificationInput!): Notification! @auth
+  deleteNotification: ID! @auth
 }

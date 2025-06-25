@@ -22,8 +22,6 @@ type Mutation struct {
 
 type Notification struct {
 	ID      string          `json:"id"`
-	Symbol  string          `json:"symbol"`
-	Email   string          `json:"email"`
 	Time    time.Time       `json:"time"`
 	Targets []*SymbolDetail `json:"targets"`
 }
@@ -32,9 +30,8 @@ func (Notification) IsNode()            {}
 func (this Notification) GetID() string { return this.ID }
 
 type NotificationInput struct {
-	Symbol string    `json:"symbol"`
-	Email  string    `json:"email"`
-	Time   time.Time `json:"time"`
+	Symbols []string  `json:"symbols"`
+	Time    time.Time `json:"time"`
 }
 
 type Query struct {

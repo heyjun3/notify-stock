@@ -115,9 +115,16 @@ func (r *queryResolver) Notification(ctx context.Context) (*model.Notification, 
 	if len(notifications) == 0 {
 		return nil, fmt.Errorf("not found notification")
 	}
+	targets := make([]*model.SymbolDetail, 0, len(notifications[0].Targets))
+	for _, target := range notifications[0].Targets {
+		targets = append(targets, &model.SymbolDetail{
+			Symbol: target.Symbol,
+		})
+	}
 	return &model.Notification{
 		ID:   notifications[0].ID.String(),
 		Time: notifications[0].Time.Hour,
+		Targets: targets,
 	}, nil
 }
 

@@ -72,4 +72,50 @@ func TestMemberRepository(t *testing.T) {
 		_, err = repo.GetOrCreateGoogleMember(ctx, invalidMember)
 		assert.Error(t, err, "member does not have a GoogleMember")
 	})
+
+	t.Run("not found errors", func(t *testing.T) {
+		ctx := context.Background()
+		v7, err := uuid.NewV7()
+		assert.NoError(t, err)
+
+		_, err = repo.GetByID(ctx, v7)
+		assert.Error(t, err)
+
+		_, err = repo.GetByGoogleID(ctx, "non-existent-google-id")
+		assert.Error(t, err)
+	})
+
+	t.Run("save invalid member", func(t *testing.T) {
+		ctx := context.Background()
+		invalidMember, err := notify.NewMember(nil)
+		assert.NoError(t, err)
+		invalidMember.GoogleMember = &notify.GoogleMember{}
+
+		err = repo.Save(ctx, []*notify.Member{invalidMember})
+		assert.Error(t, err)
+	})
+
+	t.Run("get or create google member with nil google member", func(t *testing.T) {
+		ctx := context.Background()
+		member, err := notify.NewMember(nil)
+		assert.NoError(t, err)
+
+		_, err = repo.GetOrCreateGoogleMember(ctx, member)
+		assert.Error(t, err)
+	})
+
+	t.Run("save empty slice", func(t *testing.T) {
+		ctx := context.Background()
+		err := repo.Save(ctx, []*notify.Member{})
+		assert.NoError(t, err)
+	})
+
+	t.Run("save member with no google member", func(t *testing.T) {
+		ctx := context.Background()
+		member, err := notify.NewMember(nil)
+		assert.NoError(t, err)
+
+		err = repo.Save(ctx, []*notify.Member{member})
+		assert.NoError(t, err)
+	})
 }

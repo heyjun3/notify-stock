@@ -2,6 +2,8 @@ package notifystock
 
 import (
 	"context"
+	"database/sql"
+	// "errors"
 	"fmt"
 	"strings"
 
@@ -109,16 +111,17 @@ func (r *MemberRepository) GetOrCreateGoogleMember(ctx context.Context, member *
 	if member.GoogleMember == nil {
 		return nil, fmt.Errorf("member does not have a GoogleMember")
 	}
-	exist, err := r.db.NewSelect().
-		Model((*Member)(nil)).
+	var existMember Member
+	err := r.db.NewSelect().
+		Model(&existMember).
 		Relation("GoogleMember").
 		Where("google_member.id = ?", member.GoogleMember.ID).
-		Exists(ctx)
-	if err != nil {
-		return nil, err
+		Scan(ctx)
+	if err == nil {
+		return &existMember, nil
 	}
-	if exist {
-		return member, nil
+	if err != sql.ErrNoRows {
+		return nil, err
 	}
 	if err := r.Save(ctx, []*Member{member}); err != nil {
 		return nil, err

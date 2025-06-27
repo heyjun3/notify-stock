@@ -4,6 +4,7 @@ go 1.24.1
 
 require (
 	github.com/99designs/gqlgen v0.17.72
+	github.com/dmarkham/enumer v1.5.11
 	github.com/goccy/go-yaml v1.17.1
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.6.0
@@ -40,6 +41,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/oapi-codegen/runtime v1.1.1 // indirect
+	github.com/pascaldekloe/name v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.4.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect

@@ -31,6 +31,7 @@ export type ChartInput = {
 export type Mutation = {
   __typename?: "Mutation";
   createNotification: Notification;
+  deleteNotification: Scalars["ID"]["output"];
 };
 
 export type MutationCreateNotificationArgs = {
@@ -43,22 +44,20 @@ export type Node = {
 
 export type Notification = Node & {
   __typename?: "Notification";
-  email: Scalars["String"]["output"];
   id: Scalars["ID"]["output"];
-  symbol: Scalars["ID"]["output"];
   targets: Array<SymbolDetail>;
   time: Scalars["Time"]["output"];
 };
 
 export type NotificationInput = {
-  email: Scalars["String"]["input"];
-  symbol: Scalars["ID"]["input"];
+  symbols: Array<Scalars["ID"]["input"]>;
   time: Scalars["Time"]["input"];
 };
 
 export type Query = {
   __typename?: "Query";
   node?: Maybe<Node>;
+  notification?: Maybe<Notification>;
   notifications: Array<Notification>;
   symbol: Symbol;
   symbols: Array<Symbol>;
@@ -112,6 +111,15 @@ export type SymbolInput = {
   symbol: Scalars["ID"]["input"];
 };
 
+export type CreateNotificationMutationVariables = Exact<{
+  createNotificationInput: NotificationInput;
+}>;
+
+export type CreateNotificationMutation = {
+  __typename?: "Mutation";
+  createNotification: { __typename?: "Notification"; id: string };
+};
+
 export type GetSymbolsQueryVariables = Exact<{
   chartInput: ChartInput;
 }>;
@@ -145,6 +153,53 @@ export type GetNotificationQuery = {
   notifications: Array<{ __typename?: "Notification"; id: string }>;
 };
 
+export const CreateNotificationDocument = gql`
+    mutation createNotification($createNotificationInput: NotificationInput!) {
+  createNotification(input: $createNotificationInput) {
+    id
+  }
+}
+    `;
+export type CreateNotificationMutationFn = Apollo.MutationFunction<
+  CreateNotificationMutation,
+  CreateNotificationMutationVariables
+>;
+
+/**
+ * __useCreateNotificationMutation__
+ *
+ * To run a mutation, you first call `useCreateNotificationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateNotificationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createNotificationMutation, { data, loading, error }] = useCreateNotificationMutation({
+ *   variables: {
+ *      createNotificationInput: // value for 'createNotificationInput'
+ *   },
+ * });
+ */
+export function useCreateNotificationMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateNotificationMutation,
+    CreateNotificationMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<CreateNotificationMutation, CreateNotificationMutationVariables>(
+    CreateNotificationDocument,
+    options,
+  );
+}
+export type CreateNotificationMutationHookResult = ReturnType<typeof useCreateNotificationMutation>;
+export type CreateNotificationMutationResult = Apollo.MutationResult<CreateNotificationMutation>;
+export type CreateNotificationMutationOptions = Apollo.BaseMutationOptions<
+  CreateNotificationMutation,
+  CreateNotificationMutationVariables
+>;
 export const GetSymbolsDocument = gql`
     query GetSymbols($chartInput: ChartInput!) {
   symbols {

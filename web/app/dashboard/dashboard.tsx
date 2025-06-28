@@ -6,7 +6,11 @@ import { StockChart, type ChartData } from "./stockChart";
 import { Pagination } from "./pagination";
 import { StockCard } from "./stockCard";
 
-import { useGetNotificationQuery, useGetSymbolsSuspenseQuery } from "../gen/graphql";
+import {
+  useCreateNotificationMutation,
+  useGetNotificationQuery,
+  useGetSymbolsSuspenseQuery,
+} from "../gen/graphql";
 import { PeriodSelector, type Period } from "./periodSelector";
 import { NotificationSection } from "./notification";
 import type { ApolloError } from "@apollo/client";
@@ -114,6 +118,33 @@ const useGetNotification = () => {
   };
 };
 
+const useCreateNotification = () => {
+  const parseTime = (time: string) => {
+    const hour = Number(time.slice(0, 2));
+    const date = new Date();
+    date.setHours(hour);
+    return date;
+  };
+  const [mutate] = useCreateNotificationMutation();
+  const handleCreateNotification = (notification: {
+    id: number;
+    time: string;
+    selectedStockSymbols: string[];
+  }) => {
+    mutate({
+      variables: {
+        createNotificationInput: {
+          symbols: notification.selectedStockSymbols,
+          time: parseTime(notification.time).toISOString(),
+        },
+      },
+    }).then((r) => {
+      console.warn(r.data);
+    });
+  };
+  return { handleCreateNotification };
+};
+
 /**
  * ダッシュボード全体のページコンポーネント
  */
@@ -130,6 +161,7 @@ function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ番号
 
   const { data, loading, unAuthorization } = useGetNotification();
+  const { handleCreateNotification } = useCreateNotification();
 
   // 検索フィルタリング
   const filteredStocks = useMemo(() => {
@@ -235,7 +267,7 @@ function DashboardPage() {
             isAuthorized={!unAuthorization}
             handleGoogleLogin={() => {}}
             handleLogout={() => {}}
-            handleAddNotification={() => {}}
+            handleAddNotification={handleCreateNotification}
             handleDeleteNotification={() => {}}
             allStocks={symbols?.map(({ symbol, shortName }) => ({ symbol, name: shortName })) || []}
             notifications={[]}

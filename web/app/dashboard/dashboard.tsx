@@ -111,8 +111,18 @@ const isError = (error?: ApolloError) => {
 };
 const useGetNotification = () => {
   const { data, loading, error } = useGetNotificationQuery();
+  let notifications = undefined;
+  if (data?.notification) {
+    notifications = [
+      {
+        id: data.notification.id,
+        time: data.notification.time,
+        tickers: data.notification.targets.map((t) => t.shortName),
+      },
+    ];
+  }
   return {
-    data,
+    notifications: notifications ?? [],
     loading,
     unAuthorization: isError(error),
   };
@@ -160,7 +170,7 @@ function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ番号
 
-  const { data, loading, unAuthorization } = useGetNotification();
+  const { loading, notifications, unAuthorization } = useGetNotification();
   const { handleCreateNotification } = useCreateNotification();
 
   // 検索フィルタリング
@@ -270,7 +280,8 @@ function DashboardPage() {
             handleAddNotification={handleCreateNotification}
             handleDeleteNotification={() => {}}
             allStocks={symbols?.map(({ symbol, shortName }) => ({ symbol, name: shortName })) || []}
-            notifications={[]}
+            notifications={notifications}
+            loading={loading}
           />
         )}
 

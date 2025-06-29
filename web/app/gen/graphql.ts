@@ -150,7 +150,12 @@ export type GetNotificationQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GetNotificationQuery = {
   __typename?: "Query";
-  notifications: Array<{ __typename?: "Notification"; id: string }>;
+  notification?: {
+    __typename?: "Notification";
+    id: string;
+    time: string;
+    targets: Array<{ __typename?: "SymbolDetail"; symbol: string; shortName: string }>;
+  } | null;
 };
 
 export const CreateNotificationDocument = gql`
@@ -275,8 +280,13 @@ export type GetSymbolsSuspenseQueryHookResult = ReturnType<typeof useGetSymbolsS
 export type GetSymbolsQueryResult = Apollo.QueryResult<GetSymbolsQuery, GetSymbolsQueryVariables>;
 export const GetNotificationDocument = gql`
     query getNotification {
-  notifications {
+  notification {
     id
+    time
+    targets {
+      symbol
+      shortName
+    }
   }
 }
     `;

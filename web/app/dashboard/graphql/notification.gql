@@ -1,5 +1,10 @@
 query getNotification {
-  notifications {
+  notification {
     id
+    time
+    targets {
+      symbol
+      shortName
+    }
   }
 }

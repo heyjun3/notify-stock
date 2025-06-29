@@ -103,14 +103,14 @@ function NotificationForm({ stocks, onAddNotification }: NotificationFormProps) 
 }
 
 type Notification = {
-  id: number;
+  id: string;
   time: string;
-  selectedStockSymbols: string[];
+  tickers: string[];
 };
 
 type NotificationListProps = {
   notifications: Notification[];
-  onDeleteNotification: (id: number) => void;
+  onDeleteNotification: (id: string) => void;
 };
 
 function NotificationList({ notifications, onDeleteNotification }: NotificationListProps) {
@@ -137,8 +137,7 @@ function NotificationList({ notifications, onDeleteNotification }: NotificationL
               </p>
               <p className="text-sm text-gray-800 dark:text-gray-200">
                 <Briefcase size={14} className="inline mr-1 text-gray-500 dark:text-gray-400" />{" "}
-                銘柄:{" "}
-                <span className="font-medium">{notification.selectedStockSymbols.join(", ")}</span>
+                銘柄: <span className="font-medium">{notification.tickers.join(", ")}</span>
               </p>
             </div>
             <button
@@ -170,7 +169,8 @@ type NotificationSectionProps = {
     time: string;
     selectedStockSymbols: string[];
   }) => void;
-  handleDeleteNotification: (id: number) => void;
+  handleDeleteNotification: (id: string) => void;
+  loading: boolean;
 };
 
 export function NotificationSection({
@@ -179,6 +179,7 @@ export function NotificationSection({
   handleLogout,
   allStocks,
   notifications,
+  loading,
   handleAddNotification,
   handleDeleteNotification,
 }: NotificationSectionProps) {
@@ -207,13 +208,18 @@ export function NotificationSection({
               ログアウト
             </Link>
           </div>
-          <div className="space-y-8">
-            <NotificationForm stocks={allStocks} onAddNotification={handleAddNotification} />
-            <NotificationList
-              notifications={notifications}
-              onDeleteNotification={handleDeleteNotification}
-            />
-          </div>
+          {!loading && (
+            <div className="space-y-4">
+              {notifications.length ? (
+                <NotificationList
+                  notifications={notifications}
+                  onDeleteNotification={handleDeleteNotification}
+                />
+              ) : (
+                <NotificationForm stocks={allStocks} onAddNotification={handleAddNotification} />
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center">

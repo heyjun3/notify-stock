@@ -10,6 +10,7 @@ func convertToSymbolDetail(symbol *notify.SymbolDetail) *model.SymbolDetail {
 		return nil
 	}
 	return &model.SymbolDetail{
+		ID:             symbol.Symbol,
 		Symbol:         symbol.Symbol,
 		ShortName:      symbol.ShortName,
 		LongName:       symbol.LongName,

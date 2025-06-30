@@ -54,6 +54,7 @@ func (Symbol) IsNode()            {}
 func (this Symbol) GetID() string { return this.ID }
 
 type SymbolDetail struct {
+	ID             string  `json:"id"`
 	Symbol         string  `json:"symbol"`
 	ShortName      string  `json:"shortName"`
 	LongName       string  `json:"longName"`

@@ -24,6 +24,7 @@ type Symbol implements Node {
 }
 
 type SymbolDetail {
+  id: ID!
   symbol: ID!
   shortName: String!
   longName: String!

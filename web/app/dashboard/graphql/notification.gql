@@ -3,6 +3,7 @@ query getNotification {
     id
     time
     targets {
+      id
       symbol
       shortName
     }

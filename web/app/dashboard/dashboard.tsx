@@ -8,6 +8,7 @@ import { StockCard } from "./stockCard";
 
 import {
   useCreateNotificationMutation,
+  useDeleteNotificationMutation,
   useGetNotificationQuery,
   useGetSymbolsSuspenseQuery,
 } from "../gen/graphql";
@@ -110,7 +111,8 @@ const isError = (error?: ApolloError) => {
   return extensions.find((e) => e.code) ? true : false;
 };
 const useGetNotification = () => {
-  const { data, loading, error } = useGetNotificationQuery();
+  const { data, loading, error, refetch } = useGetNotificationQuery();
+  console.warn(data?.notification);
   let notifications = undefined;
   if (data?.notification) {
     notifications = [
@@ -122,13 +124,14 @@ const useGetNotification = () => {
     ];
   }
   return {
+    refetch,
     notifications: notifications ?? [],
     loading,
     unAuthorization: isError(error),
   };
 };
 
-const useCreateNotification = () => {
+const useCreateNotification = (refetch: () => void) => {
   const parseTime = (time: string) => {
     const hour = Number(time.slice(0, 2));
     const date = new Date();
@@ -150,9 +153,22 @@ const useCreateNotification = () => {
       },
     }).then((r) => {
       console.warn(r.data);
+      refetch();
     });
   };
   return { handleCreateNotification };
+};
+
+const useDeleteNotification = (refetch: () => void) => {
+  const [mutate] = useDeleteNotificationMutation();
+  const handleDeleteNotification = () => {
+    mutate().then(() => {
+      refetch();
+    });
+  };
+  return {
+    handleDeleteNotification,
+  };
 };
 
 /**
@@ -170,8 +186,9 @@ function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ番号
 
-  const { loading, notifications, unAuthorization } = useGetNotification();
-  const { handleCreateNotification } = useCreateNotification();
+  const { loading, notifications, unAuthorization, refetch } = useGetNotification();
+  const { handleCreateNotification } = useCreateNotification(refetch);
+  const { handleDeleteNotification } = useDeleteNotification(refetch);
 
   // 検索フィルタリング
   const filteredStocks = useMemo(() => {
@@ -278,7 +295,7 @@ function DashboardPage() {
             handleGoogleLogin={() => {}}
             handleLogout={() => {}}
             handleAddNotification={handleCreateNotification}
-            handleDeleteNotification={() => {}}
+            handleDeleteNotification={handleDeleteNotification}
             allStocks={symbols?.map(({ symbol, shortName }) => ({ symbol, name: shortName })) || []}
             notifications={notifications}
             loading={loading}

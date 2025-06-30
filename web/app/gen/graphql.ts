@@ -99,6 +99,7 @@ export type SymbolDetail = {
   change: Scalars["String"]["output"];
   changePercent: Scalars["String"]["output"];
   currencySymbol: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
   longName: Scalars["String"]["output"];
   marketCap?: Maybe<Scalars["String"]["output"]>;
   price: Scalars["Float"]["output"];
@@ -117,8 +118,17 @@ export type CreateNotificationMutationVariables = Exact<{
 
 export type CreateNotificationMutation = {
   __typename?: "Mutation";
-  createNotification: { __typename?: "Notification"; id: string };
+  createNotification: {
+    __typename?: "Notification";
+    id: string;
+    time: string;
+    targets: Array<{ __typename?: "SymbolDetail"; id: string; symbol: string; shortName: string }>;
+  };
 };
+
+export type DeleteNotificationMutationVariables = Exact<{ [key: string]: never }>;
+
+export type DeleteNotificationMutation = { __typename?: "Mutation"; deleteNotification: string };
 
 export type GetSymbolsQueryVariables = Exact<{
   chartInput: ChartInput;
@@ -154,7 +164,7 @@ export type GetNotificationQuery = {
     __typename?: "Notification";
     id: string;
     time: string;
-    targets: Array<{ __typename?: "SymbolDetail"; symbol: string; shortName: string }>;
+    targets: Array<{ __typename?: "SymbolDetail"; id: string; symbol: string; shortName: string }>;
   } | null;
 };
 
@@ -162,6 +172,12 @@ export const CreateNotificationDocument = gql`
     mutation createNotification($createNotificationInput: NotificationInput!) {
   createNotification(input: $createNotificationInput) {
     id
+    time
+    targets {
+      id
+      symbol
+      shortName
+    }
   }
 }
     `;
@@ -204,6 +220,50 @@ export type CreateNotificationMutationResult = Apollo.MutationResult<CreateNotif
 export type CreateNotificationMutationOptions = Apollo.BaseMutationOptions<
   CreateNotificationMutation,
   CreateNotificationMutationVariables
+>;
+export const DeleteNotificationDocument = gql`
+    mutation deleteNotification {
+  deleteNotification
+}
+    `;
+export type DeleteNotificationMutationFn = Apollo.MutationFunction<
+  DeleteNotificationMutation,
+  DeleteNotificationMutationVariables
+>;
+
+/**
+ * __useDeleteNotificationMutation__
+ *
+ * To run a mutation, you first call `useDeleteNotificationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteNotificationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteNotificationMutation, { data, loading, error }] = useDeleteNotificationMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useDeleteNotificationMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    DeleteNotificationMutation,
+    DeleteNotificationMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<DeleteNotificationMutation, DeleteNotificationMutationVariables>(
+    DeleteNotificationDocument,
+    options,
+  );
+}
+export type DeleteNotificationMutationHookResult = ReturnType<typeof useDeleteNotificationMutation>;
+export type DeleteNotificationMutationResult = Apollo.MutationResult<DeleteNotificationMutation>;
+export type DeleteNotificationMutationOptions = Apollo.BaseMutationOptions<
+  DeleteNotificationMutation,
+  DeleteNotificationMutationVariables
 >;
 export const GetSymbolsDocument = gql`
     query GetSymbols($chartInput: ChartInput!) {
@@ -284,6 +344,7 @@ export const GetNotificationDocument = gql`
     id
     time
     targets {
+      id
       symbol
       shortName
     }

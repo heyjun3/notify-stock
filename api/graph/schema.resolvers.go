@@ -22,9 +22,16 @@ func (r *mutationResolver) CreateNotification(ctx context.Context, input model.N
 	if err != nil {
 		return nil, err
 	}
+	targets := make([]*model.SymbolDetail, 0, len(notification.Targets))
+	for _, target := range notification.Targets {
+		targets = append(targets, &model.SymbolDetail{
+			Symbol: target.Symbol,
+		})
+	}
 	return &model.Notification{
-		ID:   notification.ID.String(),
-		Time: notification.Time.Hour,
+		ID:      notification.ID.String(),
+		Time:    notification.Time.Hour,
+		Targets: targets,
 	}, nil
 }
 
@@ -113,7 +120,8 @@ func (r *queryResolver) Notification(ctx context.Context) (*model.Notification, 
 		return nil, err
 	}
 	if len(notifications) == 0 {
-		return nil, fmt.Errorf("not found notification")
+		r.logger.Info("not found notification")
+		return nil, nil
 	}
 	targets := make([]*model.SymbolDetail, 0, len(notifications[0].Targets))
 	for _, target := range notifications[0].Targets {
@@ -122,8 +130,8 @@ func (r *queryResolver) Notification(ctx context.Context) (*model.Notification, 
 		})
 	}
 	return &model.Notification{
-		ID:   notifications[0].ID.String(),
-		Time: notifications[0].Time.Hour,
+		ID:      notifications[0].ID.String(),
+		Time:    notifications[0].Time.Hour,
 		Targets: targets,
 	}, nil
 }

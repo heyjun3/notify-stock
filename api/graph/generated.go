@@ -87,6 +87,7 @@ type ComplexityRoot struct {
 		Change         func(childComplexity int) int
 		ChangePercent  func(childComplexity int) int
 		CurrencySymbol func(childComplexity int) int
+		ID             func(childComplexity int) int
 		LongName       func(childComplexity int) int
 		MarketCap      func(childComplexity int) int
 		Price          func(childComplexity int) int
@@ -298,6 +299,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SymbolDetail.CurrencySymbol(childComplexity), true
+
+	case "SymbolDetail.id":
+		if e.complexity.SymbolDetail.ID == nil {
+			break
+		}
+
+		return e.complexity.SymbolDetail.ID(childComplexity), true
 
 	case "SymbolDetail.longName":
 		if e.complexity.SymbolDetail.LongName == nil {
@@ -984,6 +992,8 @@ func (ec *executionContext) fieldContext_Notification_targets(_ context.Context,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_SymbolDetail_id(ctx, field)
 			case "symbol":
 				return ec.fieldContext_SymbolDetail_symbol(ctx, field)
 			case "shortName":
@@ -1726,6 +1736,8 @@ func (ec *executionContext) fieldContext_Symbol_detail(_ context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_SymbolDetail_id(ctx, field)
 			case "symbol":
 				return ec.fieldContext_SymbolDetail_symbol(ctx, field)
 			case "shortName":
@@ -1810,6 +1822,50 @@ func (ec *executionContext) fieldContext_Symbol_chart(ctx context.Context, field
 	if fc.Args, err = ec.field_Symbol_chart_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SymbolDetail_id(ctx context.Context, field graphql.CollectedField, obj *model.SymbolDetail) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SymbolDetail_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SymbolDetail_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SymbolDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -4754,6 +4810,11 @@ func (ec *executionContext) _SymbolDetail(ctx context.Context, sel ast.Selection
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SymbolDetail")
+		case "id":
+			out.Values[i] = ec._SymbolDetail_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "symbol":
 			out.Values[i] = ec._SymbolDetail_symbol(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

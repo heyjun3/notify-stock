@@ -1,20 +1,16 @@
 import type React from "react";
-import { useState, useMemo, useEffect, Suspense } from "react";
-import { addMonth, addYear, dayEnd } from "@formkit/tempo";
+import { useState, useMemo, Suspense } from "react";
 
-import { StockChart, type ChartData } from "./stockChart";
+import { StockChart } from "./stockChart";
 import { Pagination } from "./pagination";
 import { StockCard } from "./stockCard";
 
-import {
-  useCreateNotificationMutation,
-  useDeleteNotificationMutation,
-  useGetNotificationQuery,
-  useGetSymbolsSuspenseQuery,
-} from "../gen/graphql";
 import { PeriodSelector, type Period } from "./periodSelector";
 import { NotificationSection } from "./notification";
-import type { ApolloError } from "@apollo/client";
+import { useGetSymbols } from "./hooks/getsymbols";
+import { useGetNotification } from "./hooks/getNotification";
+import { useCreateNotification } from "./hooks/createNotification";
+import { useDeleteNotification } from "./hooks/deleteNotification";
 
 // 1ページあたりの表示件数
 const ITEMS_PER_PAGE = 4;
@@ -33,142 +29,6 @@ const periodToTitle = (period: Period) => {
       period satisfies never;
       return "";
   }
-};
-
-const periodToStart = (period: Period) => {
-  switch (period) {
-    case "1M":
-      return addMonth(new Date(), -1);
-    case "6M":
-      return addMonth(new Date(), -6);
-    case "1Y":
-      return addYear(new Date(), -1);
-    case "5Y":
-      return addYear(new Date(), -5);
-    default:
-      period satisfies never;
-      return new Date();
-  }
-};
-
-type Chart = {
-  data: ChartData[];
-  formatter?: (v: any) => string;
-};
-
-const useGetSymbols = () => {
-  const [selectedSymbol, setSelectedSymbol] = useState<{
-    symbol: string;
-    shortName: string;
-  } | null>(null); // 初期選択
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>("1Y"); // 選択された期間
-  const [chartData, setChartData] = useState<Chart>({ data: [] });
-  const { data } = useGetSymbolsSuspenseQuery({
-    variables: {
-      chartInput: {
-        start: dayEnd(periodToStart(selectedPeriod)).toISOString(),
-        end: dayEnd(new Date()).toISOString(),
-        symbol: selectedSymbol?.symbol,
-      },
-    },
-  });
-  const symbols = data?.symbols.map((symbol) => symbol.detail);
-
-  useEffect(() => {
-    if (data && data.symbols.length > 0) {
-      setSelectedSymbol(
-        (symbol) =>
-          symbol ?? {
-            symbol: data.symbols[0].detail.symbol,
-            shortName: data.symbols[0].detail.shortName,
-          },
-      );
-    }
-    if (!data) return;
-    for (const symbol of data.symbols) {
-      const chart = symbol.chart;
-      if (chart && chart.length) {
-        const formatter = (value: any) => `${symbol.detail.currencySymbol}${value}`;
-        setChartData({ data: chart, formatter });
-      }
-    }
-    return;
-  }, [data]);
-  return {
-    symbols,
-    selectedSymbol,
-    setSelectedSymbol,
-    selectedPeriod,
-    setSelectedPeriod,
-    chartData,
-  };
-};
-
-const isError = (error?: ApolloError) => {
-  if (error === undefined) return false;
-  const extension = error.cause?.extensions;
-  const extensions = Array.isArray(extension) ? extension : extension == null ? [] : [extension];
-  return extensions.find((e) => e.code) ? true : false;
-};
-const useGetNotification = () => {
-  const { data, loading, error, refetch } = useGetNotificationQuery();
-  console.warn(data?.notification);
-  let notifications = undefined;
-  if (data?.notification) {
-    notifications = [
-      {
-        id: data.notification.id,
-        time: data.notification.time,
-        tickers: data.notification.targets.map((t) => t.shortName),
-      },
-    ];
-  }
-  return {
-    refetch,
-    notifications: notifications ?? [],
-    loading,
-    unAuthorization: isError(error),
-  };
-};
-
-const useCreateNotification = (refetch: () => void) => {
-  const parseTime = (time: string) => {
-    const hour = Number(time.slice(0, 2));
-    const date = new Date();
-    date.setHours(hour);
-    return date;
-  };
-  const [mutate] = useCreateNotificationMutation();
-  const handleCreateNotification = (notification: {
-    id: number;
-    time: string;
-    selectedStockSymbols: string[];
-  }) => {
-    mutate({
-      variables: {
-        createNotificationInput: {
-          symbols: notification.selectedStockSymbols,
-          time: parseTime(notification.time).toISOString(),
-        },
-      },
-    }).then((r) => {
-      console.warn(r.data);
-      refetch();
-    });
-  };
-  return { handleCreateNotification };
-};
-
-const useDeleteNotification = (refetch: () => void) => {
-  const [mutate] = useDeleteNotificationMutation();
-  const handleDeleteNotification = () => {
-    mutate().then(() => {
-      refetch();
-    });
-  };
-  return {
-    handleDeleteNotification,
-  };
 };
 
 /**

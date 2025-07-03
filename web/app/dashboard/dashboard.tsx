@@ -8,9 +8,6 @@ import { StockCard } from "./stockCard";
 import { PeriodSelector, type Period } from "./periodSelector";
 import { NotificationSection } from "./notification";
 import { useGetSymbols } from "./hooks/getsymbols";
-import { useGetNotification } from "./hooks/getNotification";
-import { useCreateNotification } from "./hooks/createNotification";
-import { useDeleteNotification } from "./hooks/deleteNotification";
 
 // 1ページあたりの表示件数
 const ITEMS_PER_PAGE = 4;
@@ -45,10 +42,6 @@ function DashboardPage() {
   } = useGetSymbols();
   const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ番号
-
-  const { loading, notifications, unAuthorization, refetch } = useGetNotification();
-  const { handleCreateNotification } = useCreateNotification(refetch);
-  const { handleDeleteNotification } = useDeleteNotification(refetch);
 
   // 検索フィルタリング
   const filteredStocks = useMemo(() => {
@@ -151,14 +144,7 @@ function DashboardPage() {
         {import.meta.env.VITE_ENABLE_STOCK_NOTIFICATION === "true" && (
           <NotificationSection
             user={{ displayName: "ゲストユーザー" }}
-            isAuthorized={!unAuthorization}
-            handleGoogleLogin={() => {}}
-            handleLogout={() => {}}
-            handleAddNotification={handleCreateNotification}
-            handleDeleteNotification={handleDeleteNotification}
             allStocks={symbols?.map(({ symbol, shortName }) => ({ symbol, name: shortName })) || []}
-            notifications={notifications}
-            loading={loading}
           />
         )}
 

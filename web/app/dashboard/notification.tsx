@@ -1,6 +1,9 @@
 import React, { useState } from "react";
-import { Navigate, redirect, useNavigate, Link } from "react-router";
+import { Link } from "react-router";
 import { Trash2, BellPlus, Clock, Briefcase, CheckSquare, Square, LogOut } from "lucide-react";
+import { useCreateNotification } from "./hooks/createNotification";
+import { useDeleteNotification } from "./hooks/deleteNotification";
+import { useGetNotification } from "./hooks/getNotification";
 
 type Stock = {
   symbol: string;
@@ -159,30 +162,15 @@ type NotificationSectionProps = {
     displayName: string;
     photoURL?: string;
   } | null;
-  isAuthorized: boolean;
-  handleGoogleLogin: () => void;
-  handleLogout: () => void;
   allStocks: Stock[];
-  notifications: Notification[];
-  handleAddNotification: (notification: {
-    id: number;
-    time: string;
-    selectedStockSymbols: string[];
-  }) => void;
-  handleDeleteNotification: (id: string) => void;
-  loading: boolean;
 };
 
-export function NotificationSection({
-  user,
-  isAuthorized,
-  handleLogout,
-  allStocks,
-  notifications,
-  loading,
-  handleAddNotification,
-  handleDeleteNotification,
-}: NotificationSectionProps) {
+export function NotificationSection({ user, allStocks }: NotificationSectionProps) {
+  const { loading, notifications, unAuthorization, refetch } = useGetNotification();
+  const { handleCreateNotification } = useCreateNotification(refetch);
+  const { handleDeleteNotification } = useDeleteNotification(refetch);
+  const isAuthorized = !unAuthorization;
+
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md min-h-[250px] flex flex-col justify-center">
       {isAuthorized && user ? (
@@ -216,7 +204,7 @@ export function NotificationSection({
                   onDeleteNotification={handleDeleteNotification}
                 />
               ) : (
-                <NotificationForm stocks={allStocks} onAddNotification={handleAddNotification} />
+                <NotificationForm stocks={allStocks} onAddNotification={handleCreateNotification} />
               )}
             </div>
           )}

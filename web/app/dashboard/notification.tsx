@@ -166,9 +166,9 @@ type NotificationSectionProps = {
 };
 
 export function NotificationSection({ user, allStocks }: NotificationSectionProps) {
-  const { loading, notifications, unAuthorization, refetch } = useGetNotification();
-  const { handleCreateNotification } = useCreateNotification(refetch);
-  const { handleDeleteNotification } = useDeleteNotification(refetch);
+  const { loading, notifications, unAuthorization } = useGetNotification();
+  const { handleCreateNotification } = useCreateNotification();
+  const { handleDeleteNotification } = useDeleteNotification();
   const isAuthorized = !unAuthorization;
 
   return (

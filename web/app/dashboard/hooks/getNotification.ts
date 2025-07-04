@@ -8,8 +8,7 @@ const isError = (error?: ApolloError) => {
   return extensions.find((e) => e.code) ? true : false;
 };
 export const useGetNotification = () => {
-  const { data, loading, error, refetch } = useGetNotificationQuery();
-  console.warn(data?.notification);
+  const { data, loading, error } = useGetNotificationQuery();
   let notifications = undefined;
   if (data?.notification) {
     notifications = [
@@ -21,7 +20,6 @@ export const useGetNotification = () => {
     ];
   }
   return {
-    refetch,
     notifications: notifications ?? [],
     loading,
     unAuthorization: isError(error),

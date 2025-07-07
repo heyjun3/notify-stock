@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router";
 import { Trash2, BellPlus, Clock, Briefcase, CheckSquare, Square, LogOut } from "lucide-react";
+import { parse, format } from "@formkit/tempo";
+
 import { useCreateNotification } from "./hooks/createNotification";
 import { useDeleteNotification } from "./hooks/deleteNotification";
 import { useGetNotification } from "./hooks/getNotification";
@@ -81,9 +83,7 @@ function NotificationForm({ stocks, onAddNotification }: NotificationFormProps) 
                   onChange={() => handleStockSelectionChange(stock.symbol)}
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
                 />
-                <span className="text-sm text-gray-800 dark:text-gray-200">
-                  {stock.symbol} - {stock.name}
-                </span>
+                <span className="text-sm text-gray-800 dark:text-gray-200">{stock.name}</span>
                 {selectedStockSymbols.includes(stock.symbol) ? (
                   <CheckSquare size={16} className="text-blue-500" />
                 ) : (
@@ -125,8 +125,8 @@ function NotificationList({ notifications, onDeleteNotification }: NotificationL
     );
   }
   return (
-    <div className="mt-8 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-      <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">登録済み通知一覧</h4>
+    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+      <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">登録済み通知</h4>
       <ul className="space-y-3">
         {notifications.map((notification) => (
           <li
@@ -175,7 +175,7 @@ export function NotificationSection({ user, allStocks }: NotificationSectionProp
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md min-h-[250px] flex flex-col justify-center">
       {isAuthorized && user ? (
         <div>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b dark:border-gray-700 pb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b dark:border-gray-700 pb-4">
             <div className="flex items-center mb-3 sm:mb-0">
               {user.photoURL && (
                 <img
@@ -184,9 +184,6 @@ export function NotificationSection({ user, allStocks }: NotificationSectionProp
                   className="w-9 h-9 rounded-full mr-3 border-2 border-blue-500"
                 />
               )}
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                ようこそ, <span className="font-semibold">{user.displayName}</span> さん
-              </span>
             </div>
             <Link
               to={new URL("/logout", import.meta.env.VITE_BACKEND_URL).toString()}

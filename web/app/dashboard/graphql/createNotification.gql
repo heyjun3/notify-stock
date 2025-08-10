@@ -1,7 +1,7 @@
 mutation createNotification($createNotificationInput: NotificationInput!) {
   createNotification(input: $createNotificationInput) {
     id
-    time
+    hour
     targets {
       id
       symbol

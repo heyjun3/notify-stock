@@ -44,6 +44,7 @@ export type Node = {
 
 export type Notification = Node & {
   __typename?: "Notification";
+  hour: Scalars["Time"]["output"];
   id: Scalars["ID"]["output"];
   targets: Array<SymbolDetail>;
   time: Scalars["Time"]["output"];
@@ -121,7 +122,7 @@ export type CreateNotificationMutation = {
   createNotification: {
     __typename?: "Notification";
     id: string;
-    time: string;
+    hour: string;
     targets: Array<{ __typename?: "SymbolDetail"; id: string; symbol: string; shortName: string }>;
   };
 };
@@ -163,7 +164,7 @@ export type GetNotificationQuery = {
   notification?: {
     __typename?: "Notification";
     id: string;
-    time: string;
+    hour: string;
     targets: Array<{ __typename?: "SymbolDetail"; id: string; symbol: string; shortName: string }>;
   } | null;
 };
@@ -172,7 +173,7 @@ export const CreateNotificationDocument = gql`
     mutation createNotification($createNotificationInput: NotificationInput!) {
   createNotification(input: $createNotificationInput) {
     id
-    time
+    hour
     targets {
       id
       symbol
@@ -342,7 +343,7 @@ export const GetNotificationDocument = gql`
     query getNotification {
   notification {
     id
-    time
+    hour
     targets {
       id
       symbol

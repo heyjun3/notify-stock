@@ -1,5 +1,12 @@
 import { ApolloError } from "@apollo/client";
+import { parse, format } from "@formkit/tempo";
+
 import { useGetNotificationQuery } from "~/gen/graphql";
+
+const toLocalTime = (time: string): string => {
+  const date = parse(time);
+  return format(date, "HH:mm", "jp");
+};
 
 const isError = (error?: ApolloError) => {
   if (error === undefined) return false;
@@ -14,7 +21,7 @@ export const useGetNotification = () => {
     notifications = [
       {
         id: data.notification.id,
-        time: data.notification.time,
+        time: toLocalTime(data.notification.time),
         tickers: data.notification.targets.map((t) => t.shortName),
       },
     ];

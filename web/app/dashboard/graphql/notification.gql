@@ -1,7 +1,7 @@
 query getNotification {
   notification {
     id
-    time
+    hour
     targets {
       id
       symbol

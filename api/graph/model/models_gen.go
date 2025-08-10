@@ -23,6 +23,7 @@ type Mutation struct {
 type Notification struct {
 	ID      string          `json:"id"`
 	Time    time.Time       `json:"time"`
+	Hour    time.Time       `json:"hour"`
 	Targets []*SymbolDetail `json:"targets"`
 }
 

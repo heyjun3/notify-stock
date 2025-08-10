@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/heyjun3/notify-stock/graph/model"
 )
@@ -46,6 +47,12 @@ func (r *mutationResolver) DeleteNotification(ctx context.Context) (string, erro
 		return "", err
 	}
 	return deletedNotification[0].ID.String(), nil
+}
+
+// Hour is the resolver for the hour field.
+func (r *notificationResolver) Hour(ctx context.Context, obj *model.Notification) (*time.Time, error) {
+	hour := obj.Time.AddDate(2022, 0, 0)
+	return &hour, nil
 }
 
 // Targets is the resolver for the targets field.

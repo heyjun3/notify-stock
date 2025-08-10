@@ -39,6 +39,7 @@ type SymbolDetail {
 type Notification implements Node {
   id: ID!
   time: Time!
+  hour: Time!
   targets: [SymbolDetail!]!
 }
 

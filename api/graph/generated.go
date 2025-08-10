@@ -57,6 +57,7 @@ type ComplexityRoot struct {
 	}
 
 	Notification struct {
+		Hour    func(childComplexity int) int
 		ID      func(childComplexity int) int
 		Targets func(childComplexity int) int
 		Time    func(childComplexity int) int
@@ -102,6 +103,7 @@ type MutationResolver interface {
 	DeleteNotification(ctx context.Context) (string, error)
 }
 type NotificationResolver interface {
+	Hour(ctx context.Context, obj *model.Notification) (*time.Time, error)
 	Targets(ctx context.Context, obj *model.Notification) ([]*model.SymbolDetail, error)
 }
 type QueryResolver interface {
@@ -153,6 +155,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteNotification(childComplexity), true
+
+	case "Notification.hour":
+		if e.complexity.Notification.Hour == nil {
+			break
+		}
+
+		return e.complexity.Notification.Hour(childComplexity), true
 
 	case "Notification.id":
 		if e.complexity.Notification.ID == nil {
@@ -779,6 +788,8 @@ func (ec *executionContext) fieldContext_Mutation_createNotification(ctx context
 				return ec.fieldContext_Notification_id(ctx, field)
 			case "time":
 				return ec.fieldContext_Notification_time(ctx, field)
+			case "hour":
+				return ec.fieldContext_Notification_hour(ctx, field)
 			case "targets":
 				return ec.fieldContext_Notification_targets(ctx, field)
 			}
@@ -946,6 +957,50 @@ func (ec *executionContext) fieldContext_Notification_time(_ context.Context, fi
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Notification_hour(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Notification_hour(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Notification().Hour(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Notification_hour(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Notification",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
 		},
@@ -1263,6 +1318,8 @@ func (ec *executionContext) fieldContext_Query_notification(_ context.Context, f
 				return ec.fieldContext_Notification_id(ctx, field)
 			case "time":
 				return ec.fieldContext_Notification_time(ctx, field)
+			case "hour":
+				return ec.fieldContext_Notification_hour(ctx, field)
 			case "targets":
 				return ec.fieldContext_Notification_targets(ctx, field)
 			}
@@ -1337,6 +1394,8 @@ func (ec *executionContext) fieldContext_Query_notifications(_ context.Context, 
 				return ec.fieldContext_Notification_id(ctx, field)
 			case "time":
 				return ec.fieldContext_Notification_time(ctx, field)
+			case "hour":
+				return ec.fieldContext_Notification_hour(ctx, field)
 			case "targets":
 				return ec.fieldContext_Notification_targets(ctx, field)
 			}
@@ -4421,6 +4480,42 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "hour":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Notification_hour(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "targets":
 			field := field
 
@@ -5552,6 +5647,27 @@ func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v an
 
 func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
 	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNTime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalTime(*v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

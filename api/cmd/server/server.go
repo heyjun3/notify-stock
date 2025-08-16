@@ -16,6 +16,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 
 	"github.com/heyjun3/notify-stock/graph"
+	grapherror "github.com/heyjun3/notify-stock/graph/error"
 	notifystock "github.com/heyjun3/notify-stock/internal"
 )
 
@@ -116,6 +117,7 @@ func runServer() {
 	srv.Use(extension.AutomaticPersistedQuery{
 		Cache: lru.New[string](100),
 	})
+	srv.SetErrorPresenter(grapherror.NewPresenter(logger))
 
 	mux := http.NewServeMux()
 	if notifystock.Cfg.IsDevelopment() {

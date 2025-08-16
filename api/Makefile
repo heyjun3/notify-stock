@@ -5,6 +5,8 @@
 	update\
 	update-all\
 	gen-local-key\
+	db-connect\
+	run-api-server
 
 db-setup:
 	docker compose up -d database
@@ -22,3 +24,6 @@ update-all:
 	/usr/local/go/bin/go run cmd/main.go stock update -a
 gqlgen:
 	go run github.com/99designs/gqlgen generate
+
+run-api-server:
+	go run cmd/main.go server --tls

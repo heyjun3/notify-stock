@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
+	graphError "github.com/heyjun3/notify-stock/graph/error"
 	notifystock "github.com/heyjun3/notify-stock/internal"
 )
 
@@ -39,7 +40,7 @@ func NewAuthDirective(logger *slog.Logger) Directive {
 				Err:     err,
 				Message: err.Error(),
 				Extensions: map[string]any{
-					"code": "UNAUTHORIZED",
+					"code": graphError.UnAuthorized,
 				},
 			}
 		}

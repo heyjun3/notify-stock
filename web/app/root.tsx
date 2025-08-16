@@ -6,15 +6,35 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { ApolloClient, ApolloProvider, InMemoryCache, from, createHttpLink } from "@apollo/client";
+import { onError } from "@apollo/client/link/error";
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
+
+const errorLink = onError(({ graphQLErrors, forward, operation }) => {
+  if (graphQLErrors) {
+    for (let err of graphQLErrors) {
+      switch (err.extensions?.code) {
+        case "INTERNAL_SERVER_ERROR":
+          return forward(operation);
+        default:
+          return;
+      }
+    }
+  }
+});
+
+const httpLink = createHttpLink({
+  uri: new URL("query", import.meta.env.VITE_BACKEND_URL).toString(),
+  credentials: "include",
+});
+
+const apolloLinks = from([errorLink, httpLink]);
 
 const client = new ApolloClient({
-  uri: new URL("query", import.meta.env.VITE_BACKEND_URL).toString(),
   cache: new InMemoryCache(),
-  credentials: "include",
+  link: apolloLinks,
 });
 
 export const links: Route.LinksFunction = () => [

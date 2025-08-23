@@ -32,16 +32,16 @@ export function StockCard({ stock, isSelected, onClick }: StockCardProps) {
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border ${borderClass} cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02]`}
+      className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border ${borderClass} cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] min-h-[140px] flex flex-col`}
       onClick={() => onClick(stock)}
       onKeyDown={() => onClick(stock)}
     >
-      <div className="flex justify-between items-start mb-2">
+      <div className="space-y-3">
         <div>
-          <h4 className="text-lg font-bold text-gray-900 dark:text-white">{stock.shortName}</h4>
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate w-32 sm:w-40">
-            {stock.longName}
-          </p>
+          <h4 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+            {stock.shortName}
+          </h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{stock.longName}</p>
         </div>
         <div className="text-right">
           <p className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -53,14 +53,13 @@ export function StockCard({ stock, isSelected, onClick }: StockCardProps) {
           </p>
         </div>
       </div>
+      <div className="flex-1" />
       {stock.volume || stock.marketCap ? (
         <div className="text-xs text-gray-500 dark:text-gray-400 flex justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
           {stock.volume && <span>出来高: {stock.volume}</span>}
           {stock.marketCap && <span>時価総額: {stock.marketCap}</span>}
         </div>
-      ) : (
-        <div />
-      )}
+      ) : null}
     </div>
   );
 }

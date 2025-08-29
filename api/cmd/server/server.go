@@ -79,7 +79,7 @@ func runServer() {
 	logger.Info("Start set up server")
 
 	db := notifystock.NewDB(notifystock.Cfg.DBDSN)
-	go func() {
+	func() {
 		logger.Info("Start ping database")
 		if err := db.Ping(); err != nil {
 			logger.Warn("Failed to ping database", "error", err)

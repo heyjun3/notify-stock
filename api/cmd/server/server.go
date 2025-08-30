@@ -82,7 +82,7 @@ func runServer() {
 	db := notifystock.NewDB(notifystock.Cfg.DBDSN)
 	func () {
 		logger.Error("start up request start")
-		res, err := http.Get("10.0.0.2:8888")
+		res, err := http.Get("http://10.0.0.2:8888")
 		if err != nil {
 			logger.Error("start up request error")
 			return;

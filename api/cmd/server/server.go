@@ -1,6 +1,7 @@
 package server
 
 import (
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -79,13 +80,28 @@ func runServer() {
 	logger.Info("Start set up server")
 
 	db := notifystock.NewDB(notifystock.Cfg.DBDSN)
-	func() {
-		logger.Info("Start ping database")
-		if err := db.Ping(); err != nil {
-			logger.Warn("Failed to ping database", "error", err)
+	func () {
+		logger.Error("start up request start")
+		res, err := http.Get("10.0.0.2:8888")
+		if err != nil {
+			logger.Error("start up request error")
+			return;
 		}
-		logger.Info("Done ping database")
+		defer res.Body.Close()
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			logger.Error("read body error")
+			return;
+		}
+		logger.Error("start up request done", "res", body)
 	}()
+	// func() {
+	// 	logger.Info("Start ping database")
+	// 	if err := db.Ping(); err != nil {
+	// 		logger.Warn("Failed to ping database", "error", err)
+	// 	}
+	// 	logger.Info("Done ping database")
+	// }()
 	sessionRepo := notifystock.NewSessionRepository(db)
 	sessions := notifystock.InitSessionsWithRepo(sessionRepo)
 	authHandler := notifystock.InitAuthHandler(

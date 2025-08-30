@@ -2,6 +2,7 @@ package notifystock
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -10,7 +11,7 @@ import (
 )
 
 func NewDB(dsn string) *bun.DB {
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn), pgdriver.WithTimeout(2*time.Second)))
 	db := bun.NewDB(sqldb, pgdialect.New())
 	db.AddQueryHook(bundebug.NewQueryHook(
 		bundebug.WithVerbose(true),
